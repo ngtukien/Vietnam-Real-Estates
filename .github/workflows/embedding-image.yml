@@ -1,0 +1,110 @@
+name: Embed dataset and publish image
+
+# Chạy thủ công và luôn embedding toàn bộ dataset; chạy thử dùng scripts/embed.py --limit trên máy riêng.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Các nhánh dùng chung staging, chỉ một job được ghi database tại một thời điểm.
+concurrency:
+  group: embedding-image
+  cancel-in-progress: false
+
+jobs:
+  embed-and-package:
+    # Runner Linux x64 có Docker và đủ dung lượng. index.py tự dùng CUDA nếu GPU khả dụng.
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 7200
+    permissions:
+      contents: read
+      packages: write
+    env:
+      DATA_URL: https://huggingface.co/datasets/tinixai/vietnam-real-estates
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_DB: embeddings
+      POSTGRES_USER: embeddings
+      POSTGRES_PASSWORD: ci_embedding_password
+      PGSSLMODE: disable
+      REPOSITORY: ${{ github.repository }}
+      OMP_NUM_THREADS: "4"
+      TOKENIZERS_PARALLELISM: "false"
+    services:
+      vector_db:
+        image: pgvector/pgvector:0.8.7-pg17-bookworm
+        env:
+          POSTGRES_DB: embeddings
+          POSTGRES_USER: embeddings
+          POSTGRES_PASSWORD: ci_embedding_password
+        ports:
+          # Docker chọn cổng host để không va chạm PostgreSQL có sẵn trên runner.
+          - 5432/tcp
+        volumes:
+          # Giữ checkpoint sau khi job kết thúc; lần chạy lại trên cùng máy tiếp tục phần chưa xong.
+          - vre-embedding-${{ github.repository_id }}:/var/lib/postgresql/data
+        options: >-
+          --shm-size=2g
+          --health-cmd "pg_isready -h 127.0.0.1 -U embeddings -d embeddings"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: app/requirements.txt
+
+      - name: Install dependencies
+        # Không ép torch CPU: giữ khả năng dùng GPU của runner cho toàn bộ dataset.
+        run: python -m pip install -r app/requirements.txt nbformat
+
+      - name: Test application and notebooks
+        run: python -m unittest discover -s tests -v
+
+      - name: Embed entire dataset and export snapshot
+        env:
+          DB_CONTAINER: ${{ job.services.vector_db.id }}
+          POSTGRES_PORT: ${{ job.services.vector_db.ports['5432'] }}
+        run: |
+          python scripts/embed.py --all --db-container "$DB_CONTAINER" --batch-size 1024 --workers 4
+
+      - name: Build image locally
+        run: |
+          docker build --file build/embeddings/Dockerfile --tag vre-embeddings:check \
+            --label "org.opencontainers.image.source=https://github.com/$REPOSITORY" build/embeddings
+
+      # Chỉ publish sau khi container mới khôi phục được tin, vector, KG, báo cáo và HNSW.
+      - name: Verify image restoration
+        run: python scripts/verify_embedding_image.py vre-embeddings:check --timeout 21600
+
+      # Snapshot lớn được đóng trong image trên GHCR; artifact chỉ giữ manifest để tra cứu.
+      - name: Upload manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: embeddings-all-${{ github.run_id }}
+          path: build/embeddings/manifest.json
+          retention-days: 7
+          if-no-files-found: error
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish verified image
+        run: |
+          image="ghcr.io/${REPOSITORY,,}-embeddings"
+          version="all-run-${GITHUB_RUN_ID}"
+          docker tag vre-embeddings:check "$image:$version"
+          docker push "$image:$version"
+          printf 'Image: %s:%s\n' "$image" "$version" >> "$GITHUB_STEP_SUMMARY"

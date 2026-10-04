@@ -9,7 +9,8 @@
 
 Mã chạy trực tiếp trong từng cell; không có hàm tự định nghĩa hoặc khối gom tham số cấu hình. Mỗi mô hình độc lập, không có thư mục `shared` và không import code của mô hình khác. Mỗi thư mục chứa notebook, `requirements.txt` và README; toàn bộ mã mô hình nằm trong notebook, không dùng script Python hỗ trợ. Traditional RAG hiển thị kết quả ngay tại bước Test. Các notebook còn lại có cell xuất kết quả vào `outputs/result.json` của chính mô hình đó. Dữ liệu CSV và Docker Compose dùng chung ở thư mục gốc.
 
-`DATA_URL` trong `.env.example` trỏ tới [tinixai/vietnam-real-estates](https://huggingface.co/datasets/tinixai/vietnam-real-estates).
+Cell tải dữ liệu trong từng notebook đã đặt sẵn link [tinixai/vietnam-real-estates](https://huggingface.co/datasets/tinixai/vietnam-real-estates),
+nên không cần `.env` để chọn nguồn dữ liệu. Có thể ghi đè nguồn bằng `DATA_URL` trong môi trường hoặc `.env`.
 Cả bốn notebook đọc Parquet qua `datasets.load_dataset(..., streaming=True)` và dừng sau số dòng mẫu,
 không tải toàn bộ dataset. Cũng hỗ trợ link HTTP(S) tải trực tiếp CSV UTF-8. Để trống `DATA_URL` để dùng
 `data/vietnam-real-estates.csv` cục bộ; CSV không đưa vào Git. Notebook tìm thư mục gốc qua `app/`

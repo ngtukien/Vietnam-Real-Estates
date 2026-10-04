@@ -1,0 +1,8 @@
+# Được embed.py chép vào build/embeddings: chỉ gửi các file cần cho image, bỏ dump gốc bị trùng.
+**
+!Dockerfile
+!01-pgvector.sql
+!02-restore.sh
+!parts/
+!parts/snapshot-*.part
+!manifest.json

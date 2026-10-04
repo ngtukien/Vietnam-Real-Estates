@@ -14,4 +14,4 @@ Mã nằm trực tiếp trong từng cell; không có khối cấu hình thí ng
 
 Notebook đọc 10 dòng đầu CSV và hiển thị dạng bảng, chia đoạn tối đa 384 token với overlap 48 token và lưu chunk/vector/metadata trong PostgreSQL. Sửa câu hỏi ngay tại bước Test để tìm tối đa 5 tin khác nhau; không cần xuất file hoặc khai báo bộ lọc riêng.
 
-Nguồn mặc định trong `.env.example`: [tinixai/vietnam-real-estates](https://huggingface.co/datasets/tinixai/vietnam-real-estates). `DATA_URL` trong `.env` hỗ trợ dataset Hugging Face (Parquet streaming) hoặc link CSV trực tiếp. Notebook đọc theo luồng và dừng sau số dòng mẫu. Để trống để dùng `data/vietnam-real-estates.csv` cục bộ.
+Nguồn mặc định đặt trực tiếp trong cell tải dữ liệu (không cần `.env`): [tinixai/vietnam-real-estates](https://huggingface.co/datasets/tinixai/vietnam-real-estates). `DATA_URL` trong `.env` hỗ trợ dataset Hugging Face (Parquet streaming) hoặc link CSV trực tiếp. Notebook đọc theo luồng và dừng sau số dòng mẫu. Để trống để dùng `data/vietnam-real-estates.csv` cục bộ.

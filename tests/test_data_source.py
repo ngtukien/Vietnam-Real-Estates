@@ -126,8 +126,9 @@ class DataSourceTests(unittest.TestCase):
 
 
 class NotebookRemoteTests(unittest.TestCase):
-    def test_all_notebooks_stream_huggingface_without_full_materialization(self):
-        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, DATA_URL=HF_URL):
+    def test_all_notebooks_default_to_huggingface_without_env_or_local_csv(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ):
+            os.environ.pop("DATA_URL", None)
             for path in NOTEBOOKS:
                 dataset = StreamingDataset()
                 with self.subTest(notebook=path.name), patch("datasets.load_dataset", return_value=dataset) as load:

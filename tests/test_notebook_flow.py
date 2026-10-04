@@ -5,6 +5,7 @@ import importlib.util
 import io
 import json
 import math
+import os
 import re
 import tempfile
 import unicodedata
@@ -13,7 +14,7 @@ from collections import Counter
 from contextlib import redirect_stdout
 from itertools import islice
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 ROOT = Path(__file__).resolve().parent.parent
 NOTEBOOKS = sorted((ROOT / 'model').glob('*/*.ipynb'))
@@ -91,7 +92,7 @@ class NotebookFlowTests(unittest.TestCase):
                     self.assertFalse(removed & {n.id for n in ast.walk(tree) if isinstance(n, ast.Name)})
 
     def test_csv_cleaning_preserves_source_ids_and_handles_missing_numbers(self):
-        with tempfile.TemporaryDirectory() as directory:
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, DATA_URL=""):
             root = Path(directory)
             (root / 'data').mkdir()
             (root / 'data/vietnam-real-estates.csv').write_text(

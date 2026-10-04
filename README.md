@@ -300,6 +300,8 @@ PGSSLMODE=require
 
 PostgreSQL 17 + pgvector 0.8.7, dữ liệu lưu trong Docker named volume, cổng chỉ mở trên `127.0.0.1`.
 Extension `vector` tự bật khi volume khởi tạo lần đầu.
+Chỉ dùng `docker-compose.yaml`: để trống `EMBEDDINGS_IMAGE` để nạp dữ liệu trên PostgreSQL gốc,
+hoặc đặt biến này thành image đã embedding để khôi phục chỉ mục có sẵn.
 
 ```bash
 docker compose ps                     # trạng thái
@@ -316,6 +318,75 @@ docker compose exec vector_db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 
 - Các biến `POSTGRES_*` chỉ có tác dụng khi volume còn trống.
 - Nếu ứng dụng chạy trong cùng Compose, dùng `POSTGRES_HOST=vector_db`.
+
+### Embedding trên GitHub Actions và đóng thành image
+
+[`scripts/embed.py`](scripts/embed.py) chạy pipeline của `app/index.py`: embedding E5 cho chunk tin,
+dựng KG, embedding báo cáo GraphRAG và tạo HNSW. Sau đó xuất đúng các bảng `app_*` ra
+`build/embeddings/02-embeddings.sql.gz`, kèm `manifest.json` ghi số bản ghi, cấu hình model và SHA-256.
+Script **mặc định embedding toàn bộ dataset Hugging Face**, đọc theo luồng đến hết nguồn.
+`--all` cũng chọn toàn bộ; chỉ truyền `--limit N` khi chủ động chạy thử với N dòng.
+
+[`embedding-image.yml`](.github/workflows/embedding-image.yml) chạy thủ công trên GitHub:
+
+1. Đăng ký runner riêng **Linux x64** với các nhãn `self-hosted`, `linux`, `x64`, có Docker và Python 3.12.
+   Cài driver/CUDA phù hợp nếu dùng GPU; pipeline tự chọn CUDA khi PyTorch nhận GPU.
+2. Mở **Actions → Embed dataset and publish image → Run workflow**. Workflow luôn lấy toàn bộ dataset,
+   chạy kiểm thử, embedding trong PostgreSQL staging và xuất snapshot.
+3. Script sinh `build/embeddings/Dockerfile` từ [template](docker/embeddings/Dockerfile). Workflow build
+   image này, rồi khởi động
+   một container với volume trống và user khác để kiểm tra khôi phục số tin/vector/KG/báo cáo và hai index HNSW.
+4. Khi kiểm tra đạt, workflow publish image chứa snapshot lên GHCR bằng `GITHUB_TOKEN` và lưu
+   manifest thành artifact 7 ngày. Tag của image xuất hiện trong phần **Summary**, dạng
+   `ghcr.io/ngtukien/vietnam-real-estates-embeddings:all-run-<run-id>`.
+
+Image này là **PostgreSQL + pgvector có chỉ mục đã tính sẵn**. Nó chứa tin, vector, KG và báo cáo;
+model E5 để embedding câu hỏi vẫn được chatbot tải như hiện tại. Không cần mật khẩu database thật
+hoặc token Hugging Face cho workflow dùng dataset công khai. Mật khẩu staging chỉ dùng trong runner,
+không nằm trong image; dump bỏ thông tin owner và quyền của user tạo dữ liệu.
+
+Chạy image đã publish:
+
+```bash
+# Thay tag bằng image trong Summary của workflow đã chạy thành công.
+export EMBEDDINGS_IMAGE="ghcr.io/ngtukien/vietnam-real-estates-embeddings:all-run-<run-id>"
+docker compose up -d --wait
+.venv/bin/python app/server.py
+```
+
+Trong `.env`, đặt `POSTGRES_HOST=127.0.0.1`, `PGSSLMODE=disable` và dùng cùng `POSTGRES_PORT`,
+`POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` với container. PostgreSQL khôi phục snapshot khi
+volume còn trống lần đầu; lần khởi động sau dùng dữ liệu trong volume. Thay tag image không thay dữ liệu
+của volume đã khởi tạo. Để chạy một snapshot mới bên cạnh bản cũ, dùng tên project Compose khác:
+`docker compose -p estates-new up -d --wait` và chọn cổng host khác.
+
+Build trên máy riêng, dùng **database staging riêng** với cấu hình kết nối trong `.env` hoặc biến môi trường:
+
+```bash
+# PostgreSQL staging cần chạy trước; truyền ID/tên container tương ứng để dùng pg_dump 17 bên trong.
+.venv/bin/python scripts/embed.py --db-container "<staging-container-id>"
+docker build -f build/embeddings/Dockerfile -t vre-embeddings:local build/embeddings
+.venv/bin/python scripts/verify_embedding_image.py vre-embeddings:local
+```
+
+Nếu PostgreSQL chạy ngoài Docker, cài `pg_dump` 17 trên máy và bỏ `--db-container`.
+`--batch-size` và `--workers` điều chỉnh lô/tốc độ xử lý. Nếu chỉ kiểm tra nhanh, thêm `--limit 1000`.
+
+Workflow dành tối đa 5 ngày cho một job trên runner riêng; runner GitHub được quản lý có
+[giới hạn 6 giờ/job](https://docs.github.com/en/actions/reference/limits). Runner cần đủ RAM và dung lượng
+cho database staging, dump, image và một database khôi phục để kiểm tra. Bước kiểm tra cho phép
+khôi phục tối đa 6 giờ. Staging được lưu trong volume `vre-embedding-<repository-id>`; chạy lại
+**trên cùng máy runner** sẽ tiếp tục từ checkpoint, kể cả sau khi job bị ngắt. Nếu có nhiều runner
+cùng nhãn, cần chọn cùng máy để dùng lại volume. Không tự xóa volume staging sau job; muốn làm lại
+từ đầu hoặc dùng phiên bản dataset mới, cấu hình một volume staging mới trước khi chạy.
+Các job của workflow được xếp hàng để tránh ghi đồng thời vào staging.
+
+Manifest ghi `limit: null` cho toàn bộ dữ liệu và số tin/vector thực tế đã đóng gói. Script chia
+dump nén thành các phần từ 256 MiB trong `build/embeddings/parts/` (tối đa 96 phần), mỗi phần
+nằm trong một layer riêng để đáp ứng [giới hạn 10 GB/layer của GHCR](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
+PostgreSQL ghép và giải nén các phần theo luồng khi khởi tạo; SHA-256 kiểm tra toàn bộ dump đã ghép.
+Thư mục build giữ cả dump gốc và các phần nên cần dung lượng cho hai bản dump. Snapshot lớn chỉ
+nằm trong image GHCR; artifact của workflow chỉ chứa manifest.
 
 ## Cấu trúc thư mục
 

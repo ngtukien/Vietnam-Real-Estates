@@ -16,4 +16,4 @@ Toàn bộ mã nằm trong notebook, viết trực tiếp trong các cell chạy
 
 Mặc định đọc 1.000 tin đầu CSV. Embedding E5 được tải ở lần đầu chạy. Cell xuất kết quả lưu trong `outputs/result.json` của thư mục này.
 
-Nguồn mặc định trong `.env.example`: [tinixai/vietnam-real-estates](https://huggingface.co/datasets/tinixai/vietnam-real-estates). `DATA_URL` trong `.env` hỗ trợ dataset Hugging Face (Parquet streaming) hoặc link CSV trực tiếp. Notebook đọc theo luồng và dừng sau số dòng mẫu. Để trống để dùng `data/vietnam-real-estates.csv` cục bộ.
+Nguồn mặc định đặt trực tiếp trong cell tải dữ liệu (không cần `.env`): [tinixai/vietnam-real-estates](https://huggingface.co/datasets/tinixai/vietnam-real-estates). `DATA_URL` trong `.env` hỗ trợ dataset Hugging Face (Parquet streaming) hoặc link CSV trực tiếp. Notebook đọc theo luồng và dừng sau số dòng mẫu. Để trống để dùng `data/vietnam-real-estates.csv` cục bộ.

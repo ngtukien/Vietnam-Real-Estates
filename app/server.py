@@ -159,6 +159,6 @@ if __name__ == "__main__":
     print("Đang đọc chỉ mục từ PostgreSQL và tải E5…")
     Handler.index = Index.load()
     Handler.index.connection()  # mở sẵn kết nối DB để câu hỏi đầu tiên không phải chờ
-    print(f"Chỉ mục {Handler.index.collection}: {Handler.index.stats}")
+    print(f"Chỉ mục: {Handler.index.stats}")
     print(f"Mở http://{args.host}:{args.port}")
     ThreadingHTTPServer((args.host, args.port), Handler).serve_forever()
