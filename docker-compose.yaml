@@ -1,0 +1,42 @@
+services:
+  vector_db:
+    image: pgvector/pgvector:0.8.7-pg17-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-real_estates}
+      POSTGRES_USER: ${POSTGRES_USER:-real_estates}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local_dev_password}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    # Cấu hình cho nạp hàng triệu dòng (app/index.py): bộ đệm lớn hơn, ít checkpoint trong lúc
+    # nạp, đủ bộ nhớ và shared memory để build index HNSW song song.
+    command:
+      - postgres
+      - -c
+      - shared_buffers=1GB
+      - -c
+      - effective_cache_size=4GB
+      - -c
+      - max_wal_size=8GB
+      - -c
+      - maintenance_work_mem=1GB
+      - -c
+      - max_parallel_maintenance_workers=4
+    shm_size: "3gb"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  postgres_data:

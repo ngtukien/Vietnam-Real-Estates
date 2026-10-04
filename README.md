@@ -20,8 +20,28 @@ tổng hợp câu trả lời trực tiếp từ các tin truy xuất được v
 
 ## Dữ liệu
 
-`data/vietnam-real-estates.csv` gồm tin đăng có tiêu đề, mô tả tự do và các cột có cấu trúc: tỉnh, quận,
+Dữ liệu từ [tinixai/vietnam-real-estates trên Hugging Face](https://huggingface.co/datasets/tinixai/vietnam-real-estates)
+gồm tin đăng có tiêu đề, mô tả tự do và các cột có cấu trúc: tỉnh, quận,
 phường, đường, dự án, loại hình, giá (VND), diện tích (m²), số phòng, hướng nhà, ngày đăng…
+
+Dataset trên Hub hiện dùng các shard **Parquet**. App và cả bốn notebook đọc bằng
+`datasets.load_dataset(..., split="train", streaming=True)`. `.env.example` đã đặt sẵn nguồn:
+
+```dotenv
+DATA_URL=https://huggingface.co/datasets/tinixai/vietnam-real-estates
+```
+
+Cũng có thể đặt `DATA_URL` thành link HTTP(S) tải trực tiếp CSV UTF-8. Với nguồn CSV, trang xem trước/
+chia sẻ hoặc trang đăng nhập không dùng được. `DATA_URL` được ưu tiên hơn file cục bộ. Để trống
+biến này nếu muốn đọc `data/vietnam-real-estates.csv` có sẵn trên máy. Bản CSV cục bộ khoảng
+**3,1 GB**, được loại khỏi Git.
+
+Dữ liệu được đọc theo luồng, không tải toàn bộ dataset xuống máy hoặc nạp toàn bộ vào RAM. Parquet
+đọc theo lô/row group nên có thể lấy thêm dữ liệu đệm ngoài số tin mẫu. Notebook
+và `app/index.py --limit N` dừng sau số dòng cần dùng. Khi lập chỉ mục toàn bộ qua link, app đọc
+một lượt đến hết nguồn, không tải thêm một lượt chỉ để đếm dòng. Chạy lại sau khi bị gián đoạn vẫn
+bỏ qua các dòng đã ghi vào PostgreSQL, nhưng phải đọc luồng từ đầu để tìm đến dòng tiếp theo.
+Nguồn dữ liệu phải giữ nguyên nội dung và thứ tự dòng khi chạy tiếp; đổi dataset thì dùng `--reset`.
 
 Mọi mô hình làm sạch dữ liệu giống nhau: gộp khoảng trắng, giữ nguyên dấu tiếng Việt, chuyển trường số sang
 số (giá trị rỗng/sai/âm thành `None`) và bỏ tin không có cả tiêu đề lẫn mô tả. ID tin là số thứ tự dòng CSV.
@@ -242,6 +262,7 @@ Yêu cầu: Python 3.12, Docker.
 ```bash
 python3 -m venv .venv
 cp .env.example .env
+# DATA_URL trong .env đã trỏ tới dataset tinixai/vietnam-real-estates.
 .venv/bin/python -m pip install -r app/requirements.txt jupyterlab nbformat
 docker compose up -d vector_db
 ```
@@ -300,11 +321,12 @@ docker compose exec vector_db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" 
 
 ```text
 app/
+  data_source.py        Streaming Hugging Face/CSV từ DATA_URL hoặc CSV cục bộ
   engine.py             Logic truy xuất của 4 mô hình
   index.py              Lập chỉ mục vào PostgreSQL (chạy trước)
   server.py             Server HTTP + API /api/chat
   static/               Giao diện HTML/CSS/JS
-data/                   vietnam-real-estates.csv
+data/                   CSV cục bộ tùy chọn, không đưa vào Git
 docker/postgres/init/   Script bật extension pgvector
 model/
   TraditionalRAG/       Notebook, README, requirements
@@ -326,7 +348,7 @@ nhau. Chi tiết từng thư mục: [model/README.md](model/README.md).
 
 Các test kiểm tra:
 
-- làm sạch CSV;
+- làm sạch CSV, đọc URL theo luồng và đóng kết nối sau khi đủ số dòng;
 - ngân sách token và độ phủ của chunk;
 - tách node địa chỉ trùng tên;
 - bộ lọc (kể cả tin thiếu giá);
