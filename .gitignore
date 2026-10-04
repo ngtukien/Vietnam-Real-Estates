@@ -3,7 +3,8 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
-model/**/outputs/
 logs/
-data/*.csv
-build/
+# Dữ liệu sạch, chỉ mục và cache sinh lại được từ notebook 01–04
+data/
+index/
+results/

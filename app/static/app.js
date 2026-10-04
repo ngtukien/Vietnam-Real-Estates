@@ -3,37 +3,29 @@ const messages = $("messages");
 const form = $("chat-form");
 const queryInput = $("query");
 const sendButton = $("send");
-const FILTERS = ["province_name", "property_type_name", "min_price", "max_price", "min_area", "max_area"];
-
-function addOptions(select, values) {
-  for (const value of values) select.add(new Option(value, value));
-}
+const ROUTES = { basic_rag: "Basic RAG", graph: "Graph", hybrid: "Graph + RAG" };
+const FILTER_NAMES = {
+  province: "tỉnh", district: "quận", property_type: "loại hình", bedrooms: "phòng ngủ",
+  min_price_mil: "giá từ (triệu)", max_price_mil: "giá đến (triệu)", min_area: "từ (m²)", max_area: "đến (m²)",
+};
+let turn = 0;
 
 async function loadInfo() {
   try {
-    const response = await fetch("/api/info");
-    const info = await response.json();
-    for (const [key, name] of Object.entries(info.models)) $("model").add(new Option(name, key));
-    $("model").value = "rag_kg";
-    addOptions($("province_name"), info.provinces);
-    addOptions($("property_type_name"), info.property_types);
-    const s = info.stats;
+    const info = await (await fetch("/api/info")).json();
+    for (const [key, system] of Object.entries(info.systems)) {
+      const option = new Option(system.name + (system.available ? "" : " (cần Neo4j)"), key);
+      option.disabled = !system.available;
+      $("system").add(option);
+    }
+    $("system").value = info.systems.hybrid.available ? "hybrid" : "basic_rag";
     const n = (value) => Number(value).toLocaleString("vi-VN");
-    $("stats").textContent = `${n(s.documents)} tin · ${n(s.chunks)} chunk · ${n(s.entities)} thực thể · ${n(s.communities)} cộng đồng`;
+    const scope = info.stats.index === "full" ? "toàn bộ dataset" : "mẫu";
+    $("stats").textContent = `${n(info.stats.listings)} tin (${scope}) · ${n(info.stats.chunks)} chunk`
+      + (info.graph_error ? ` · ${info.graph_error}` : " · đồ thị sẵn sàng");
   } catch {
     $("stats").textContent = "Không kết nối được server";
   }
-}
-
-function readFilters() {
-  const filters = {};
-  for (const key of FILTERS) {
-    const raw = $(key).value.trim();
-    if (!raw) continue;
-    // Giá nhập theo tỷ, API nhận VND.
-    filters[key] = key.endsWith("_price") ? Number(raw) * 1e9 : key.endsWith("_area") ? Number(raw) : raw;
-  }
-  return filters;
 }
 
 function bubble(className, text) {
@@ -45,61 +37,95 @@ function bubble(className, text) {
   return element;
 }
 
-function renderAnswer(answer) {
-  const container = bubble("bot");
-  const notes = [];
-  if (answer.matched_entities.length) notes.push(`Nhận diện: ${answer.matched_entities.join(", ")}`);
-  if (answer.filters_ignored) notes.push("Traditional RAG không áp dụng bộ lọc");
-  if (notes.length) {
-    const note = document.createElement("p");
-    note.className = "note muted";
-    note.textContent = notes.join(" · ");
-    container.append(note);
-  }
-  if (!answer.best) {
-    container.className = "bubble empty";
-    container.textContent = answer.message;
-    return;
-  }
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
 
-  const best = answer.best;
-  const card = $("listing-card").content.firstElementChild.cloneNode(true);
+// Câu trả lời dạng văn bản; mỗi [Tin#ID] thành liên kết tới thẻ tin nguồn bên dưới.
+function answerText(answer, prefix) {
+  const paragraph = element("div", "answer");
+  const known = new Set(answer.sources.map((s) => s.id));
+  for (const part of answer.answer.split(/(\[Tin#\d+\])/)) {
+    const match = part.match(/^\[Tin#(\d+)\]$/);
+    if (match && known.has(Number(match[1]))) {
+      const link = element("a", "cite-link", `#${match[1]}`);
+      link.href = `#${prefix}-${match[1]}`;
+      paragraph.append(link);
+    } else {
+      paragraph.append(document.createTextNode(part));
+    }
+  }
+  return paragraph;
+}
+
+function howFound(answer) {
+  const parts = [answer.system_name];
+  if (answer.route) parts.push(`router chọn ${ROUTES[answer.route] || answer.route}`);
+  if (answer.fallback) parts.push("đồ thị không có kết quả, đã dùng RAG");
+  const filters = Object.entries(answer.filters).map(([k, v]) => `${FILTER_NAMES[k] || k}: ${v}`);
+  if (filters.length) parts.push(`bộ lọc ${filters.join(", ")}`);
+  if (answer.note) parts.push(answer.note);
+  parts.push(`${answer.elapsed_ms} ms · ${answer.tokens.toLocaleString("vi-VN")} token`);
+  return parts.join(" · ");
+}
+
+function sourceCard(source, prefix, cited) {
+  const card = $("source-card").content.firstElementChild.cloneNode(true);
+  card.id = `${prefix}-${source.id}`;
   const set = (selector, text) => { card.querySelector(selector).textContent = text; };
-  set(".type", best.property_type);
-  set(".score", best.score);
-  set(".title", best.title);
-  set(".price", best.price);
-  set(".area", best.area);
-  const rooms = [best.bedrooms && `${best.bedrooms} PN`, best.bathrooms && `${best.bathrooms} WC`].filter(Boolean);
+  set(".type", source.property_type);
+  set(".cite", `Tin #${source.id}${cited ? " · được trích" : ""}${source.published_at ? " · đăng " + source.published_at : ""}`);
+  set(".title", source.title);
+  set(".price", source.price);
+  set(".area", source.area);
+  const rooms = [source.bedrooms && `${source.bedrooms} PN`, source.bathrooms && `${source.bathrooms} WC`].filter(Boolean);
   if (rooms.length) set(".rooms", rooms.join(" · "));
   else card.querySelector(".rooms-cell").remove();
-  set(".address", [best.project, best.address].filter(Boolean).join(" — ") || "Chưa rõ địa chỉ");
-  set(".description", best.description);
-  if (answer.area) set(".area-note", `Tổng quan khu vực (${answer.area.id}): ${answer.area.summary}`);
-  set(".evidence pre", best.evidence);
-  set(".meta", `Tin #${best.id}${best.published_at ? " · đăng " + best.published_at : ""} · ${answer.model_name} · ${answer.elapsed_ms} ms`);
-  container.append(card);
+  set(".address", [source.project, source.address].filter(Boolean).join(" — ") || "Chưa rõ địa chỉ");
+  set(".description", source.description || "Không có mô tả");
+  return card;
+}
+
+function renderAnswer(answer) {
+  const prefix = `t${++turn}`;
+  const container = bubble("bot");
+  container.append(answerText(answer, prefix));
+  container.append(element("p", "note muted", howFound(answer)));
+  if (answer.cypher) {
+    const details = element("details", "evidence");
+    details.append(element("summary", "", "Cypher đã chạy"), element("pre", "", answer.cypher));
+    container.append(details);
+  }
+  if (answer.sources.length) {
+    const cited = new Set(answer.cited);
+    const list = element("div", "sources");
+    for (const source of answer.sources) list.append(sourceCard(source, prefix, cited.has(source.id)));
+    container.append(element("p", "sources-title muted", "Tin nguồn"), list);
+  }
   container.scrollIntoView({ behavior: "smooth", block: "end" });
 }
 
 async function ask(query) {
   $("welcome")?.remove();
   bubble("user", query);
-  const typing = bubble("typing", "Đang tìm…");
+  const typing = bubble("typing", "Đang tìm và soạn câu trả lời…");
   sendButton.disabled = true;
   try {
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, model: $("model").value, filters: readFilters() }),
+      body: JSON.stringify({ query, system: $("system").value }),
     });
     const answer = await response.json();
     typing.remove();
-    if (answer.error) bubble("error", answer.error);
+    if (answer.error && !answer.answer) bubble("error", answer.error);
     else renderAnswer(answer);
   } catch {
     typing.remove();
-    bubble("error", "Không kết nối được server. Kiểm tra server.py còn chạy.");
+    bubble("error", "Không kết nối được server. Kiểm tra app/server.py còn chạy.");
   } finally {
     sendButton.disabled = false;
     queryInput.focus();
@@ -118,4 +144,9 @@ for (const button of document.querySelectorAll(".examples button")) {
   button.addEventListener("click", () => ask(button.textContent));
 }
 
-loadInfo();
+// Link dạng /?q=...&system=graph hỏi ngay khi mở trang (tiện khi trình bày).
+loadInfo().then(() => {
+  const params = new URLSearchParams(location.search);
+  if (params.get("system")) $("system").value = params.get("system");
+  if (params.get("q")) ask(params.get("q"));
+});

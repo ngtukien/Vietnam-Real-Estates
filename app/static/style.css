@@ -107,7 +107,6 @@ select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: -1
 .bubble { max-width: 85%; padding: 10px 14px; border-radius: var(--radius); }
 .bubble.user { align-self: flex-end; background: var(--user); color: var(--user-text); border-bottom-right-radius: 4px; }
 .bubble.bot { align-self: flex-start; width: 100%; max-width: 100%; padding: 0; }
-.bubble.bot > .note { margin: 0 0 8px; font-size: 13px; }
 .bubble.error, .bubble.empty {
   align-self: flex-start;
   background: var(--warn-soft);
@@ -116,33 +115,45 @@ select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: -1
 }
 .typing { align-self: flex-start; color: var(--muted); font-size: 13px; }
 
-/* ---------- listing card ---------- */
+/* ---------- answer + source cards ---------- */
+.bubble.bot .answer {
+  padding: 12px 16px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow); white-space: pre-wrap;
+}
+.bubble.bot > .note { margin: 6px 4px 0; font-size: 12.5px; }
+.cite-link {
+  display: inline-block; margin: 0 2px; padding: 0 7px; border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent); font-size: 12.5px; font-weight: 600; text-decoration: none;
+}
+.cite-link:hover { text-decoration: underline; }
+.sources-title { margin: 14px 4px 6px; font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+.sources { display: grid; gap: 10px; }
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 16px 18px;
+  padding: 14px 16px;
+  scroll-margin-top: 80px;
 }
+.card:target { outline: 2px solid var(--accent); }
 .card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; }
 .badge { padding: 2px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-.card .title { margin: 10px 0 12px; font-size: 17px; line-height: 1.4; }
-.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
-.facts > div { padding: 8px 10px; border-radius: 10px; background: var(--bg); }
+.card .title { margin: 8px 0 10px; font-size: 15.5px; line-height: 1.4; }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+.facts > div { padding: 6px 10px; border-radius: 10px; background: var(--bg); }
 .facts .label { display: block; font-size: 12px; color: var(--muted); }
-.facts strong { font-size: 15.5px; }
-.address { margin: 0 0 8px; font-weight: 500; }
+.facts strong { font-size: 14.5px; }
+.address { margin: 0 0 6px; font-weight: 500; font-size: 14px; }
 .address::before { content: "📍 "; }
-.description { margin: 0 0 10px; color: var(--muted); font-size: 14px; }
-.area-note { margin: 0 0 10px; padding: 8px 12px; border-left: 3px solid var(--accent); background: var(--accent-soft); border-radius: 0 8px 8px 0; font-size: 13.5px; }
-.area-note:empty { display: none; }
+.description { margin: 6px 0 0; color: var(--muted); font-size: 13.5px; }
+.evidence { margin-top: 6px; }
 .evidence summary { cursor: pointer; font-size: 13px; color: var(--accent); }
 .evidence pre {
   margin: 8px 0 0; padding: 10px; max-height: 260px; overflow: auto;
   background: var(--bg); border-radius: 8px;
   font-size: 12.5px; white-space: pre-wrap; overflow-wrap: anywhere;
 }
-.card .meta { margin: 10px 0 0; font-size: 12px; }
 
 /* ---------- composer ---------- */
 .composer {
@@ -151,15 +162,6 @@ select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: -1
   padding: 10px max(16px, calc((100vw - 820px) / 2)) 16px;
   background: linear-gradient(transparent, var(--bg) 18px);
 }
-.filters { margin-bottom: 8px; font-size: 13.5px; }
-.filters summary { cursor: pointer; color: var(--muted); width: max-content; }
-.filter-grid {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
-  margin-top: 8px; padding: 12px;
-  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-}
-.filter-grid label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--muted); }
-.filter-grid select, .filter-grid input { color: var(--text); width: 100%; }
 .input-row {
   display: flex; gap: 8px; padding: 6px;
   background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
@@ -181,6 +183,5 @@ select:focus, input:focus { outline: 2px solid var(--accent); outline-offset: -1
   .facts { gap: 6px; }
   .facts > div { padding: 6px 8px; }
   .facts strong { font-size: 14px; }
-  .filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bubble { max-width: 92%; }
 }

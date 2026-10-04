@@ -16,47 +16,37 @@
       </div>
     </div>
     <label class="model-picker">
-      <span>Mô hình</span>
-      <select id="model"></select>
+      <span>Chế độ</span>
+      <select id="system"></select>
     </label>
   </header>
 
   <main id="messages" class="messages" aria-live="polite">
     <section class="welcome" id="welcome">
-      <h2>Bạn đang tìm bất động sản thế nào?</h2>
-      <p class="muted">Mô tả nhu cầu bằng tiếng Việt. Chatbot trả về một tin phù hợp nhất từ dữ liệu đã lập chỉ mục.</p>
+      <h2>Bạn muốn hỏi gì về thị trường?</h2>
+      <p class="muted">Hỏi bằng tiếng Việt. Điều kiện giá, quận, số phòng trong câu hỏi được tự nhận diện.
+        Chế độ Tự động chọn giữa tìm theo mô tả (RAG), truy vấn đồ thị (Cypher) hoặc kết hợp cả hai.</p>
       <div class="examples">
-        <button type="button">Nhà Hà Nội gần trường, có thang máy</button>
-        <button type="button">Căn hộ chung cư Hồ Chí Minh có hồ bơi</button>
-        <button type="button">Đất Bình Dương sổ hồng riêng</button>
-        <button type="button">Biệt thự Đà Nẵng gần biển</button>
+        <button type="button">Căn hộ 2PN ở Thủ Đức dưới 3 tỷ</button>
+        <button type="button">Nhà ở Cầu Giấy dưới 10 tỷ có thang máy</button>
+        <button type="button">Quận nào ở Hà Nội có giá/m² trung bình cao nhất?</button>
+        <button type="button">Năm quận nào của Hồ Chí Minh có nhiều tin đăng nhất?</button>
       </div>
     </section>
   </main>
 
   <footer class="composer">
-    <details class="filters">
-      <summary>Bộ lọc</summary>
-      <div class="filter-grid">
-        <label>Tỉnh/thành<select id="province_name"><option value="">Tất cả</option></select></label>
-        <label>Loại hình<select id="property_type_name"><option value="">Tất cả</option></select></label>
-        <label>Giá từ (tỷ)<input id="min_price" type="number" min="0" step="0.5" placeholder="0"></label>
-        <label>Giá đến (tỷ)<input id="max_price" type="number" min="0" step="0.5" placeholder="Không giới hạn"></label>
-        <label>Diện tích từ (m²)<input id="min_area" type="number" min="0" step="10" placeholder="0"></label>
-        <label>Diện tích đến (m²)<input id="max_area" type="number" min="0" step="10" placeholder="Không giới hạn"></label>
-      </div>
-    </details>
     <form id="chat-form" class="input-row">
-      <input id="query" type="text" autocomplete="off" placeholder="Ví dụ: Nhà Hà Nội gần trường, có thang máy" required>
+      <input id="query" type="text" autocomplete="off" placeholder="Ví dụ: Căn hộ 2PN ở Thủ Đức dưới 3 tỷ" required>
       <button type="submit" id="send">Gửi</button>
     </form>
   </footer>
 
-  <template id="listing-card">
+  <template id="source-card">
     <article class="card">
       <div class="card-head">
         <span class="badge type"></span>
-        <span class="score muted"></span>
+        <span class="cite muted"></span>
       </div>
       <h3 class="title"></h3>
       <div class="facts">
@@ -65,13 +55,10 @@
         <div class="rooms-cell"><span class="label">Phòng</span><strong class="rooms"></strong></div>
       </div>
       <p class="address"></p>
-      <p class="description"></p>
-      <p class="area-note"></p>
       <details class="evidence">
-        <summary>Bằng chứng truy xuất</summary>
-        <pre></pre>
+        <summary>Mô tả</summary>
+        <p class="description"></p>
       </details>
-      <p class="meta muted"></p>
     </article>
   </template>
 
