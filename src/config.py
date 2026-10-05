@@ -66,11 +66,18 @@ RRF_K = 60
 TOP_K = 5
 
 # ---------------------------------------------------------------- LLM (khoá đọc từ biến môi trường)
-# Anthropic SDK tự đọc ANTHROPIC_API_KEY hoặc profile `ant auth login`; không ghi khoá vào notebook.
-LLM_MODEL = os.getenv("LLM_MODEL", "claude-opus-5-5")
+# LLM_PROVIDER=anthropic đọc ANTHROPIC_API_KEY (hoặc `ant auth login`); =openai đọc OPENAI_API_KEY;
+# =gemini đọc GEMINI_API_KEY (gọi qua endpoint tương thích OpenAI). Không ghi khoá vào notebook.
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "anthropic")
+LLM_MODEL = os.getenv("LLM_MODEL", {"openai": "gpt-5.4-mini", "gemini": "gemini-3.8-flash"}.get(LLM_PROVIDER,
+                                                                                                "claude-opus-5-5"))
+# Model thử tiếp khi model chính quá tải (503) hoặc vượt hạn mức (429); chỉ dùng cho openai/gemini.
+LLM_FALLBACK_MODELS = [m.strip() for m in os.getenv(
+    "LLM_FALLBACK_MODELS", "gemini-3.7-flash,gemini-3.5-flash" if LLM_PROVIDER == "gemini" else "").split(",") if m.strip()]
 LLM_EFFORT = os.getenv("LLM_EFFORT", "low")
-# USD cho 1 triệu token vào/ra của claude-opus-5-5, dùng để tính chi phí ở P4-12.
-LLM_PRICE_PER_MTOK = {"input": 4.00, "output": 20.00}
+# USD cho 1 triệu token vào/ra (mặc định là giá claude-opus-5-5), dùng để tính chi phí ở P4-12.
+LLM_PRICE_PER_MTOK = {"input": float(os.getenv("LLM_PRICE_INPUT", 4.00)),
+                      "output": float(os.getenv("LLM_PRICE_OUTPUT", 20.00))}
 
 # ---------------------------------------------------------------- vector DB (Qdrant)
 QDRANT_URL = os.getenv("QDRANT_URL", "http://127.0.0.1:6333")

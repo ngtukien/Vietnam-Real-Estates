@@ -10,6 +10,7 @@ qdrant-client>=1.15,<1.16  # khớp server qdrant/qdrant:v1.15.5
 pyvi>=0.1,<0.2
 pydantic>=2,<3
 anthropic>=1.11,<2
+openai>=1.60,<4
 neo4j>=5,<7
 networkx>=3.2,<4
 python-igraph>=0.11

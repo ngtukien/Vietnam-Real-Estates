@@ -1,20 +1,23 @@
-"""Gọi Claude qua Anthropic SDK, có cache đĩa để cell CACHE không gọi lại mô hình trên lớp.
+"""Gọi LLM (Claude qua Anthropic SDK, GPT hoặc Gemini qua OpenAI SDK, chọn bằng LLM_PROVIDER), có cache đĩa
+để cell CACHE không gọi lại mô hình trên lớp.
 
-Khoá API đọc từ ANTHROPIC_API_KEY (hoặc profile `ant auth login`); không ghi trong notebook.
+Khoá API đọc từ ANTHROPIC_API_KEY (hoặc profile `ant auth login`), OPENAI_API_KEY hoặc GEMINI_API_KEY;
+không ghi trong notebook.
 """
 
 import hashlib
 import json
+import os
 from contextlib import contextmanager
 from dataclasses import dataclass
 
-import anthropic
 from pydantic import BaseModel
 
-from src.config import CACHE_DIR, LLM_EFFORT, LLM_MODEL
+from src.config import CACHE_DIR, LLM_EFFORT, LLM_FALLBACK_MODELS, LLM_MODEL, LLM_PROVIDER
 
 LLM_CACHE = CACHE_DIR / "llm"
 _client = None
+GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 _read_cache = True
 
 
@@ -27,10 +30,25 @@ class LLMResult:
     cached: bool
 
 
-def client() -> anthropic.Anthropic:
+def client():
     global _client
     if _client is None:
-        _client = anthropic.Anthropic()
+        if LLM_PROVIDER == "openai":
+            if not os.getenv("OPENAI_API_KEY"):
+                raise RuntimeError("Thiếu xác thực OpenAI: đặt OPENAI_API_KEY trong .env.")
+            import openai
+            _client = openai.OpenAI()
+        elif LLM_PROVIDER == "gemini":
+            if not os.getenv("GEMINI_API_KEY"):
+                raise RuntimeError("Thiếu xác thực Gemini: đặt GEMINI_API_KEY trong .env.")
+            import openai
+            # Gemini hay trả 503 khi quá tải: thử lại ít lần rồi chuyển sang LLM_FALLBACK_MODELS.
+            _client = openai.OpenAI(api_key=os.environ["GEMINI_API_KEY"], base_url=GEMINI_BASE_URL)
+        else:
+            if not (os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_AUTH_TOKEN")):
+                raise RuntimeError("Thiếu xác thực Claude: đặt ANTHROPIC_API_KEY trong .env hoặc chạy `ant auth login`.")
+            import anthropic
+            _client = anthropic.Anthropic()
     return _client
 
 
@@ -79,6 +97,19 @@ def ask_llm(prompt: str, system: str = "", output: type[BaseModel] | dict | None
         saved = json.loads(path.read_text(encoding="utf-8"))
         return LLMResult(**{**saved, "cached": True})
 
+    ask = _ask_anthropic if LLM_PROVIDER == "anthropic" else _ask_openai
+    text, input_tokens, output_tokens = ask(prompt, system, schema, effort, max_tokens)
+    data = json.loads(text) if schema else None
+    if isinstance(output, type) and issubclass(output, BaseModel):
+        data = output.model_validate(data).model_dump()
+    result = LLMResult(text, data, input_tokens, output_tokens, False)
+    LLM_CACHE.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({k: v for k, v in result.__dict__.items() if k != "cached"},
+                               ensure_ascii=False), encoding="utf-8")
+    return result
+
+
+def _ask_anthropic(prompt: str, system: str, schema: dict | None, effort: str, max_tokens: int):
     request = dict(
         model=LLM_MODEL,
         max_tokens=max_tokens,
@@ -95,11 +126,25 @@ def ask_llm(prompt: str, system: str = "", output: type[BaseModel] | dict | None
     if response.stop_reason == "refusal":
         raise RuntimeError("Claude từ chối yêu cầu này")
     text = "".join(block.text for block in response.content if block.type == "text")
-    data = json.loads(text) if schema else None
-    if isinstance(output, type) and issubclass(output, BaseModel):
-        data = output.model_validate(data).model_dump()
-    result = LLMResult(text, data, response.usage.input_tokens, response.usage.output_tokens, False)
-    LLM_CACHE.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({k: v for k, v in result.__dict__.items() if k != "cached"},
-                               ensure_ascii=False), encoding="utf-8")
-    return result
+    return text, response.usage.input_tokens, response.usage.output_tokens
+
+
+def _ask_openai(prompt: str, system: str, schema: dict | None, effort: str, max_tokens: int):
+    messages = ([{"role": "developer", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
+    request = dict(messages=messages, max_completion_tokens=max_tokens, reasoning_effort=effort)
+    if schema:
+        request["response_format"] = {"type": "json_schema",
+                                      "json_schema": {"name": "output", "schema": schema, "strict": True}}
+    import openai
+    models = [LLM_MODEL, *LLM_FALLBACK_MODELS]
+    for i, model in enumerate(models):
+        try:
+            response = client().chat.completions.create(model=model, **request)
+            break
+        except (openai.InternalServerError, openai.RateLimitError):
+            if i == len(models) - 1:
+                raise
+    message = response.choices[0].message
+    if message.refusal:
+        raise RuntimeError(f"Mô hình từ chối yêu cầu này: {message.refusal}")
+    return message.content or "", response.usage.prompt_tokens, response.usage.completion_tokens
