@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel
 
-from src.config import LLM_PRICE_PER_MTOK, TOP_K
+from src.config import JUDGE_MODEL, LLM_PRICE_PER_MTOK, TOP_K
 from src.llm import ask_llm
 
 RETRIEVAL_TYPES = ("lookup", "constraint")  # câu có tập tin đúng (gt_ids)
@@ -38,6 +38,11 @@ def mrr(runs):
 
 def faithfulness(claim_supported):
     return sum(claim_supported) / len(claim_supported) if claim_supported else np.nan
+
+
+def _align(verdicts: list[bool], n: int) -> list[bool]:
+    """Đúng n phán quyết: LLM trả thiếu thì phần thiếu tính là False (không được hỗ trợ), thừa thì cắt."""
+    return (list(verdicts) + [False] * n)[:n]
 
 
 # ---------------------------------------------------------------- đáp án chuẩn (P4-02)
@@ -104,6 +109,7 @@ def run_benchmark(questions: pd.DataFrame, systems: dict) -> pd.DataFrame:
                          "sources": [int(s) for s in result.get("sources", [])],
                          "contexts": list(result.get("contexts", [])),
                          "route": result.get("route", name), "cypher": result.get("cypher"),
+                         "unsupported_citations": list(result.get("unsupported_citations", [])),
                          "error": result.get("error"), "fallback": bool(result.get("fallback", False)),
                          "latency": result["latency"], "input_tokens": result["input_tokens"],
                          "output_tokens": result["output_tokens"]})
@@ -122,7 +128,7 @@ giá trị lệch hơn 5%, hoặc nói không đủ dữ liệu."""
 
 def judge_answer(question: str, answer: str, gt_value: str) -> dict:
     result = ask_llm(f"CÂU HỎI: {question}\nĐÁP ÁN CHUẨN: {gt_value}\nCÂU TRẢ LỜI: {answer}",
-                     system=JUDGE_SYSTEM, output=Verdict)
+                     system=JUDGE_SYSTEM, output=Verdict, model=JUDGE_MODEL)
     return result.data
 
 
@@ -154,8 +160,12 @@ def cost_table(scored: pd.DataFrame) -> pd.DataFrame:
     price = LLM_PRICE_PER_MTOK
     t = scored.groupby("system").agg(latency_s=("latency", "mean"), input_tokens=("input_tokens", "mean"),
                                      output_tokens=("output_tokens", "mean"))
+    if "unsupported_citations" in scored:  # tỷ lệ câu trả lời trích [Tin#ID] không có trong ngữ cảnh
+        bad = scored["unsupported_citations"].map(len) > 0
+        t["bad_citation_rate"] = bad.groupby(scored["system"]).mean()
     t["usd_per_question"] = (t["input_tokens"] * price["input"] + t["output_tokens"] * price["output"]) / 1e6
-    return t.round({"latency_s": 2, "input_tokens": 0, "output_tokens": 0, "usd_per_question": 4})
+    return t.round({"latency_s": 2, "input_tokens": 0, "output_tokens": 0, "usd_per_question": 4,
+                    "bad_citation_rate": 2})
 
 
 def error_cases(scored: pd.DataFrame, n: int = 3) -> pd.DataFrame:
@@ -197,13 +207,15 @@ class ContextVerdicts(BaseModel):
 def claims_supported(answer: str, contexts: list[str]) -> list[bool]:
     """Faithfulness theo định nghĩa RAGAS: tách câu trả lời thành nhận định, kiểm từng nhận định
     có được ngữ cảnh hỗ trợ không."""
-    claims = ask_llm(f"Tách câu trả lời sau thành các nhận định độc lập, ngắn:\n{answer}", output=Claims).data["claims"]
+    claims = ask_llm(f"Tách câu trả lời sau thành các nhận định độc lập, ngắn:\n{answer}", output=Claims,
+                     model=JUDGE_MODEL).data["claims"]
     if not claims:
         return []
     listed = "\n".join(f"{i + 1}. {c}" for i, c in enumerate(claims))
     check = ask_llm(f"NGỮ CẢNH:\n{chr(10).join(contexts)}\n\nNHẬN ĐỊNH:\n{listed}\n\n"
-                    "Với mỗi nhận định theo thứ tự, trả true nếu ngữ cảnh hỗ trợ trực tiếp.", output=ClaimCheck)
-    return check.data["supported"][:len(claims)]
+                    "Với mỗi nhận định theo thứ tự, trả true nếu ngữ cảnh hỗ trợ trực tiếp.", output=ClaimCheck,
+                    model=JUDGE_MODEL)
+    return _align(check.data["supported"], len(claims))
 
 
 def answer_relevancy(question: str, answer: str, n: int = 3) -> float:
@@ -211,7 +223,7 @@ def answer_relevancy(question: str, answer: str, n: int = 3) -> float:
     from src.vector import embed_query
 
     generated = ask_llm(f"Viết {n} câu hỏi mà câu trả lời sau trả lời được:\n{answer}",
-                        output=Questions).data["questions"][:n]
+                        output=Questions, model=JUDGE_MODEL).data["questions"][:n]
     if not generated:
         return 0.0
     q = embed_query(question)
@@ -225,7 +237,8 @@ def context_precision(question: str, contexts: list[str], reference: str) -> flo
     listed = "\n\n".join(f"[{i + 1}] {c[:1500]}" for i, c in enumerate(contexts))
     verdicts = ask_llm(f"CÂU HỎI: {question}\nĐÁP ÁN THAM CHIẾU: {reference}\n\nNGỮ CẢNH:\n{listed}\n\n"
                        "Với mỗi ngữ cảnh theo thứ tự, trả true nếu nó hữu ích để ra đáp án tham chiếu.",
-                       output=ContextVerdicts).data["relevant"][:len(contexts)]
+                       output=ContextVerdicts, model=JUDGE_MODEL).data["relevant"]
+    verdicts = _align(verdicts, len(contexts))
     hits, total = 0, 0.0
     for i, relevant in enumerate(verdicts, start=1):
         if relevant:
