@@ -71,21 +71,25 @@ RERANK_CANDIDATES = int(os.getenv("RERANK_CANDIDATES", "20"))
 QDRANT_OVERSAMPLING = float(os.getenv("QDRANT_OVERSAMPLING", "2.0"))
 
 # ---------------------------------------------------------------- LLM (khoá đọc từ biến môi trường)
-# LLM_PROVIDER=anthropic đọc ANTHROPIC_API_KEY (hoặc `ant auth login`); =openai đọc OPENAI_API_KEY;
-# =gemini đọc GEMINI_API_KEY (gọi qua endpoint tương thích OpenAI). Không ghi khoá vào notebook.
-LLM_PROVIDER = os.getenv("LLM_PROVIDER", "anthropic")
-LLM_MODEL = os.getenv("LLM_MODEL", {"openai": "gpt-5.4-mini", "gemini": "gemini-3.8-flash"}.get(LLM_PROVIDER,
-                                                                                                "claude-opus-5-5"))
-# Model thử tiếp khi model chính quá tải (503) hoặc vượt hạn mức (429); chỉ dùng cho openai/gemini.
-LLM_FALLBACK_MODELS = [m.strip() for m in os.getenv(
-    "LLM_FALLBACK_MODELS", "gemini-3.7-flash,gemini-3.5-flash" if LLM_PROVIDER == "gemini" else "").split(",") if m.strip()]
+# Mặc định dùng Groq (API tương thích OpenAI), đọc GROQ_API_KEY. Tuỳ chọn khác: LLM_PROVIDER=anthropic
+# (ANTHROPIC_API_KEY hoặc `ant auth login`), =openai (OPENAI_API_KEY). Không ghi khoá vào notebook.
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "groq")
+_DEFAULTS = {  # provider: (mô hình sinh, mô hình dự phòng khi 429/503, mô hình chấm, giá USD/1M token vào, ra)
+    "groq": ("openai/gpt-oss-120b", "openai/gpt-oss-20b", "openai/gpt-oss-20b", 0.15, 0.60),
+    "openai": ("gpt-5.4-mini", "", None, 4.00, 20.00),
+    "anthropic": ("claude-opus-5-5", "", None, 4.00, 20.00),
+}
+_D = _DEFAULTS.get(LLM_PROVIDER, _DEFAULTS["groq"])
+LLM_MODEL = os.getenv("LLM_MODEL", _D[0])
+# Model thử tiếp khi model chính quá tải (503) hoặc vượt hạn mức (429); dùng cho groq/openai.
+LLM_FALLBACK_MODELS = [m.strip() for m in os.getenv("LLM_FALLBACK_MODELS", _D[1]).split(",") if m.strip()]
 LLM_EFFORT = os.getenv("LLM_EFFORT", "low")
 LLM_TIMEOUT = float(os.getenv("LLM_TIMEOUT", "120"))  # giây cho mỗi lượt gọi API
-# Mô hình chấm điểm ở eval.py; nên khác mô hình sinh để tránh tự chấm thiên vị. Rỗng: dùng LLM_MODEL.
-JUDGE_MODEL = os.getenv("JUDGE_MODEL") or None
-# USD cho 1 triệu token vào/ra (mặc định là giá claude-opus-5-5), dùng để tính chi phí ở P4-12.
-LLM_PRICE_PER_MTOK = {"input": float(os.getenv("LLM_PRICE_INPUT", 4.00)),
-                      "output": float(os.getenv("LLM_PRICE_OUTPUT", 20.00))}
+# Mô hình chấm điểm ở eval.py; khác mô hình sinh để tránh tự chấm thiên vị. Rỗng: dùng LLM_MODEL.
+JUDGE_MODEL = os.getenv("JUDGE_MODEL") or _D[2]
+# USD cho 1 triệu token vào/ra của LLM_MODEL, dùng để tính chi phí ở P4-12. Kiểm tra lại bảng giá khi đổi model.
+LLM_PRICE_PER_MTOK = {"input": float(os.getenv("LLM_PRICE_INPUT", _D[3])),
+                      "output": float(os.getenv("LLM_PRICE_OUTPUT", _D[4]))}
 
 # ---------------------------------------------------------------- vector DB (Qdrant)
 QDRANT_URL = os.getenv("QDRANT_URL", "http://127.0.0.1:6333")

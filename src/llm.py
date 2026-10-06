@@ -1,7 +1,7 @@
-"""Gọi LLM (Claude qua Anthropic SDK, GPT hoặc Gemini qua OpenAI SDK, chọn bằng LLM_PROVIDER), có cache đĩa
+"""Gọi LLM (mặc định Groq qua OpenAI SDK; tuỳ chọn OpenAI hoặc Claude, chọn bằng LLM_PROVIDER), có cache đĩa
 để cell CACHE không gọi lại mô hình trên lớp.
 
-Khoá API đọc từ ANTHROPIC_API_KEY (hoặc profile `ant auth login`), OPENAI_API_KEY hoặc GEMINI_API_KEY;
+Khoá API đọc từ GROQ_API_KEY, OPENAI_API_KEY hoặc ANTHROPIC_API_KEY (hoặc profile `ant auth login`);
 không ghi trong notebook.
 """
 
@@ -19,7 +19,7 @@ from src.config import CACHE_DIR, LLM_EFFORT, LLM_FALLBACK_MODELS, LLM_MODEL, LL
 LLM_CACHE = CACHE_DIR / "llm"
 _client = None
 _client_lock = threading.Lock()  # chatbot gọi từ nhiều luồng: chỉ tạo một client
-GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 _read_cache = True
 
 
@@ -41,22 +41,21 @@ def client():
 
 
 def _new_client():
+    if LLM_PROVIDER == "anthropic":
+        if not (os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_AUTH_TOKEN")):
+            raise RuntimeError("Thiếu xác thực Claude: đặt ANTHROPIC_API_KEY trong .env hoặc chạy `ant auth login`.")
+        import anthropic
+        return anthropic.Anthropic(timeout=LLM_TIMEOUT, max_retries=2)
+    import openai
     if LLM_PROVIDER == "openai":
         if not os.getenv("OPENAI_API_KEY"):
             raise RuntimeError("Thiếu xác thực OpenAI: đặt OPENAI_API_KEY trong .env.")
-        import openai
         return openai.OpenAI(timeout=LLM_TIMEOUT, max_retries=2)
-    if LLM_PROVIDER == "gemini":
-        if not os.getenv("GEMINI_API_KEY"):
-            raise RuntimeError("Thiếu xác thực Gemini: đặt GEMINI_API_KEY trong .env.")
-        import openai
-        # Gemini hay trả 503 khi quá tải: thử lại ít lần rồi chuyển sang LLM_FALLBACK_MODELS.
-        return openai.OpenAI(api_key=os.environ["GEMINI_API_KEY"], base_url=GEMINI_BASE_URL,
-                             timeout=LLM_TIMEOUT, max_retries=2)
-    if not (os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_AUTH_TOKEN")):
-        raise RuntimeError("Thiếu xác thực Claude: đặt ANTHROPIC_API_KEY trong .env hoặc chạy `ant auth login`.")
-    import anthropic
-    return anthropic.Anthropic(timeout=LLM_TIMEOUT, max_retries=2)
+    if not os.getenv("GROQ_API_KEY"):
+        raise RuntimeError("Thiếu xác thực Groq: đặt GROQ_API_KEY trong .env.")
+    # Groq giới hạn token/phút theo từng mô hình: SDK tự chờ và thử lại khi gặp 429.
+    return openai.OpenAI(api_key=os.environ["GROQ_API_KEY"], base_url=GROQ_BASE_URL, timeout=LLM_TIMEOUT,
+                         max_retries=4)
 
 
 def _close_objects(node):
@@ -95,7 +94,7 @@ def fresh():
 def ask_llm(prompt: str, system: str = "", output: type[BaseModel] | dict | None = None,
             effort: str = LLM_EFFORT, max_tokens: int = 4000, use_cache: bool = True,
             model: str | None = None) -> LLMResult:
-    """Một lượt hỏi Claude. `output` (pydantic model hoặc JSON schema) bật structured output;
+    """Một lượt hỏi LLM. `output` (pydantic model hoặc JSON schema) bật structured output;
     khi đó `data` là dict đã parse. Cùng (model, system, prompt, schema) trả lại kết quả đã lưu.
     `model` mặc định là LLM_MODEL (eval.py dùng JUDGE_MODEL để chấm)."""
     model = model or LLM_MODEL
@@ -151,14 +150,23 @@ def _ask_openai(model: str, prompt: str, system: str, schema: dict | None, effor
         request["response_format"] = {"type": "json_schema",
                                       "json_schema": {"name": "output", "schema": schema, "strict": True}}
     import openai
-    models = [model, *LLM_FALLBACK_MODELS]
+    models = list(dict.fromkeys([model, *LLM_FALLBACK_MODELS]))
+    response = None
     for i, name in enumerate(models):
-        try:
-            response = client().chat.completions.create(model=name, **request)
+        for attempt in range(3):
+            try:
+                response = client().chat.completions.create(model=name, **request)
+                break
+            except openai.BadRequestError as error:
+                # Groq đôi khi trả JSON rỗng cho structured output (json_validate_failed): thử lại cùng model.
+                if "json_validate_failed" not in str(error) or (attempt == 2 and i == len(models) - 1):
+                    raise
+            except (openai.InternalServerError, openai.RateLimitError):
+                if i == len(models) - 1:
+                    raise
+                break
+        if response is not None:
             break
-        except (openai.InternalServerError, openai.RateLimitError):
-            if i == len(models) - 1:
-                raise
     choice = response.choices[0]
     if choice.message.refusal:
         raise RuntimeError(f"Mô hình từ chối yêu cầu này: {choice.message.refusal}")

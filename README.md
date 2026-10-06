@@ -6,8 +6,8 @@ Dự án so sánh ba cách trả lời trên cùng dữ liệu và cùng bộ c�
 
 | Hệ thống | Cách tìm bằng chứng | Mạnh ở |
 | --- | --- | --- |
-| **Basic RAG** | LLM trích bộ lọc → dense (E5) + BM25 trên Qdrant gộp bằng RRF, lọc trước theo payload → Claude trả lời có `[Tin#ID]` | Tìm theo mô tả tự do: "gần trường", "có thang máy" |
-| **Graph** | Text2Cypher: Claude sinh Cypher chỉ đọc trên đồ thị Neo4j → Claude diễn giải kết quả | Câu tổng hợp, đếm, xếp hạng, đa chặng |
+| **Basic RAG** | LLM trích bộ lọc → dense (E5) + BM25 trên Qdrant gộp bằng RRF, lọc trước theo payload → LLM trả lời có `[Tin#ID]` | Tìm theo mô tả tự do: "gần trường", "có thang máy" |
+| **Graph** | Text2Cypher: LLM sinh Cypher chỉ đọc trên đồ thị Neo4j → LLM diễn giải kết quả | Câu tổng hợp, đếm, xếp hạng, đa chặng |
 | **Hybrid** | Router chọn Basic RAG, Graph hoặc gộp ngữ cảnh cả hai; đồ thị lỗi hoặc rỗng thì lui về Basic RAG | Câu vừa có điều kiện cấu trúc vừa có mô tả |
 
 Mã nằm trong [src/](src/) và được dùng chung bởi 5 notebook trình bày và chatbot. Có hai chỉ mục cùng cấu trúc:
@@ -53,7 +53,7 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 cp .env.example .env                       # sửa N_ROWS, NEO4J_PASSWORD nếu cần
 docker compose up -d --wait               # Qdrant (vector_db) + Neo4j mẫu (graph_db)
-export ANTHROPIC_API_KEY=...               # hoặc `ant auth login`
+# Đặt GROQ_API_KEY trong .env (tạo khoá tại console.groq.com)
 ```
 
 | Thành phần | Chọn |
@@ -64,7 +64,7 @@ export ANTHROPIC_API_KEY=...               # hoặc `ant auth login`
 | Từ khoá | BM25 dạng sparse vector trong cùng collection Qdrant (IDF tính phía server), tách từ tiếng Việt bằng `pyvi`. Dense và BM25 đi chung một lượt gọi Qdrant (`query_batch_points`) |
 | Rerank | Cross-encoder `mmarco-mMiniLMv2`, tắt mặc định; `RERANK=1` để `retrieve()` lấy `RERANK_CANDIDATES` tin rồi chấm lại |
 | Đồ thị | Neo4j: `(Listing)-[:IN_WARD]->(Ward)-[:IN_DISTRICT]->(District)-[:IN_PROVINCE]->(Province)`, `(Listing)-[:OF_TYPE]->(PropertyType)`; Listing có thêm `project`, `street`, `direction` (có index) để lọc theo dự án/đường; script [graph/load.cypher](graph/load.cypher) |
-| LLM | `claude-opus-5-5` qua Anthropic SDK, structured output cho bộ lọc, Cypher, router và chấm điểm; timeout `LLM_TIMEOUT`, đầu ra có cấu trúc bị cắt ở `max_tokens` báo lỗi rõ |
+| LLM | Groq (API tương thích OpenAI): `openai/gpt-oss-120b` sinh, `openai/gpt-oss-20b` chấm và làm dự phòng khi quá tải; structured output cho bộ lọc, Cypher, router và chấm điểm; timeout `LLM_TIMEOUT`, đầu ra có cấu trúc bị cắt ở `max_tokens` báo lỗi rõ |
 
 Text2Cypher có hai lớp chặn lệnh ghi: regex trong [src/graph.py](src/graph.py) (cả lệnh quản trị như
 `SHOW`, `USE`, `CALL`), và giao dịch chỉ đọc của Neo4j (`execute_read`, lỗi `AccessMode` nếu câu lệnh có ghi).
@@ -94,7 +94,7 @@ cd notebooks && ../.venv/bin/python -m jupyter lab
 ```
 
 Chạy theo thứ tự 01 → 04. Lần đầu tính và lưu mọi cell CACHE vào `data/`, `index/` và `results/cache/`;
-các lần sau chỉ đọc lại. Mỗi lượt gọi Claude được lưu theo nội dung prompt trong `results/cache/llm/`,
+các lần sau chỉ đọc lại. Mỗi lượt gọi LLM được lưu theo nội dung prompt trong `results/cache/llm/`,
 nên chạy lại cùng câu hỏi không tốn token. Riêng P4-10 luôn gọi API thật để đo đúng độ trễ và token.
 Đặt `REBUILD=1` để tính lại mọi cell CACHE. Khi dữ liệu sạch đổi, notebook 03 tự xoá và nạp lại đồ thị.
 
@@ -131,7 +131,7 @@ Sau mỗi lô, script ghi checkpoint vào `index/listings_full_state.json`. Bị
 thời gian nằm ở bước embed. Dung lượng ước tính: Qdrant khoảng 10–12 GB đĩa và 2 GB RAM (vector nén int8).
 
 - Chế độ **Tự động** (Hybrid, mặc định), **Basic RAG** và **Graph** chọn ở góc phải.
-- Câu trả lời do Claude sinh. Mỗi `[Tin#ID]` thành liên kết tới thẻ tin nguồn bên dưới (giá, diện tích,
+- Câu trả lời do LLM sinh. Mỗi `[Tin#ID]` thành liên kết tới thẻ tin nguồn bên dưới (giá, diện tích,
   phòng, địa chỉ, mô tả).
 - Dòng ghi chú cho biết tuyến router đã chọn, bộ lọc trích từ câu hỏi, độ trễ và số token. Câu Cypher
   đã chạy nằm trong phần thu gọn.
@@ -164,10 +164,10 @@ nội dung câu hỏi. Lỗi nội bộ chỉ trả mã yêu cầu cho giao di�
 đa chặng. Mỗi câu có nhãn tuyến đúng cho router. Đáp án chuẩn tính bằng pandas từ cột `gt_rule`
 ([src/eval.py](src/eval.py)), không gõ tay:
 - Câu tra cứu/ràng buộc có tập tin đúng `gt_ids`, chấm bằng Recall@5 (chia cho min(số tin đúng, 5)) và MRR.
-- Câu tổng hợp/đa chặng có giá trị đúng `gt_value`, do Claude chấm câu trả lời so với đáp án (cho phép sai số 5%).
+- Câu tổng hợp/đa chặng có giá trị đúng `gt_value`, do LLM giám khảo chấm câu trả lời so với đáp án (cho phép sai số 5%).
 
 Notebook 04 còn tính Faithfulness, Answer Relevancy và Context Precision theo định nghĩa của RAGAS
-(chấm bằng Claude). Nó cũng lập bảng độ chính xác theo loại câu × hệ thống, chi phí, độ trễ, tỷ lệ câu trả lời
+(chấm bằng LLM giám khảo). Nó cũng lập bảng độ chính xác theo loại câu × hệ thống, chi phí, độ trễ, tỷ lệ câu trả lời
 trích nguồn không có trong ngữ cảnh (`bad_citation_rate`) và phân tích lỗi. Đặt `JUDGE_MODEL` để chấm bằng
 mô hình khác mô hình sinh (tránh tự chấm thiên vị); để trống thì dùng `LLM_MODEL`.
 
@@ -191,7 +191,7 @@ src/
   graph.py              Nạp đồ thị, Cypher mẫu, Leiden, Text2Cypher, ask_graph
   hybrid.py             Router, ask_hybrid
   eval.py               Recall@k, MRR, RAGAS, chạy benchmark
-  llm.py                Gọi Claude, structured output, cache đĩa
+  llm.py                Gọi LLM (Groq), structured output, cache đĩa
 tests/                  Kiểm thử src/, cấu trúc notebook, chatbot
 data/ index/ results/   Sinh ra khi chạy notebook, không đưa vào Git
 docker-compose.yaml     Qdrant (vector_db), Neo4j mẫu (graph_db), Neo4j đầy đủ (graph_db_full, profile full)
@@ -203,7 +203,7 @@ docker-compose.yaml     Qdrant (vector_db), Neo4j mẫu (graph_db), Neo4j đầy
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
-Test không cần mạng, Claude, Qdrant hay Neo4j. Chúng kiểm tra:
+Test không cần mạng, LLM, Qdrant hay Neo4j. Chúng kiểm tra:
 - Các số toy trên slide.
 - Làm sạch, entity resolution, sửa đơn vị giá.
 - Chunk theo ngân sách token, bộ lọc và đơn vị tiền (cả "1 tỷ 50 triệu", "3.000.000.000", chuỗi không có số).
@@ -222,7 +222,7 @@ CI ([.github/workflows/tests.yml](.github/workflows/tests.yml)) chạy bộ test
 - Notebook chạy trên mẫu `N_ROWS` dòng đầu, không đại diện toàn thị trường; giá đăng không phải giá giao dịch.
 - Chỉ mục đầy đủ cố định `avgdl` của BM25 từ lô đầu tiên. Tin trùng được nhận diện bằng tiêu đề + mô tả
   giống hệt nhau, không bắt được tin đăng lại có sửa chữ.
-- Bộ lọc, câu trả lời, Cypher và router phụ thuộc Claude; cần khoá API khi chạy lần đầu.
+- Bộ lọc, câu trả lời, Cypher và router phụ thuộc LLM; cần khoá Groq khi chạy lần đầu.
 - Đồ thị nạp trước khi Listing có `project`, `street`, `direction` vẫn qua bước kiểm khớp (cùng số tin, tổng giá)
   nhưng thiếu ba thuộc tính này: nạp lại bằng notebook 03 với `REBUILD=1`, hoặc `scripts/index_full.py --reset`.
 - Kết quả benchmark trên 24 câu chỉ là so sánh tương đối giữa ba hệ thống, chưa đủ để kết luận tổng quát.
