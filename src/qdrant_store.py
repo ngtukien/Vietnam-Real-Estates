@@ -14,7 +14,7 @@ from collections import Counter
 import numpy as np
 import pandas as pd
 
-from src.config import INDEX_DIR, QDRANT_COLLECTION, QDRANT_URL
+from src.config import INDEX_DIR, QDRANT_COLLECTION, QDRANT_OVERSAMPLING, QDRANT_URL
 
 K1, B = 1.2, 0.75
 CARD_FIELDS = ("title", "property_type", "province", "district", "ward", "street", "project", "price",
@@ -58,19 +58,28 @@ def client():
 # ---------------------------------------------------------------- collection
 
 
-def ensure_collection(reset: bool = False) -> None:
+def ensure_collection(reset: bool = False, dim: int | None = None) -> None:
     """Tạo collection nếu chưa có. Vector gốc nằm trên đĩa, bản nén int8 ở RAM để tìm nhanh;
-    HNSW tắt trong lúc nạp hàng loạt (indexing_threshold=0), bật lại bằng finish_indexing()."""
+    HNSW tắt trong lúc nạp hàng loạt (indexing_threshold=0), bật lại bằng finish_indexing().
+    `dim` mặc định là số chiều của EMBEDDING_MODEL; collection có sẵn mà khác chiều thì báo lỗi."""
     from qdrant_client import models
 
+    if dim is None:
+        from src.vector import dimension
+
+        dim = dimension()
     c = client()
     if reset and c.collection_exists(_collection):
         c.delete_collection(_collection)
     if c.collection_exists(_collection):
+        size = c.get_collection(_collection).config.params.vectors["dense"].size
+        if size != dim:
+            raise ValueError(f"Collection {_collection} có vector {size} chiều, mô hình embedding cho {dim} chiều: "
+                             "nạp lại với reset=True (hoặc --reset).")
         return
     c.create_collection(
         _collection,
-        vectors_config={"dense": models.VectorParams(size=384, distance=models.Distance.COSINE, on_disk=True)},
+        vectors_config={"dense": models.VectorParams(size=dim, distance=models.Distance.COSINE, on_disk=True)},
         sparse_vectors_config={"bm25": models.SparseVectorParams(modifier=models.Modifier.IDF)},
         quantization_config=models.ScalarQuantization(
             scalar=models.ScalarQuantizationConfig(type=models.ScalarType.INT8, always_ram=True)),
@@ -99,7 +108,7 @@ def count() -> int:
 def load(chunks: pd.DataFrame, listings: pd.DataFrame, dense: np.ndarray, tokens: list[list[str]],
          reset: bool = True, batch: int = 1024) -> int:
     """Nạp trọn một bảng chunk (notebook 01): tạo lại collection, upsert theo lô, bật HNSW."""
-    ensure_collection(reset=reset)
+    ensure_collection(reset=reset, dim=dense.shape[1])
     avgdl = float(np.mean([len(t) for t in tokens]))
     for start in range(0, len(chunks), batch):
         end = start + batch
@@ -196,10 +205,31 @@ def _hits(points) -> pd.DataFrame:
     return df
 
 
+def _params(using: str):
+    """Dense trên bản nén int8: lấy dư rồi chấm lại bằng vector gốc (trên đĩa) để giữ độ chính xác."""
+    from qdrant_client import models
+
+    if using != "dense":
+        return None
+    return models.SearchParams(quantization=models.QuantizationSearchParams(
+        rescore=True, oversampling=QDRANT_OVERSAMPLING))
+
+
 def search(query, using: str, limit: int, filters=None) -> pd.DataFrame:
     result = client().query_points(_collection, query=query, using=using, limit=limit,
-                                   query_filter=to_filter(filters), with_payload=True)
+                                   query_filter=to_filter(filters), search_params=_params(using),
+                                   with_payload=True)
     return _hits(result.points)
+
+
+def search_many(queries: list[tuple], limit: int, filters=None) -> list[pd.DataFrame]:
+    """Nhiều truy vấn [(query, using), ...] cùng bộ lọc trong MỘT lượt gọi Qdrant (query_batch_points)."""
+    from qdrant_client import models
+
+    query_filter = to_filter(filters)
+    requests = [models.QueryRequest(query=query, using=using, limit=limit, filter=query_filter,
+                                    params=_params(using), with_payload=True) for query, using in queries]
+    return [_hits(r.points) for r in client().query_batch_points(_collection, requests=requests)]
 
 
 def listings(ids: list[int]) -> dict[int, dict]:

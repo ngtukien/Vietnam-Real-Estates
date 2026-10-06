@@ -64,6 +64,11 @@ RERANK_MODEL = os.getenv("RERANK_MODEL", "cross-encoder/mmarco-mMiniLMv2-L12-H38
 CHUNK_SIZE, CHUNK_OVERLAP = 400, 100  # token, khớp slide 7 (S = 400, O = 100)
 RRF_K = 60
 TOP_K = 5
+# RERANK=1: retrieve() lấy RERANK_CANDIDATES tin từ hybrid search rồi cross-encoder chọn TOP_K (chậm hơn, chính xác hơn).
+RERANK = os.getenv("RERANK", "0") == "1"
+RERANK_CANDIDATES = int(os.getenv("RERANK_CANDIDATES", "20"))
+# Dense search trên vector nén int8: lấy dư `oversampling` lần rồi chấm lại bằng vector gốc.
+QDRANT_OVERSAMPLING = float(os.getenv("QDRANT_OVERSAMPLING", "2.0"))
 
 # ---------------------------------------------------------------- LLM (khoá đọc từ biến môi trường)
 # LLM_PROVIDER=anthropic đọc ANTHROPIC_API_KEY (hoặc `ant auth login`); =openai đọc OPENAI_API_KEY;
@@ -75,6 +80,9 @@ LLM_MODEL = os.getenv("LLM_MODEL", {"openai": "gpt-5.4-mini", "gemini": "gemini-
 LLM_FALLBACK_MODELS = [m.strip() for m in os.getenv(
     "LLM_FALLBACK_MODELS", "gemini-3.7-flash,gemini-3.5-flash" if LLM_PROVIDER == "gemini" else "").split(",") if m.strip()]
 LLM_EFFORT = os.getenv("LLM_EFFORT", "low")
+LLM_TIMEOUT = float(os.getenv("LLM_TIMEOUT", "120"))  # giây cho mỗi lượt gọi API
+# Mô hình chấm điểm ở eval.py; nên khác mô hình sinh để tránh tự chấm thiên vị. Rỗng: dùng LLM_MODEL.
+JUDGE_MODEL = os.getenv("JUDGE_MODEL") or None
 # USD cho 1 triệu token vào/ra (mặc định là giá claude-opus-5-5), dùng để tính chi phí ở P4-12.
 LLM_PRICE_PER_MTOK = {"input": float(os.getenv("LLM_PRICE_INPUT", 4.00)),
                       "output": float(os.getenv("LLM_PRICE_OUTPUT", 20.00))}
@@ -90,3 +98,12 @@ NEO4J_URI = os.getenv("NEO4J_URI", "bolt://127.0.0.1:7687")  # mẫu, notebook 0
 NEO4J_FULL_URI = os.getenv("NEO4J_FULL_URI", "bolt://127.0.0.1:7688")  # toàn bộ, chatbot
 NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
 NEO4J_PASSWORD = os.getenv("NEO4J_PASSWORD", "local_dev_password")
+# Cypher do LLM sinh: Neo4j huỷ giao dịch quá CYPHER_TIMEOUT giây, chỉ đọc tối đa CYPHER_MAX_ROWS dòng.
+CYPHER_TIMEOUT = float(os.getenv("CYPHER_TIMEOUT", "10"))
+CYPHER_MAX_ROWS = int(os.getenv("CYPHER_MAX_ROWS", "50"))
+
+# ---------------------------------------------------------------- chatbot (app/server.py)
+CHAT_MAX_CONCURRENT = int(os.getenv("CHAT_MAX_CONCURRENT", "4"))  # số câu hỏi xử lý đồng thời
+CHAT_RATE_PER_MIN = int(os.getenv("CHAT_RATE_PER_MIN", "20"))  # số câu hỏi mỗi phút cho một IP; 0 = không giới hạn
+CHAT_MAX_QUERY_CHARS = int(os.getenv("CHAT_MAX_QUERY_CHARS", "500"))
+CHAT_API_TOKEN = os.getenv("CHAT_API_TOKEN", "")  # đặt khi mở server ra ngoài 127.0.0.1

@@ -1,6 +1,7 @@
 """Retrieval và Generation (Notebook 2). Hợp đồng: search_dense, search_bm25, rrf, ask_rag."""
 
 import re
+import threading
 from time import perf_counter
 
 import numpy as np
@@ -9,7 +10,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from src import qdrant_store
 from src.common import fmt_vnd
-from src.config import RERANK_MODEL, RRF_K, TOP_K
+from src.config import RERANK, RERANK_CANDIDATES, RERANK_MODEL, RRF_K, TOP_K
 from src.data import normalize_place
 from src.llm import LLMResult, ask_llm
 from src.vector import embed_query
@@ -18,31 +19,58 @@ from src.vector import embed_query
 # ---------------------------------------------------------------- nạp chỉ mục (P2-01)
 
 
+_tokenizer_lock = threading.Lock()  # mô hình CRF của pyvi dùng chung giữa các luồng của chatbot
+
+
 def tokenize_vi(text: str) -> list[str]:
     """Tách từ tiếng Việt bằng pyvi: 'trường học' -> 'trường_học'; bỏ dấu câu."""
     from pyvi import ViTokenizer
 
-    return [t for t in ViTokenizer.tokenize(text.lower()).split() if re.search(r"\w", t)]
+    with _tokenizer_lock:
+        tokens = ViTokenizer.tokenize(text.lower()).split()
+    return [t for t in tokens if re.search(r"\w", t)]
 
 
 # ---------------------------------------------------------------- hiểu câu hỏi (P2-02)
 
 
+_NUM = r"\d+(?:[.,]\d+)*"
+
+
+def _number(token: str) -> float:
+    """'8,5' -> 8.5; '1.200.000.000' hay '1,200,000' (dấu ngăn nghìn: ≥ 2 nhóm 3 chữ số) -> số nguyên."""
+    parts = re.split(r"[.,]", token)
+    if len(parts) > 2:
+        return float("".join(parts)) if all(len(p) == 3 for p in parts[1:]) else float(f"{parts[0]}.{parts[1]}")
+    return float(".".join(parts))
+
+
 def parse_money_mil(value) -> float | None:
-    """Đổi tiền về triệu đồng: '5 tỷ' -> 5000; '1 tỷ 2' -> 1200; '850 triệu' -> 850."""
+    """Đổi tiền về triệu đồng: '5 tỷ' -> 5000; '1 tỷ 2' -> 1200; '1 tỷ 50 triệu' -> 1050; '850 triệu' -> 850;
+    '3.000.000.000' (VND) -> 3000. Số trần dưới 1 triệu coi là triệu. Không có chữ số -> None."""
     if value is None or isinstance(value, (int, float)):
         return value
-    text = str(value).lower().replace(",", ".").strip()
-    if not text:
+    text = str(value).lower().strip()
+    match = re.search(rf"({_NUM})\s*(?:tỷ|tỉ|ty)(?!\w)(?:\s*(\d+)\s*(triệu|tr)?(?!\w))?", text)
+    if match:
+        whole, extra, unit = match.groups()
+        rest = 0.0
+        if extra and unit:  # '1 tỷ 50 triệu'
+            rest = float(extra)
+        elif extra and len(extra) <= 3:  # '1 tỷ 2' = 1,2 tỷ; '2 tỷ 05' = 2,05 tỷ
+            rest = float(extra) * 10 ** (3 - len(extra))
+        return _number(whole) * 1000 + rest
+    match = re.search(rf"({_NUM})\s*(?:triệu|tr)(?!\w)", text)
+    if match:
+        return _number(match.group(1))
+    match = re.search(rf"({_NUM})\s*(?:nghìn|ngàn|k)(?!\w)", text)
+    if match:
+        return _number(match.group(1)) / 1000
+    match = re.search(_NUM, text)
+    if not match:
         return None
-    match = re.search(r"(\d+(?:\.\d+)?)\s*(tỷ|ty)\s*(\d+)?", text)
-    if match:
-        extra = match.group(3)
-        return float(match.group(1)) * 1000 + (float(extra) * 10 ** (3 - len(extra)) if extra else 0)
-    match = re.search(r"(\d+(?:\.\d+)?)\s*(triệu|tr)", text)
-    if match:
-        return float(match.group(1))
-    return float(re.search(r"\d+(?:\.\d+)?", text).group())
+    number = _number(match.group())
+    return number / 1e6 if number >= 1e6 else number
 
 
 class ExtractedFilters(BaseModel):
@@ -163,11 +191,18 @@ def rrf(rankings: list[list], k: int = RRF_K) -> list[tuple]:
 
 def search_hybrid(question: str, k: int = TOP_K, filters: QueryFilters | None = None,
                   candidates: int = 20) -> pd.DataFrame:
-    """Gộp dense và BM25 bằng RRF theo listing_id; giữ chunk tốt nhất của mỗi tin."""
-    dense = search_dense(question, candidates, filters)
-    bm25 = search_bm25(question, candidates, filters)
-    fused = rrf([dense["listing_id"].tolist(), bm25["listing_id"].tolist()])[:k]
-    pool = pd.concat([dense, bm25]).sort_values("score", ascending=False).drop_duplicates("listing_id")
+    """Gộp dense và BM25 bằng RRF theo listing_id; giữ chunk tốt nhất của mỗi tin.
+    Hai truy vấn đi chung một lượt gọi Qdrant (search_many), kết quả giống gọi search_dense + search_bm25."""
+    candidates = max(candidates, k)
+    queries = [(embed_query(question).tolist(), "dense")]
+    tokens = tokenize_vi(question)
+    if tokens:  # câu hỏi toàn dấu câu: không có từ nào cho BM25
+        queries.append((qdrant_store.bm25_query(tokens), "bm25"))
+    rankings = [_by_listing(h, candidates) for h in qdrant_store.search_many(queries, candidates * 4, filters)]
+    fused = rrf([r["listing_id"].tolist() for r in rankings])[:k]
+    pool = pd.concat(rankings).sort_values("score", ascending=False).drop_duplicates("listing_id")
+    if not fused:
+        return pool.assign(rrf=pd.Series(dtype=float)).reset_index(drop=True)  # rỗng nhưng đủ cột
     pool = pool.set_index("listing_id")
     return pd.DataFrame([{**pool.loc[lid].to_dict(), "listing_id": lid, "rrf": score}
                          for lid, score in fused])
@@ -191,16 +226,18 @@ def post_filter(hits: pd.DataFrame, filters: QueryFilters) -> pd.DataFrame:
 
 
 _reranker = None
+_reranker_lock = threading.Lock()
 
 
 def rerank(question: str, hits: pd.DataFrame, top: int = TOP_K) -> pd.DataFrame:
     """Cross-encoder chấm lại từng cặp (câu hỏi, chunk): chậm hơn nhưng chính xác hơn bi-encoder."""
     global _reranker
-    if _reranker is None:
-        from sentence_transformers import CrossEncoder
+    with _reranker_lock:
+        if _reranker is None:
+            from sentence_transformers import CrossEncoder
 
-        _reranker = CrossEncoder(RERANK_MODEL)
-    scores = _reranker.predict([(question, text) for text in hits["text"]])
+            _reranker = CrossEncoder(RERANK_MODEL)
+        scores = _reranker.predict([(question, text) for text in hits["text"]])
     return hits.assign(rerank=scores).nlargest(top, "rerank").reset_index(drop=True)
 
 
@@ -215,25 +252,43 @@ def format_context(hits: pd.DataFrame) -> list[str]:
     return [f"[Tin#{int(row.listing_id)}] {row.text}" for row in hits.itertuples()]
 
 
-def build_prompt(question: str, contexts: list[str]) -> str:
-    return "NGỮ CẢNH:\n" + "\n\n".join(contexts) + f"\n\nCÂU HỎI: {question}"
+FILTER_DROPPED = "bộ lọc không có kết quả, đã bỏ lọc"
+# Báo cho LLM khi ngữ cảnh không thoả điều kiện trong câu hỏi, để nó không trình bày tin gần đúng như tin khớp.
+FILTER_DROPPED_PROMPT = ("LƯU Ý: không có tin nào thoả mọi điều kiện (giá, khu vực, loại hình, số phòng, diện tích) "
+                         "trong câu hỏi. Các tin dưới đây chỉ gần giống; nói rõ điều này và nêu điều kiện nào "
+                         "không thoả trước khi giới thiệu tin.")
 
 
-def generate(question: str, contexts: list[str]) -> LLMResult:
-    return ask_llm(build_prompt(question, contexts), system=ANSWER_SYSTEM)
+def build_prompt(question: str, contexts: list[str], note: str = "") -> str:
+    prompt = "NGỮ CẢNH:\n" + "\n\n".join(contexts) + f"\n\nCÂU HỎI: {question}"
+    return f"{FILTER_DROPPED_PROMPT}\n\n{prompt}" if note == FILTER_DROPPED else prompt
+
+
+def generate(question: str, contexts: list[str], note: str = "", system: str = ANSWER_SYSTEM) -> LLMResult:
+    return ask_llm(build_prompt(question, contexts, note), system=system)
 
 
 def cited_ids(answer: str) -> list[int]:
     return [int(x) for x in dict.fromkeys(re.findall(r"Tin#(\d+)", answer))]
 
 
-def retrieve(question: str, k: int = TOP_K, use_filters: bool = True) -> dict:
-    """Bộ lọc từ LLM -> hybrid search có pre-filter. Nếu bộ lọc quá chặt (0 kết quả), bỏ lọc
-    và ghi lại trong 'note'."""
+def check_citations(answer: str, sources) -> tuple[list[int], list[int]]:
+    """(trích dẫn có trong nguồn đã đưa vào ngữ cảnh, trích dẫn không có: dấu hiệu LLM bịa nguồn)."""
+    allowed = {int(s) for s in sources}
+    cited = cited_ids(answer)
+    return [i for i in cited if i in allowed], [i for i in cited if i not in allowed]
+
+
+def retrieve(question: str, k: int = TOP_K, use_filters: bool = True, use_rerank: bool = RERANK) -> dict:
+    """Bộ lọc từ LLM -> hybrid search có pre-filter (-> rerank nếu bật). Nếu bộ lọc quá chặt
+    (0 kết quả), bỏ lọc và ghi lại trong 'note'."""
     filters, parsed = parse_filters(question) if use_filters else (None, None)
-    hits, note = search_hybrid(question, k, filters), ""
+    pool = max(RERANK_CANDIDATES, k) if use_rerank else k
+    hits, note = search_hybrid(question, pool, filters), ""
     if hits.empty and filters is not None:
-        hits, note = search_hybrid(question, k), "bộ lọc không có kết quả, đã bỏ lọc"
+        hits, note = search_hybrid(question, pool), FILTER_DROPPED
+    if use_rerank and not hits.empty:
+        hits = rerank(question, hits, top=k)
     return dict(hits=hits, filters=filters, note=note, calls=[parsed] if parsed else [])
 
 
@@ -242,11 +297,13 @@ def ask_rag(question: str, k: int = TOP_K, use_filters: bool = True) -> dict:
     start = perf_counter()
     found = retrieve(question, k, use_filters)
     contexts = format_context(found["hits"])
-    answer = generate(question, contexts)
+    answer = generate(question, contexts, found["note"])
     calls = found["calls"] + [answer]
     filters = found["filters"]
-    return dict(system="basic_rag", question=question, answer=answer.text,
-                sources=found["hits"]["listing_id"].astype(int).tolist(), contexts=contexts,
+    sources = found["hits"]["listing_id"].astype(int).tolist()
+    cited, unsupported = check_citations(answer.text, sources)
+    return dict(system="basic_rag", question=question, answer=answer.text, sources=sources, contexts=contexts,
+                cited=cited, unsupported_citations=unsupported,
                 filters=filters.model_dump(exclude_none=True) if filters else {}, note=found["note"],
                 latency=perf_counter() - start,
                 input_tokens=sum(r.input_tokens for r in calls),
