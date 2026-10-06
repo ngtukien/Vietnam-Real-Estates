@@ -76,22 +76,25 @@ def main():
     args = parser.parse_args()
 
     # Tạo pool trước khi nạp mô hình/CUDA để tiến trình con không kế thừa trạng thái GPU.
-    pool = mp.get_context("fork").Pool(args.workers)
+    # Windows không có fork: dùng spawn (tiến trình con tự import src.rag).
+    method = "fork" if "fork" in mp.get_all_start_methods() else "spawn"
+    pool = mp.get_context(method).Pool(args.workers)
     from src import vector  # nạp sau khi fork
 
     INDEX_DIR.mkdir(parents=True, exist_ok=True)
     qdrant_store.use(FULL_COLLECTION)
     graph.use(NEO4J_FULL_URI)
+    dim = vector.dimension()
     if args.reset:
         STATE_PATH.unlink(missing_ok=True)
         DIGESTS_PATH.unlink(missing_ok=True)
-        qdrant_store.ensure_collection(reset=True)
+        qdrant_store.ensure_collection(reset=True, dim=dim)
         graph.reset_graph()
     state = load_state()
     if state["done"] and not args.limit:
         print("Chỉ mục toàn bộ đã xong. Dùng --reset để làm lại.")
         return
-    qdrant_store.ensure_collection()
+    qdrant_store.ensure_collection(dim=dim)
     graph.run_block("constraints")
     seen = load_digests(state["digests"])
     tokenizer = vector.embedder().tokenizer
@@ -145,6 +148,7 @@ def main():
               f"{rate:,.0f} dòng/s", flush=True)
 
     pool.close()
+    pool.join()
     if state["done"] or args.limit:
         qdrant_store.finish_indexing()
     save_state(state)
