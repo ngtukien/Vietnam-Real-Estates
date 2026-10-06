@@ -133,6 +133,13 @@ class FilterTests(unittest.TestCase):
         self.assertEqual((must["bedrooms"].range.gte, must["bedrooms"].range.lte), (2, 2))
         self.assertIsNone(qdrant_store.to_filter(rag.QueryFilters()))
 
+    def test_money_edge_cases(self):
+        cases = {"2 tỷ 05": 2050, "1 tỷ 50 triệu": 1050, "1 tỷ 250": 1250, "1.5 tỉ": 1500, "850tr": 850,
+                 "3.000.000.000": 3000, "1,200,000,000": 1200, "500k": 0.5, "dưới 3": 3,
+                 "vài tỷ": None, "": None, None: None}
+        for text, expected in cases.items():
+            self.assertEqual(rag.parse_money_mil(text), expected, text)
+
     def test_bm25_sparse_vectors(self):
         doc = qdrant_store.bm25_document(["sổ", "hồng", "sổ"], avgdl=3.0)
         weights = dict(zip(doc.indices, doc.values))
@@ -161,7 +168,7 @@ class GraphTests(unittest.TestCase):
         blocks = graph.load_blocks()
         self.assertEqual(set(blocks), {"constraints", "provinces", "districts", "wards", "property_types", "listings",
                                        "of_type", "in_ward", "in_district", "in_province"})
-        self.assertEqual(len(blocks["constraints"]), 8)
+        self.assertEqual(len(blocks["constraints"]), 12)
         df = pd.DataFrame([listing(listing_id=1, price_bn=5.0, price_m2_mil=100.0, bathrooms=None, floors=None,
                                    published_at="2025-06-01"),
                            listing(listing_id=2, ward=None, price_bn=5.0, price_m2_mil=float("nan"), bathrooms=None,
@@ -173,6 +180,7 @@ class GraphTests(unittest.TestCase):
         self.assertEqual(len(rows["districts"]), 2)
         self.assertEqual([r["listing_id"] for r in rows["in_district"]], [2])
         self.assertIsNone(rows["listings"][1]["props"]["price_m2"])
+        self.assertEqual(rows["listings"][0]["props"]["street"], "Xuân Thủy")
         expected = graph.expected_counts(df).set_index("loai")["pandas"]
         self.assertEqual(expected["IN_DISTRICT"], 1 + 2)  # 1 tin thiếu phường + 2 phường
 
@@ -184,13 +192,62 @@ class GraphTests(unittest.TestCase):
         replies = iter([{"cypher": "MATCH (l) DETACH DELETE l"}, {"cypher": "MATCH (l:Listing) RETURN 1 AS x"}])
         fake = lambda *a, **k: llm.LLMResult("", next(replies), 10, 5, False)
         with mock.patch.object(graph, "ask_llm", fake), \
+                mock.patch.object(graph, "cypher_system", return_value=graph.CYPHER_SYSTEM), \
                 mock.patch.object(graph, "run_cypher", return_value=pd.DataFrame({"x": [1]})) as run:
             out = graph.text2cypher("câu hỏi")
         self.assertIsNone(out["error"])
         self.assertEqual(len(out["attempts"]), 2)
         self.assertIn("bị chặn", out["attempts"][0]["error"])
-        run.assert_called_once_with("MATCH (l:Listing) RETURN 1 AS x")
+        run.assert_called_once_with("MATCH (l:Listing) RETURN 1 AS x\nLIMIT 50", timeout=graph.CYPHER_TIMEOUT,
+                                    max_rows=graph.CYPHER_MAX_ROWS)
         self.assertEqual(out["usage"], [20, 10])
+
+    def test_limit_and_admin_guard(self):
+        self.assertEqual(graph.ensure_limit("MATCH (n) RETURN n;", 50), "MATCH (n) RETURN n\nLIMIT 50")
+        self.assertEqual(graph.ensure_limit("MATCH (n) RETURN n LIMIT 5", 50), "MATCH (n) RETURN n LIMIT 5")
+        # LIMIT trong WITH không giới hạn số dòng RETURN cuối
+        self.assertTrue(graph.ensure_limit("MATCH (n) WITH n LIMIT 3 RETURN n", 50).endswith("LIMIT 50"))
+        for bad in ("SHOW USERS", "USE system MATCH (n) RETURN n", "MATCH (n) FOREACH (x IN [1] | SET n.a = x)"):
+            self.assertFalse(graph.is_read_only(bad), bad)
+
+    def test_cypher_system_falls_back_without_neo4j(self):
+        graph._cypher_systems.clear()
+        with mock.patch.object(graph, "run_cypher", side_effect=RuntimeError("down")):
+            self.assertEqual(graph.cypher_system(), graph.CYPHER_SYSTEM)
+        with mock.patch.object(graph, "run_cypher", return_value=pd.DataFrame({"name": ["Đất", "Nhà"]})):
+            self.assertIn("giá trị: 'Đất', 'Nhà'", graph.cypher_system())
+        graph._cypher_systems.clear()
+
+
+class RetrievalTests(unittest.TestCase):
+    def test_search_hybrid_one_round_trip(self):
+        dense = pd.DataFrame({"listing_id": [1, 2, 2], "chunk_id": ["1:0", "2:0", "2:1"], "text": ["a", "b", "c"],
+                              "score": [0.9, 0.8, 0.85]})
+        bm25 = pd.DataFrame({"listing_id": [2, 3], "chunk_id": ["2:0", "3:0"], "text": ["b", "d"], "score": [7.0, 5.0]})
+        with mock.patch.object(rag, "embed_query", return_value=pd.Series([0.1, 0.2]).to_numpy()), \
+                mock.patch.object(rag, "tokenize_vi", return_value=["sổ_hồng"]), \
+                mock.patch.object(qdrant_store, "search_many", return_value=[dense, bm25]) as search:
+            hits = rag.search_hybrid("q", k=3)
+        search.assert_called_once()
+        self.assertEqual([using for _, using in search.call_args.args[0]], ["dense", "bm25"])
+        self.assertEqual(hits["listing_id"].tolist(), [2, 1, 3])  # 2 có mặt ở cả hai bảng xếp hạng
+
+    def test_search_hybrid_empty_keeps_columns(self):
+        empty = qdrant_store._hits([])
+        with mock.patch.object(rag, "embed_query", return_value=pd.Series([0.1]).to_numpy()), \
+                mock.patch.object(rag, "tokenize_vi", return_value=[]), \
+                mock.patch.object(qdrant_store, "search_many", return_value=[empty]) as search:
+            hits = rag.search_hybrid("???")
+        self.assertEqual(len(search.call_args.args[0]), 1)  # không có từ nào: bỏ truy vấn BM25
+        self.assertTrue(hits.empty)
+        self.assertEqual(hits["listing_id"].tolist(), [])
+
+    def test_filter_dropped_is_told_to_llm(self):
+        self.assertTrue(rag.build_prompt("q", ["[Tin#1] x"], rag.FILTER_DROPPED).startswith("LƯU Ý"))
+        self.assertEqual(rag.build_prompt("q", ["[Tin#1] x"]), "NGỮ CẢNH:\n[Tin#1] x\n\nCÂU HỎI: q")
+
+    def test_check_citations(self):
+        self.assertEqual(rag.check_citations("A [Tin#7], B [Tin#9] và lại [Tin#7]", [7, 8]), ([7], [9]))
 
 
 class HybridTests(unittest.TestCase):
@@ -206,6 +263,36 @@ class HybridTests(unittest.TestCase):
         self.assertTrue(out["fallback"])
         self.assertEqual(out["sources"], [7])
         self.assertEqual((out["input_tokens"], out["output_tokens"]), (6, 6))
+        self.assertEqual((out["cited"], out["unsupported_citations"]), ([7], []))
+
+    def _ask(self, route, t2c, answer="ok"):
+        hits = pd.DataFrame({"listing_id": [7], "text": ["Căn hộ"]})
+        calls = [llm.LLMResult("", {}, 4, 4, False)]
+        with mock.patch.object(hybrid, "router", return_value={"route": route, "reason": "", "input_tokens": 1,
+                                                              "output_tokens": 1}), \
+                mock.patch.object(hybrid, "text2cypher", **t2c), \
+                mock.patch.object(hybrid, "retrieve", return_value={"hits": hits, "calls": calls, "note": ""}), \
+                mock.patch.object(hybrid, "generate", return_value=llm.LLMResult(answer, None, 3, 3, False)) as gen:
+            return hybrid.ask_hybrid("q"), gen
+
+    def test_neo4j_error_falls_back_to_rag(self):
+        with self.assertLogs("src.hybrid", level="WARNING"):
+            out, _ = self._ask("graph", {"side_effect": RuntimeError("ServiceUnavailable")})
+        self.assertTrue(out["fallback"])
+        self.assertEqual(out["sources"], [7])
+
+    def test_graph_route_uses_only_graph_context(self):
+        rows = pd.DataFrame({"listing_id": [5], "price_bn": [2.5]})
+        out, gen = self._ask("graph", {"return_value": {"error": None, "rows": rows, "cypher": "MATCH",
+                                                        "usage": [2, 2]}}, answer="có [Tin#5] và [Tin#9]")
+        self.assertFalse(out["fallback"])
+        self.assertEqual(out["sources"], [5])
+        self.assertEqual(len(gen.call_args.args[1]), 1)  # chỉ ngữ cảnh đồ thị
+        # ngữ cảnh có kết quả Cypher: prompt cho phép nguồn [Cypher], không ép [Tin#ID] cho số tổng hợp
+        self.assertEqual(gen.call_args.kwargs["system"], hybrid.GRAPH_CONTEXT_SYSTEM)
+        self.assertEqual(out["unsupported_citations"], [9])
+        # token của truy xuất RAG chạy song song vẫn được tính: 1 + 2 + 4 + 3
+        self.assertEqual(out["input_tokens"], 10)
 
 
 class BenchmarkTests(unittest.TestCase):
@@ -228,6 +315,14 @@ class BenchmarkTests(unittest.TestCase):
         self.assertTrue(set(q.route) <= set(hybrid.ROUTES))
         for rule in q.gt_rule:
             json.loads(rule)
+
+    def test_judge_verdicts_are_aligned(self):
+        self.assertEqual(ev._align([True], 3), [True, False, False])
+        self.assertEqual(ev._align([True, True, True], 2), [True, True])
+        replies = iter([{"claims": ["a", "b", "c"]}, {"supported": [True]}])
+        fake = lambda *a, **k: llm.LLMResult("", next(replies), 1, 1, False)
+        with mock.patch.object(ev, "ask_llm", fake):
+            self.assertEqual(ev.faithfulness(ev.claims_supported("x", ["ctx"])), 1 / 3)
 
 
 class NotebookStructureTests(unittest.TestCase):
