@@ -2,6 +2,7 @@
 
 import json
 import re
+from itertools import islice
 from time import perf_counter
 
 import networkx as nx
@@ -9,9 +10,11 @@ import numpy as np
 import pandas as pd
 from pydantic import BaseModel
 
-from src.config import LOAD_CYPHER, NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
+from src.config import (CYPHER_MAX_ROWS, CYPHER_TIMEOUT, LOAD_CYPHER, NEO4J_PASSWORD, NEO4J_URI,
+                        NEO4J_USER)
 from src.data import text
 from src.llm import ask_llm
+from src.rag import check_citations
 
 _driver = None
 _uri = NEO4J_URI
@@ -32,18 +35,25 @@ def driver():
     if _driver is None:
         from neo4j import GraphDatabase
 
-        _driver = GraphDatabase.driver(_uri, auth=(NEO4J_USER, NEO4J_PASSWORD))
+        _driver = GraphDatabase.driver(_uri, auth=(NEO4J_USER, NEO4J_PASSWORD), connection_timeout=10)
         _driver.verify_connectivity()
     return _driver
 
 
-def run_cypher(query: str, params: dict | None = None, write: bool = False) -> pd.DataFrame:
+def run_cypher(query: str, params: dict | None = None, write: bool = False, timeout: float | None = None,
+               max_rows: int | None = None) -> pd.DataFrame:
     """Chạy Cypher, trả DataFrame. Mặc định mở giao dịch CHỈ ĐỌC: Neo4j từ chối mọi lệnh ghi
-    trong giao dịch đọc, đây là lớp bảo vệ ở phía cơ sở dữ liệu cho Text2Cypher."""
+    trong giao dịch đọc, đây là lớp bảo vệ ở phía cơ sở dữ liệu cho Text2Cypher.
+    `timeout` (giây): Neo4j huỷ giao dịch chạy quá lâu. `max_rows`: chỉ đọc chừng ấy dòng đầu."""
     def work(tx):
         result = tx.run(query, params or {})
-        return pd.DataFrame([r.data() for r in result], columns=result.keys())
+        records = list(islice(result, max_rows)) if max_rows else list(result)
+        return pd.DataFrame([r.data() for r in records], columns=result.keys())
 
+    if timeout:
+        from neo4j import unit_of_work
+
+        work = unit_of_work(timeout=timeout)(work)
     with driver().session() as session:
         return session.execute_write(work) if write else session.execute_read(work)
 
@@ -99,7 +109,9 @@ def graph_rows(df: pd.DataFrame) -> dict[str, list[dict]]:
             rows["of_type"].append({"listing_id": lid, "target": kind})
         props = {"title": text(r.get("title")), "price": r["price"], "price_bn": r["price_bn"], "area": r["area"],
                  "price_m2": r["price_m2_mil"], "bedrooms": r["bedrooms"], "bathrooms": r["bathrooms"],
-                 "floors": r["floors"], "published_at": text(r.get("published_at"))}
+                 "floors": r["floors"], "published_at": text(r.get("published_at")),
+                 "project": text(r.get("project")), "street": text(r.get("street")),
+                 "direction": text(r.get("direction"))}
         rows["listings"].append({"listing_id": lid, "props": {k: _value(v) for k, v in props.items()}})
         if w:
             rows["in_ward"].append({"listing_id": lid, "target": w})
@@ -371,7 +383,8 @@ def community_table(prof: pd.DataFrame) -> pd.DataFrame:
 
 # ---------------------------------------------------------------- Text2Cypher (P4-03) và ask_graph
 
-FORBIDDEN = re.compile(r"\b(CREATE|MERGE|DELETE|DETACH|SET|REMOVE|DROP|LOAD\s+CSV|CALL)\b", re.I)
+FORBIDDEN = re.compile(r"\b(CREATE|MERGE|DELETE|DETACH|SET|REMOVE|DROP|LOAD\s+CSV|CALL|FOREACH|USE|SHOW|"
+                       r"GRANT|DENY|REVOKE|ALTER|RENAME)\b", re.I)
 
 
 def is_read_only(cypher: str) -> bool:
@@ -379,56 +392,94 @@ def is_read_only(cypher: str) -> bool:
     return FORBIDDEN.search(cypher) is None
 
 
-SCHEMA = """Nút và thuộc tính:
-- (:Listing {listing_id: int, title, price: VND, price_bn: tỷ đồng, area: m², price_m2: triệu đồng/m²,
-            bedrooms, bathrooms, floors, published_at})
-- (:PropertyType {name})  giá trị: 'Nhà', 'Đất', 'Căn hộ chung cư', 'Biệt thự/Nhà liền kề', 'Shophouse'
-- (:Ward {key, name})  ví dụ name: 'Phường 5', 'Phúc Diễn'
-- (:District {key, name})  ví dụ name: 'Quận 7', 'Thủ Đức', 'Cầu Giấy'
-- (:Province {key, name})  ví dụ name: 'Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng'
+def ensure_limit(cypher: str, n: int = CYPHER_MAX_ROWS) -> str:
+    """Cypher do LLM sinh: thêm LIMIT n nếu mệnh đề RETURN cuối chưa có LIMIT."""
+    cypher = cypher.strip().rstrip(";").rstrip()
+    last_return = cypher.upper().rfind("RETURN")
+    tail = cypher[last_return:] if last_return >= 0 else cypher
+    return cypher if re.search(r"\bLIMIT\b", tail, re.I) else f"{cypher}\nLIMIT {n}"
+
+
+PROPERTY_TYPES = ["Nhà", "Đất", "Căn hộ chung cư", "Biệt thự/Nhà liền kề", "Shophouse"]
+SCHEMA_TEMPLATE = """Nút và thuộc tính:
+- (:Listing {{listing_id: int, title, price: VND, price_bn: tỷ đồng, area: m², price_m2: triệu đồng/m²,
+            bedrooms, bathrooms, floors, published_at, project: tên dự án, street: tên đường, direction: hướng nhà}})
+- (:PropertyType {{name}})  giá trị: {types}
+- (:Ward {{key, name}})  ví dụ name: 'Phường 5', 'Phúc Diễn'
+- (:District {{key, name}})  ví dụ name: 'Quận 7', 'Thủ Đức', 'Cầu Giấy'
+- (:Province {{key, name}})  ví dụ name: 'Hồ Chí Minh', 'Hà Nội', 'Đà Nẵng'
 Quan hệ:
 - (:Listing)-[:OF_TYPE]->(:PropertyType)
 - (:Listing)-[:IN_WARD]->(:Ward)-[:IN_DISTRICT]->(:District)-[:IN_PROVINCE]->(:Province)
 - Tin thiếu phường: (:Listing)-[:IN_DISTRICT]->(:District). Để lấy mọi tin của một quận dùng
-  (l:Listing)-[:IN_WARD|IN_DISTRICT*1..2]->(d:District)."""
+  (l:Listing)-[:IN_WARD|IN_DISTRICT*1..2]->(d:District).
+- Tên quận có thể trùng ở nhiều tỉnh: nếu câu hỏi nêu tỉnh, nối thêm -[:IN_PROVINCE]->(:Province {{name: ...}})."""
+SCHEMA = SCHEMA_TEMPLATE.format(types=", ".join(f"'{t}'" for t in PROPERTY_TYPES))
 
-CYPHER_EXAMPLE = """Ví dụ. Câu hỏi: Ở Hồ Chí Minh, quận nào có giá/m² trung bình thấp nhất (ít nhất 20 tin)?
+CYPHER_EXAMPLE = """Ví dụ 1. Câu hỏi: Ở Hồ Chí Minh, quận nào có giá/m² trung bình thấp nhất (ít nhất 20 tin)?
 Cypher:
 MATCH (l:Listing)-[:IN_WARD|IN_DISTRICT*1..2]->(d:District)-[:IN_PROVINCE]->(:Province {name: 'Hồ Chí Minh'})
 WHERE l.price_m2 IS NOT NULL
 WITH d.name AS district, avg(l.price_m2) AS avg_price_m2, count(l) AS n
 WHERE n >= 20
 RETURN district, round(avg_price_m2, 2) AS avg_price_m2, n
-ORDER BY avg_price_m2 ASC LIMIT 1"""
+ORDER BY avg_price_m2 ASC LIMIT 1
 
-CYPHER_SYSTEM = f"""Bạn viết MỘT câu Cypher chỉ đọc (MATCH/WHERE/WITH/RETURN) cho Neo4j để trả lời câu hỏi.
+Ví dụ 2. Câu hỏi: Liệt kê căn hộ 2 phòng ngủ ở Quận 7 dưới 4 tỷ.
+Cypher:
+MATCH (l:Listing)-[:OF_TYPE]->(:PropertyType {name: 'Căn hộ chung cư'}),
+      (l)-[:IN_WARD|IN_DISTRICT*1..2]->(:District {name: 'Quận 7'})
+WHERE l.bedrooms = 2 AND l.price <= 4e9
+RETURN l.listing_id AS listing_id, l.title AS title, l.price_bn AS price_bn, l.area AS area
+ORDER BY l.price ASC LIMIT 20
+
+Ví dụ 3. Câu hỏi: Phường nào của Cầu Giấy, Hà Nội có nhiều tin đăng nhất?
+Cypher:
+MATCH (l:Listing)-[:IN_WARD]->(w:Ward)-[:IN_DISTRICT]->(:District {name: 'Cầu Giấy'})-[:IN_PROVINCE]->(:Province {name: 'Hà Nội'})
+RETURN w.name AS ward, count(l) AS so_tin
+ORDER BY so_tin DESC LIMIT 1"""
+
+CYPHER_RULES = """Bạn viết MỘT câu Cypher chỉ đọc (MATCH/WHERE/WITH/RETURN) cho Neo4j để trả lời câu hỏi.
 Không dùng CREATE, MERGE, DELETE, SET, REMOVE, DROP, CALL, LOAD CSV.
 Khi trả về tin cụ thể, luôn trả cột l.listing_id AS listing_id. Giới hạn tối đa 20 dòng.
-Dùng đúng tên thuộc tính và đơn vị trong schema.
+Dùng đúng tên thuộc tính và đơn vị trong schema."""
+CYPHER_SYSTEM = f"{CYPHER_RULES}\n\n{SCHEMA}\n\n{CYPHER_EXAMPLE}"
+_cypher_systems: dict[str, str] = {}
 
-{SCHEMA}
 
-{CYPHER_EXAMPLE}"""
+def cypher_system() -> str:
+    """Prompt Text2Cypher với danh sách loại hình đọc từ đồ thị đang dùng (đọc một lần cho mỗi Neo4j);
+    không đọc được thì dùng danh sách mặc định."""
+    if _uri not in _cypher_systems:
+        try:
+            types = run_cypher("MATCH (t:PropertyType) RETURN t.name AS name ORDER BY name", timeout=5)["name"]
+        except Exception:
+            return CYPHER_SYSTEM
+        schema = SCHEMA_TEMPLATE.format(types=", ".join(f"'{t}'" for t in types)) if len(types) else SCHEMA
+        _cypher_systems[_uri] = f"{CYPHER_RULES}\n\n{schema}\n\n{CYPHER_EXAMPLE}"
+    return _cypher_systems[_uri]
 
 CYPHER_OUTPUT = {"type": "object", "properties": {"cypher": {"type": "string"}},
                  "required": ["cypher"], "additionalProperties": False}
 
 
 def text2cypher(question: str, retries: int = 2) -> dict:
-    """LLM sinh Cypher -> chặn lệnh ghi -> thực thi chỉ đọc; lỗi thì gửi lỗi lại cho LLM và thử lại."""
+    """LLM sinh Cypher -> chặn lệnh ghi -> thêm LIMIT -> thực thi chỉ đọc, có timeout;
+    lỗi thì gửi lỗi lại cho LLM và thử lại."""
     from neo4j.exceptions import Neo4jError
 
-    prompt, attempts, usage = f"Câu hỏi: {question}", [], [0, 0]
+    prompt, attempts, usage, system = f"Câu hỏi: {question}", [], [0, 0], cypher_system()
     for _ in range(retries + 1):
-        result = ask_llm(prompt, system=CYPHER_SYSTEM, output=CYPHER_OUTPUT)
+        result = ask_llm(prompt, system=system, output=CYPHER_OUTPUT)
         usage[0] += result.input_tokens
         usage[1] += result.output_tokens
         cypher = result.data["cypher"].strip()
         if not is_read_only(cypher):
-            error = "bị chặn: câu Cypher chứa lệnh ghi"
+            error = "bị chặn: câu Cypher chứa lệnh ghi hoặc lệnh quản trị"
         else:
+            cypher = ensure_limit(cypher)
             try:
-                rows = run_cypher(cypher)
+                rows = run_cypher(cypher, timeout=CYPHER_TIMEOUT, max_rows=CYPHER_MAX_ROWS)
                 attempts.append({"cypher": cypher, "error": None})
                 return dict(cypher=cypher, rows=rows, attempts=attempts, error=None, usage=usage)
             except Neo4jError as exc:
@@ -456,7 +507,9 @@ def ask_graph(question: str) -> dict:
     context = f"Cypher:\n{t2c['cypher']}\n\nKẾT QUẢ TRUY VẤN ({len(rows)} dòng):\n{rows_context(rows)}"
     answer = ask_llm(f"{context}\n\nCÂU HỎI: {question}", system=GRAPH_ANSWER_SYSTEM)
     sources = rows["listing_id"].dropna().astype(int).tolist() if "listing_id" in rows else []
+    cited, unsupported = check_citations(answer.text, sources)
     return dict(system="graph", question=question, answer=answer.text, sources=sources,
+                cited=cited, unsupported_citations=unsupported,
                 contexts=[context], cypher=t2c["cypher"], error=t2c["error"],
                 attempts=len(t2c["attempts"]), n_rows=len(rows), latency=perf_counter() - start,
                 input_tokens=t2c["usage"][0] + answer.input_tokens,

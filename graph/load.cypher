@@ -13,6 +13,10 @@ CREATE CONSTRAINT property_type_name IF NOT EXISTS FOR (n:PropertyType) REQUIRE 
 CREATE INDEX district_name IF NOT EXISTS FOR (n:District) ON (n.name);
 CREATE INDEX ward_name IF NOT EXISTS FOR (n:Ward) ON (n.name);
 CREATE INDEX listing_price IF NOT EXISTS FOR (n:Listing) ON (n.price);
+CREATE INDEX listing_bedrooms IF NOT EXISTS FOR (n:Listing) ON (n.bedrooms);
+CREATE INDEX listing_area IF NOT EXISTS FOR (n:Listing) ON (n.area);
+CREATE INDEX listing_price_m2 IF NOT EXISTS FOR (n:Listing) ON (n.price_m2);
+CREATE INDEX listing_project IF NOT EXISTS FOR (n:Listing) ON (n.project);
 
 // name: provinces
 UNWIND $rows AS r
