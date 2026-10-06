@@ -1,0 +1,22 @@
+# Bộ test trong tests/ không cần mạng, LLM, Qdrant hay Neo4j: chỉ cài các thư viện mà src/ import ở đầu file.
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  unittest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Cài thư viện cho test
+        run: >
+          pip install "pandas>=2.2" "numpy>=1.26" "pydantic>=2,<3" "qdrant-client>=1.15,<1.16"
+          "neo4j>=5,<7" "networkx>=3.2,<4" "python-dotenv>=1,<2" "nbformat>=5.10,<6"
+      - name: Chạy unittest
+        run: python -m unittest discover -s tests -v

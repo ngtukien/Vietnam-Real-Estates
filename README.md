@@ -60,13 +60,19 @@ export ANTHROPIC_API_KEY=...               # hoặc `ant auth login`
 | --- | --- |
 | Embedding | `intfloat/multilingual-e5-small` (384 chiều), tiền tố `passage:`/`query:`; trên GPU chạy fp16 (nhanh ~3 lần, cosine với bản fp32 ≥ 0,999) |
 | Chunk | Cửa sổ 400 token, chồng lấn 100; header (tiêu đề, loại, địa chỉ, giá, diện tích) lặp ở mọi chunk |
-| Vector DB | Qdrant: vector dense trên đĩa + bản nén int8 trong RAM, payload index để pre-filter |
-| Từ khoá | BM25 dạng sparse vector trong cùng collection Qdrant (IDF tính phía server), tách từ tiếng Việt bằng `pyvi` |
-| Đồ thị | Neo4j: `(Listing)-[:IN_WARD]->(Ward)-[:IN_DISTRICT]->(District)-[:IN_PROVINCE]->(Province)`, `(Listing)-[:OF_TYPE]->(PropertyType)`; script [graph/load.cypher](graph/load.cypher) |
-| LLM | `claude-opus-5-5` qua Anthropic SDK, structured output cho bộ lọc, Cypher, router và chấm điểm |
+| Vector DB | Qdrant: vector dense trên đĩa + bản nén int8 trong RAM (tìm trên bản nén, lấy dư `QDRANT_OVERSAMPLING` lần rồi chấm lại bằng vector gốc), payload index để pre-filter. Số chiều collection lấy từ mô hình embedding và được kiểm khi mở lại |
+| Từ khoá | BM25 dạng sparse vector trong cùng collection Qdrant (IDF tính phía server), tách từ tiếng Việt bằng `pyvi`. Dense và BM25 đi chung một lượt gọi Qdrant (`query_batch_points`) |
+| Rerank | Cross-encoder `mmarco-mMiniLMv2`, tắt mặc định; `RERANK=1` để `retrieve()` lấy `RERANK_CANDIDATES` tin rồi chấm lại |
+| Đồ thị | Neo4j: `(Listing)-[:IN_WARD]->(Ward)-[:IN_DISTRICT]->(District)-[:IN_PROVINCE]->(Province)`, `(Listing)-[:OF_TYPE]->(PropertyType)`; Listing có thêm `project`, `street`, `direction` (có index) để lọc theo dự án/đường; script [graph/load.cypher](graph/load.cypher) |
+| LLM | `claude-opus-5-5` qua Anthropic SDK, structured output cho bộ lọc, Cypher, router và chấm điểm; timeout `LLM_TIMEOUT`, đầu ra có cấu trúc bị cắt ở `max_tokens` báo lỗi rõ |
 
-Text2Cypher có hai lớp chặn lệnh ghi: regex trong [src/graph.py](src/graph.py), và giao dịch chỉ đọc
-của Neo4j (`execute_read`, lỗi `AccessMode` nếu câu lệnh có ghi).
+Text2Cypher có hai lớp chặn lệnh ghi: regex trong [src/graph.py](src/graph.py) (cả lệnh quản trị như
+`SHOW`, `USE`, `CALL`), và giao dịch chỉ đọc của Neo4j (`execute_read`, lỗi `AccessMode` nếu câu lệnh có ghi).
+Câu Cypher do LLM sinh còn được thêm `LIMIT` nếu thiếu, bị Neo4j huỷ sau `CYPHER_TIMEOUT` giây và chỉ đọc
+tối đa `CYPHER_MAX_ROWS` dòng. Danh sách loại hình trong prompt đọc từ đồ thị đang dùng.
+
+Câu trả lời được kiểm trích dẫn: mọi `[Tin#ID]` không nằm trong nguồn đã đưa vào ngữ cảnh được trả về ở
+`unsupported_citations`. Khi bộ lọc quá chặt và phải bỏ lọc, prompt báo cho LLM rằng các tin chỉ gần đúng.
 
 ## Notebook trình bày
 
@@ -131,10 +137,26 @@ thời gian nằm ở bước embed. Dung lượng ước tính: Qdrant khoảng
   đã chạy nằm trong phần thu gọn.
 - Link dạng `/?q=Căn hộ 2PN ở Thủ Đức dưới 3 tỷ&system=graph` hỏi ngay khi mở trang, tiện khi trình bày.
 - Nếu Neo4j chưa chạy hoặc đồ thị chưa khớp dữ liệu sạch, chế độ Tự động và Graph bị tắt; Basic RAG
-  vẫn dùng được.
+  vẫn dùng được. Neo4j mất kết nối giữa chừng thì chế độ Tự động lui về Basic RAG.
+- Chế độ Tự động chạy truy xuất RAG song song với router và Text2Cypher, nên tuyến hybrid và đường lui
+  không phải chờ thêm một lượt LLM (đổi lại, tuyến graph tốn thêm một lượt trích bộ lọc).
+- Trích dẫn không có trong nguồn được cảnh báo ở dòng ghi chú.
 
 API: `GET /api/info` trả danh sách chế độ và thống kê chỉ mục; `POST /api/chat` nhận
-`{"query": "...", "system": "hybrid" | "basic_rag" | "graph"}`.
+`{"query": "...", "system": "hybrid" | "basic_rag" | "graph"}` (Content-Type `application/json`).
+
+Bảo vệ API (cấu hình trong `.env`):
+
+| Biến | Mặc định | Tác dụng |
+| --- | --- | --- |
+| `CHAT_MAX_CONCURRENT` | 4 | Số câu hỏi xử lý đồng thời; chờ quá 60 s trả 503 |
+| `CHAT_RATE_PER_MIN` | 20 | Số câu hỏi mỗi phút cho một IP (429 khi vượt); 0 = không giới hạn |
+| `CHAT_MAX_QUERY_CHARS` | 500 | Độ dài câu hỏi tối đa; body tối đa 8 KB |
+| `CHAT_API_TOKEN` | rỗng | Bắt buộc header `X-API-Key`; mở trang bằng `/?token=...` một lần. Bắt buộc khi `--host` không phải loopback |
+
+Server ghi log mỗi câu hỏi (mã yêu cầu, chế độ, tuyến, độ trễ, token, số trích dẫn sai) nhưng không ghi
+nội dung câu hỏi. Lỗi nội bộ chỉ trả mã yêu cầu cho giao diện, chi tiết nằm trong log. Trang có CSP
+`default-src 'self'` và `X-Content-Type-Options: nosniff`.
 
 ## Đánh giá
 
@@ -145,7 +167,9 @@ API: `GET /api/info` trả danh sách chế độ và thống kê chỉ mục; `
 - Câu tổng hợp/đa chặng có giá trị đúng `gt_value`, do Claude chấm câu trả lời so với đáp án (cho phép sai số 5%).
 
 Notebook 04 còn tính Faithfulness, Answer Relevancy và Context Precision theo định nghĩa của RAGAS
-(chấm bằng Claude). Nó cũng lập bảng độ chính xác theo loại câu × hệ thống, chi phí, độ trễ và phân tích lỗi.
+(chấm bằng Claude). Nó cũng lập bảng độ chính xác theo loại câu × hệ thống, chi phí, độ trễ, tỷ lệ câu trả lời
+trích nguồn không có trong ngữ cảnh (`bad_citation_rate`) và phân tích lỗi. Đặt `JUDGE_MODEL` để chấm bằng
+mô hình khác mô hình sinh (tránh tự chấm thiên vị); để trống thì dùng `LLM_MODEL`.
 
 ## Cấu trúc thư mục
 
@@ -182,12 +206,16 @@ docker-compose.yaml     Qdrant (vector_db), Neo4j mẫu (graph_db), Neo4j đầy
 Test không cần mạng, Claude, Qdrant hay Neo4j. Chúng kiểm tra:
 - Các số toy trên slide.
 - Làm sạch, entity resolution, sửa đơn vị giá.
-- Chunk theo ngân sách token, bộ lọc và đơn vị tiền.
+- Chunk theo ngân sách token, bộ lọc và đơn vị tiền (cả "1 tỷ 50 triệu", "3.000.000.000", chuỗi không có số).
 - Nạp đồ thị: khoá địa danh theo cấp cha.
-- Chặn lệnh ghi và cơ chế thử lại của Text2Cypher.
-- Đường lui của Hybrid, luật tính đáp án chuẩn.
+- Chặn lệnh ghi/quản trị, thêm `LIMIT`, cơ chế thử lại của Text2Cypher, prompt lui về mặc định khi mất Neo4j.
+- Hybrid search một lượt Qdrant, kết quả rỗng vẫn đủ cột, kiểm trích dẫn, báo bỏ lọc cho LLM.
+- Đường lui của Hybrid (đồ thị rỗng hoặc Neo4j lỗi), cách tính token, luật tính đáp án chuẩn, căn độ dài phán quyết RAGAS.
 - Khung notebook: đúng 51 cell, 19 LIVE · 22 CACHE · 10 ẨN, không lộ khoá API hay số điện thoại trong output.
-- Route HTTP của chatbot.
+- Route HTTP của chatbot, header bảo mật, và các lớp chặn: Content-Type, kích thước body, độ dài câu hỏi,
+  tần suất, API key, không lộ lỗi nội bộ.
+
+CI ([.github/workflows/tests.yml](.github/workflows/tests.yml)) chạy bộ test này trên mỗi push và pull request.
 
 ## Giới hạn
 
@@ -195,4 +223,6 @@ Test không cần mạng, Claude, Qdrant hay Neo4j. Chúng kiểm tra:
 - Chỉ mục đầy đủ cố định `avgdl` của BM25 từ lô đầu tiên. Tin trùng được nhận diện bằng tiêu đề + mô tả
   giống hệt nhau, không bắt được tin đăng lại có sửa chữ.
 - Bộ lọc, câu trả lời, Cypher và router phụ thuộc Claude; cần khoá API khi chạy lần đầu.
+- Đồ thị nạp trước khi Listing có `project`, `street`, `direction` vẫn qua bước kiểm khớp (cùng số tin, tổng giá)
+  nhưng thiếu ba thuộc tính này: nạp lại bằng notebook 03 với `REBUILD=1`, hoặc `scripts/index_full.py --reset`.
 - Kết quả benchmark trên 24 câu chỉ là so sánh tương đối giữa ba hệ thống, chưa đủ để kết luận tổng quát.
