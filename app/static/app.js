@@ -10,9 +10,23 @@ const FILTER_NAMES = {
 };
 let turn = 0;
 
+// Server đặt CHAT_API_TOKEN: mở trang bằng /?token=... một lần, khoá được giữ trong phiên của tab.
+const API_TOKEN = (() => {
+  const fromUrl = new URLSearchParams(location.search).get("token");
+  try {
+    if (fromUrl) sessionStorage.setItem("apiToken", fromUrl);
+    return fromUrl || sessionStorage.getItem("apiToken") || "";
+  } catch {
+    return fromUrl || "";
+  }
+})();
+const authHeaders = () => (API_TOKEN ? { "X-API-Key": API_TOKEN } : {});
+
 async function loadInfo() {
   try {
-    const info = await (await fetch("/api/info")).json();
+    const response = await fetch("/api/info", { headers: authHeaders() });
+    const info = await response.json();
+    if (!response.ok) throw new Error(info.error);
     for (const [key, system] of Object.entries(info.systems)) {
       const option = new Option(system.name + (system.available ? "" : " (cần Neo4j)"), key);
       option.disabled = !system.available;
@@ -23,8 +37,8 @@ async function loadInfo() {
     const scope = info.stats.index === "full" ? "toàn bộ dataset" : "mẫu";
     $("stats").textContent = `${n(info.stats.listings)} tin (${scope}) · ${n(info.stats.chunks)} chunk`
       + (info.graph_error ? ` · ${info.graph_error}` : " · đồ thị sẵn sàng");
-  } catch {
-    $("stats").textContent = "Không kết nối được server";
+  } catch (error) {
+    $("stats").textContent = error.message || "Không kết nối được server";
   }
 }
 
@@ -68,6 +82,9 @@ function howFound(answer) {
   const filters = Object.entries(answer.filters).map(([k, v]) => `${FILTER_NAMES[k] || k}: ${v}`);
   if (filters.length) parts.push(`bộ lọc ${filters.join(", ")}`);
   if (answer.note) parts.push(answer.note);
+  if (answer.unsupported_citations?.length) {
+    parts.push(`cảnh báo: trích ${answer.unsupported_citations.map((id) => "#" + id).join(", ")} không có trong nguồn`);
+  }
   parts.push(`${answer.elapsed_ms} ms · ${answer.tokens.toLocaleString("vi-VN")} token`);
   return parts.join(" · ");
 }
@@ -116,7 +133,7 @@ async function ask(query) {
   try {
     const response = await fetch("/api/chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify({ query, system: $("system").value }),
     });
     const answer = await response.json();
