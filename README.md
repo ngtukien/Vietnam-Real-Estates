@@ -160,11 +160,23 @@ nội dung câu hỏi. Lỗi nội bộ chỉ trả mã yêu cầu cho giao di�
 
 ## Đánh giá
 
-[benchmark/questions.csv](benchmark/questions.csv) có 24 câu thuộc 4 loại: tra cứu, ràng buộc, tổng hợp,
-đa chặng. Mỗi câu có nhãn tuyến đúng cho router. Đáp án chuẩn tính bằng pandas từ cột `gt_rule`
-([src/eval.py](src/eval.py)), không gõ tay:
+[benchmark/questions.csv](benchmark/questions.csv) có 28 câu thuộc 5 loại: tra cứu, ràng buộc, tổng hợp,
+đa chặng (mỗi loại 6 câu) và 4 câu cố ý không có đáp án trong dữ liệu (giá nhà trên sao Hỏa, dự báo năm 2030…).
+Mỗi câu có nhãn tuyến đúng cho router. Đáp án chuẩn tính bằng pandas từ cột `gt_rule`
+([src/eval.py](src/eval.py)), không gõ tay. Mọi câu được chấm thang 0–2 (cột `points`); `correct` là đạt 2 điểm:
 - Câu tra cứu/ràng buộc có tập tin đúng `gt_ids`, chấm bằng Recall@5 (chia cho min(số tin đúng, 5)) và MRR.
-- Câu tổng hợp/đa chặng có giá trị đúng `gt_value`, do LLM giám khảo chấm câu trả lời so với đáp án (cho phép sai số 5%).
+  2 điểm khi Recall@5 = 1, 1 điểm khi có ít nhất một tin đúng trong top 5.
+- Câu tổng hợp/đa chặng có giá trị đúng `gt_value`. LLM giám khảo chấm câu trả lời so với đáp án: 2 = đúng
+  (sai số ≤ 5%), 1 = đúng một phần (lệch 5–20% hoặc chỉ đúng một phần của danh sách), 0 = sai.
+- Câu không có đáp án đo tỷ lệ từ chối đúng: 2 = nói rõ không đủ dữ liệu, 1 = có cảnh báo nhưng vẫn đoán, 0 = bịa.
+
+Benchmark chạy bốn hệ thống: baseline **LLM only** (`rag.ask_llm_only`: cùng mô hình nhưng không có ngữ cảnh),
+Basic RAG, Graph và Hybrid. Nhờ baseline này, ta đo được RAG thêm được gì so với LLM trần. LLM only không trả về tin nào,
+nên ở câu tra cứu/ràng buộc nó luôn được 0 điểm.
+
+Tin đăng do người dùng tự nhập nên không được coi là đáng tin. `build_prompt` bọc từng tài liệu trong
+`<tai_lieu>…</tai_lieu>` và vô hiệu hoá thẻ đóng giả mạo trong nội dung. System prompt yêu cầu coi nội dung trong thẻ
+là dữ liệu và bỏ qua mọi chỉ thị nằm trong đó (chống prompt injection).
 
 Notebook 04 còn tính Faithfulness, Answer Relevancy và Context Precision theo định nghĩa của RAGAS
 (chấm bằng LLM giám khảo). Nó cũng lập bảng độ chính xác theo loại câu × hệ thống, chi phí, độ trễ, tỷ lệ câu trả lời
@@ -177,7 +189,7 @@ mô hình khác mô hình sinh (tránh tự chấm thiên vị); để trống t
 app/
   server.py             Server HTTP + API /api/chat
   static/               Giao diện HTML/CSS/JS
-benchmark/questions.csv 24 câu hỏi đánh giá, đáp án chuẩn tính bằng pandas
+benchmark/questions.csv 28 câu hỏi đánh giá (4 câu không có đáp án), đáp án chuẩn tính bằng pandas
 scripts/index_full.py   Lập chỉ mục toàn bộ dataset cho chatbot (Qdrant + Neo4j), chạy tiếp được
 graph/load.cypher       Script nạp đồ thị Neo4j
 notebooks/              5 notebook trình bày (00_setup → 04_graphrag_eval)
@@ -225,4 +237,4 @@ CI ([.github/workflows/tests.yml](.github/workflows/tests.yml)) chạy bộ test
 - Bộ lọc, câu trả lời, Cypher và router phụ thuộc LLM; cần khoá Groq khi chạy lần đầu.
 - Đồ thị nạp trước khi Listing có `project`, `street`, `direction` vẫn qua bước kiểm khớp (cùng số tin, tổng giá)
   nhưng thiếu ba thuộc tính này: nạp lại bằng notebook 03 với `REBUILD=1`, hoặc `scripts/index_full.py --reset`.
-- Kết quả benchmark trên 24 câu chỉ là so sánh tương đối giữa ba hệ thống, chưa đủ để kết luận tổng quát.
+- Kết quả benchmark trên 28 câu chỉ là so sánh tương đối giữa bốn hệ thống, chưa đủ để kết luận tổng quát.

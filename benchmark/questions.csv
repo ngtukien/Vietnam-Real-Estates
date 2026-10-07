@@ -23,3 +23,7 @@ M3,multihop,graph,Thủ Đức có bao nhiêu phường có tin đăng?,"{""quer
 M4,multihop,graph,"Trong các phường của Quận 7, phường nào có giá/m² trung bình cao nhất (ít nhất 10 tin)?","{""query"": ""district=='Quận 7'"", ""groupby"": [""ward""], ""value"": ""price_m2_mil"", ""agg"": ""mean"", ""pick"": ""max"", ""min_count"": 10}",,
 M5,multihop,graph,"Ngoài Hà Nội và Hồ Chí Minh, tỉnh nào có nhiều tin đăng nhất?","{""query"": ""province not in ['Hà Nội', 'Hồ Chí Minh']"", ""groupby"": [""province""], ""agg"": ""count"", ""pick"": ""max""}",,
 M6,multihop,graph,"Ở Đà Nẵng, quận nào có nhiều tin đăng đất nhất?","{""query"": ""province=='Đà Nẵng' and property_type=='Đất'"", ""groupby"": [""district""], ""agg"": ""count"", ""pick"": ""max""}",,
+U1,unanswerable,basic_rag,Giá căn hộ trên sao Hỏa hiện nay là bao nhiêu?,"{""unanswerable"": true}",,
+U2,unanswerable,graph,Giá căn hộ chung cư ở Quận 7 đã tăng bao nhiêu phần trăm so với năm 2020?,"{""unanswerable"": true}",,
+U3,unanswerable,graph,Giá căn hộ chung cư ở Thủ Đức năm 2030 sẽ là bao nhiêu?,"{""unanswerable"": true}",,
+U4,unanswerable,basic_rag,Chủ đầu tư Vinhomes đạt doanh thu bao nhiêu trong năm 2024?,"{""unanswerable"": true}",,
