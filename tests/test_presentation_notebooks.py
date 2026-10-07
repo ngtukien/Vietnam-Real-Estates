@@ -359,6 +359,16 @@ class BenchmarkTests(unittest.TestCase):
         self.assertEqual(calls, ["5", None])  # câu không có đáp án được chấm theo việc từ chối
         self.assertEqual(ev.accuracy_table(scored, "points").index.tolist(), ["lookup", "aggregate", "unanswerable"])
 
+    def test_error_cases(self):
+        scored = pd.DataFrame({"id": ["U", "U", "A"], "type": ["unanswerable", "unanswerable", "aggregate"],
+                               "system": ["llm_only", "graph", "basic_rag"], "question": "q", "route": None,
+                               "route_gold": "graph", "answer": ["bịa", "", "sai"], "cypher": None,
+                               "error": [None, "TimeoutError: x", None], "correct": False})
+        out = ev.error_cases(scored, n=5)
+        self.assertEqual(out["system"].tolist(), ["graph", "basic_rag"])  # llm_only bị loại
+        self.assertEqual(out["nguyên nhân"].tolist(), ["lỗi khi chạy: TimeoutError: x",
+                                                       "truy xuất trượt hoặc ngữ cảnh không đủ để tính"])
+
     def test_questions_file(self):
         q = pd.read_csv(ROOT / "benchmark" / "questions.csv", keep_default_na=False)
         self.assertEqual(list(q.columns[:5]), ["id", "type", "route", "question", "gt_rule"])

@@ -193,14 +193,15 @@ def cost_table(scored: pd.DataFrame) -> pd.DataFrame:
 
 
 def error_cases(scored: pd.DataFrame, n: int = 3) -> pd.DataFrame:
-    """Gán nguyên nhân cho câu sai: router nhầm, Cypher lỗi, Cypher sai kết quả hoặc truy xuất trượt."""
-    wrong = scored[~scored["correct"]].copy()
+    """Gán nguyên nhân cho câu sai: lỗi khi chạy, router nhầm, Cypher lỗi, Cypher sai kết quả hoặc truy xuất trượt.
+    Bỏ baseline llm_only: nó sai câu tra cứu/ràng buộc theo thiết kế (không có nguồn), sẽ lấn hết các ví dụ."""
+    wrong = scored[~scored["correct"] & (scored["system"] != "llm_only")].copy()
 
     def cause(r):
+        if r.error and not r.answer:  # exception trong run_benchmark: hỏng hệ thống, không phải bịa
+            return f"lỗi khi chạy: {str(r.error)[:80]}"
         if r.type == UNANSWERABLE:
             return "không từ chối: trả lời câu không có dữ liệu"
-        if r.system == "llm_only":
-            return "không có ngữ cảnh: LLM trả lời từ trí nhớ"
         if r.system == "hybrid" and r.route != r.route_gold:
             return f"router nhầm: {r.route} thay vì {r.route_gold}"
         if r.error:
