@@ -372,12 +372,15 @@ def ward_communities(prof: pd.DataFrame, k: int = 5, seed: int = 42) -> tuple[pd
 
 
 def community_table(prof: pd.DataFrame) -> pd.DataFrame:
+    """Mỗi cộng đồng: số phường, giá/m² TB và ví dụ lấy từ tỉnh chính (tỉnh có nhiều phường nhất trong cụm)."""
     rows = []
     for cid, group in prof.groupby("community"):
+        province = group.index.get_level_values("province").value_counts().index[0]
+        examples = group.xs(province, level="province", drop_level=False).index[:3]
         rows.append({"cộng đồng": cid, "số phường": len(group),
                      "giá/m² TB (triệu)": round(group["median_price_m2"].mean(), 1),
-                     "tỉnh chính": group.index.get_level_values("province").value_counts().index[0],
-                     "ví dụ": ", ".join(f"{w} ({d})" for _, d, w in group.index[:3])})
+                     "tỉnh chính": province,
+                     "ví dụ": ", ".join(f"{w} ({d})" for _, d, w in examples)})
     return pd.DataFrame(rows).sort_values("giá/m² TB (triệu)").reset_index(drop=True)
 
 

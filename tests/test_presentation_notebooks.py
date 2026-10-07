@@ -184,6 +184,13 @@ class GraphTests(unittest.TestCase):
         expected = graph.expected_counts(df).set_index("loai")["pandas"]
         self.assertEqual(expected["IN_DISTRICT"], 1 + 2)  # 1 tin thiếu phường + 2 phường
 
+    def test_community_examples_come_from_main_province(self):
+        index = pd.MultiIndex.from_tuples([("Bình Dương", "Dĩ An", "An Bình"), ("Hà Nội", "Ba Đình", "Giảng Võ"),
+                                           ("Hà Nội", "Tây Hồ", "Nhật Tân")], names=["province", "district", "ward"])
+        prof = pd.DataFrame({"median_price_m2": [40.0, 250.0, 240.0], "community": [0, 0, 0]}, index=index)
+        row = graph.community_table(prof).iloc[0]
+        self.assertEqual((row["tỉnh chính"], row["ví dụ"]), ("Hà Nội", "Giảng Võ (Ba Đình), Nhật Tân (Tây Hồ)"))
+
     def test_mini_graph(self):
         G, triples = graph.mini_graph(listing())
         self.assertEqual((G.number_of_nodes(), len(triples)), (6, 5))
