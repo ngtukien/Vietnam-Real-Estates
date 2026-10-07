@@ -1,29 +1,29 @@
 id,type,route,question,gt_rule,gt_ids,gt_value
-L1,lookup,basic_rag,Khách sạn 36 phòng mặt tiền Hoàng Sa ở Quận 1 đang rao bán giá bao nhiêu?,"{""query"": ""listing_id in [10214]""}",,
-L2,lookup,basic_rag,"Căn officetel 27m2 ở Lavida Plus, Quận 7 giá bao nhiêu?","{""query"": ""listing_id in [5228]""}",,
-L3,lookup,basic_rag,Căn duplex 4 phòng ngủ 195m2 ở Sunshine City giá bao nhiêu?,"{""query"": ""listing_id in [1758]""}",,
-L4,lookup,basic_rag,Penthouse Imperial Garden ở Thanh Xuân chính chủ bán có diện tích bao nhiêu?,"{""query"": ""listing_id in [564]""}",,
-L5,lookup,basic_rag,Căn hộ Landmark 81 ba phòng ngủ view sông đang chào bán giá bao nhiêu?,"{""query"": ""listing_id in [1766]""}",,
-L6,lookup,basic_rag,"Nhà 6 tầng có thang máy ở Ngọa Long, Bắc Từ Liêm, ô tô đỗ cổng giá bao nhiêu?","{""query"": ""listing_id in [1]""}",,
-C1,constraint,graph,Liệt kê căn hộ chung cư 2 phòng ngủ ở Thủ Đức giá dưới 3 tỷ.,"{""query"": ""property_type=='Căn hộ chung cư' and district=='Thủ Đức' and bedrooms==2 and price<=3e9""}",,
-C2,constraint,graph,Căn hộ 2PN ở Quận 7 giá không quá 4 tỷ có những căn nào?,"{""query"": ""property_type=='Căn hộ chung cư' and district=='Quận 7' and bedrooms==2 and price<=4e9""}",,
-C3,constraint,graph,Tìm biệt thự hoặc nhà liền kề ở Hà Đông giá dưới 15 tỷ.,"{""query"": ""property_type=='Biệt thự/Nhà liền kề' and district=='Hà Đông' and price<=15e9""}",,
-C4,constraint,hybrid,Nhà ở Cầu Giấy dưới 10 tỷ có thang máy.,"{""query"": ""property_type=='Nhà' and district=='Cầu Giấy' and price<=10e9 and description.str.contains('thang máy', case=False, na=False)""}",,
-C5,constraint,hybrid,"Căn hộ ở Quận 7 có hồ bơi, giá dưới 5 tỷ.","{""query"": ""property_type=='Căn hộ chung cư' and district=='Quận 7' and price<=5e9 and description.str.contains('hồ bơi', case=False, na=False)""}",,
-C6,constraint,hybrid,Nhà hẻm xe hơi ở Gò Vấp giá dưới 7 tỷ.,"{""query"": ""property_type=='Nhà' and district=='Gò Vấp' and price<=7e9 and description.str.contains('hẻm xe hơi', case=False, na=False)""}",,
-A1,aggregate,graph,"Ở Hồ Chí Minh, quận nào có giá/m² trung bình thấp nhất (chỉ tính quận có ít nhất 20 tin)?","{""query"": ""province=='Hồ Chí Minh'"", ""groupby"": [""district""], ""value"": ""price_m2_mil"", ""agg"": ""mean"", ""pick"": ""min"", ""min_count"": 20}",,
-A2,aggregate,graph,"Ở Hà Nội, quận nào có giá/m² trung bình cao nhất (chỉ tính quận có ít nhất 20 tin)?","{""query"": ""province=='Hà Nội'"", ""groupby"": [""district""], ""value"": ""price_m2_mil"", ""agg"": ""mean"", ""pick"": ""max"", ""min_count"": 20}",,
-A3,aggregate,graph,Có bao nhiêu tin đăng bán đất ở Đà Nẵng?,"{""query"": ""property_type=='Đất' and province=='Đà Nẵng'"", ""agg"": ""count""}",,
-A4,aggregate,graph,Giá trung vị của căn hộ chung cư ở Thủ Đức là bao nhiêu tỷ?,"{""query"": ""property_type=='Căn hộ chung cư' and district=='Thủ Đức'"", ""value"": ""price_bn"", ""agg"": ""median""}",,
-A5,aggregate,graph,Diện tích trung bình của nhà ở Gò Vấp là bao nhiêu m²?,"{""query"": ""property_type=='Nhà' and district=='Gò Vấp'"", ""value"": ""area"", ""agg"": ""mean""}",,
-A6,aggregate,graph,"Ở Bình Dương, loại hình bất động sản nào có nhiều tin đăng nhất?","{""query"": ""province=='Bình Dương'"", ""groupby"": [""property_type""], ""agg"": ""count"", ""pick"": ""max""}",,
-M1,multihop,graph,Năm quận nào của Hồ Chí Minh có nhiều tin đăng nhất?,"{""query"": ""province=='Hồ Chí Minh'"", ""groupby"": [""district""], ""agg"": ""count"", ""pick"": ""top5""}",,
-M2,multihop,graph,"Ở Hà Nội, phường nào có nhiều tin căn hộ chung cư nhất?","{""query"": ""province=='Hà Nội' and property_type=='Căn hộ chung cư'"", ""groupby"": [""district"", ""ward""], ""agg"": ""count"", ""pick"": ""max""}",,
-M3,multihop,graph,Thủ Đức có bao nhiêu phường có tin đăng?,"{""query"": ""district=='Thủ Đức'"", ""value"": ""ward"", ""agg"": ""nunique""}",,
-M4,multihop,graph,"Trong các phường của Quận 7, phường nào có giá/m² trung bình cao nhất (ít nhất 10 tin)?","{""query"": ""district=='Quận 7'"", ""groupby"": [""ward""], ""value"": ""price_m2_mil"", ""agg"": ""mean"", ""pick"": ""max"", ""min_count"": 10}",,
-M5,multihop,graph,"Ngoài Hà Nội và Hồ Chí Minh, tỉnh nào có nhiều tin đăng nhất?","{""query"": ""province not in ['Hà Nội', 'Hồ Chí Minh']"", ""groupby"": [""province""], ""agg"": ""count"", ""pick"": ""max""}",,
-M6,multihop,graph,"Ở Đà Nẵng, quận nào có nhiều tin đăng đất nhất?","{""query"": ""province=='Đà Nẵng' and property_type=='Đất'"", ""groupby"": [""district""], ""agg"": ""count"", ""pick"": ""max""}",,
-U1,unanswerable,basic_rag,Giá căn hộ trên sao Hỏa hiện nay là bao nhiêu?,"{""unanswerable"": true}",,
-U2,unanswerable,graph,Giá căn hộ chung cư ở Quận 7 đã tăng bao nhiêu phần trăm so với năm 2020?,"{""unanswerable"": true}",,
-U3,unanswerable,graph,Giá căn hộ chung cư ở Thủ Đức năm 2030 sẽ là bao nhiêu?,"{""unanswerable"": true}",,
-U4,unanswerable,basic_rag,Chủ đầu tư Vinhomes đạt doanh thu bao nhiêu trong năm 2024?,"{""unanswerable"": true}",,
+L1,lookup,basic_rag,Khách sạn 36 phòng mặt tiền Hoàng Sa ở Quận 1 đang rao bán giá bao nhiêu?,"{""query"": ""listing_id in [10214]""}",[10214],
+L2,lookup,basic_rag,"Căn officetel 27m2 ở Lavida Plus, Quận 7 giá bao nhiêu?","{""query"": ""listing_id in [5228]""}",[5228],
+L3,lookup,basic_rag,Căn duplex 4 phòng ngủ 195m2 ở Sunshine City giá bao nhiêu?,"{""query"": ""listing_id in [1758]""}",[1758],
+L4,lookup,basic_rag,Penthouse Imperial Garden ở Thanh Xuân chính chủ bán có diện tích bao nhiêu?,"{""query"": ""listing_id in [564]""}",[564],
+L5,lookup,basic_rag,Căn hộ Landmark 81 ba phòng ngủ view sông đang chào bán giá bao nhiêu?,"{""query"": ""listing_id in [1766]""}",[1766],
+L6,lookup,basic_rag,"Nhà 6 tầng có thang máy ở Ngọa Long, Bắc Từ Liêm, ô tô đỗ cổng giá bao nhiêu?","{""query"": ""listing_id in [1]""}",[1],
+C1,constraint,graph,Liệt kê căn hộ chung cư 2 phòng ngủ ở Thủ Đức giá dưới 3 tỷ.,"{""query"": ""property_type=='Căn hộ chung cư' and district=='Thủ Đức' and bedrooms==2 and price<=3e9""}","[165, 212, 651, 685, 1132, 1159, 2062, 2897, 3102, 3532, 3861, 4081, 4413, 4724, 5366, 5729, 6306, 6409, 7012, 7168, 7388, 7572, 8500, 9124, 9161, 10217, 10432, 11213, 11360, 11787, 12001, 12313, 13205, 13674, 14485, 14865, 15041, 15492, 15519, 16691, 16871, 17346, 17730, 18756, 18792, 19294, 19414, 19943, 19950]",
+C2,constraint,graph,Căn hộ 2PN ở Quận 7 giá không quá 4 tỷ có những căn nào?,"{""query"": ""property_type=='Căn hộ chung cư' and district=='Quận 7' and bedrooms==2 and price<=4e9""}","[285, 984, 1918, 2254, 2589, 2937, 4220, 5173, 6027, 7063, 7768, 7904, 8475, 8509, 9193, 9355, 9368, 9474, 10241, 10289, 10838, 11071, 11144, 12762, 13020, 13589, 13810, 13886, 13952, 14371, 15003, 15088, 15821, 16941, 17314, 18219, 18575, 18672, 19819, 19845]",
+C3,constraint,graph,Tìm biệt thự hoặc nhà liền kề ở Hà Đông giá dưới 15 tỷ.,"{""query"": ""property_type=='Biệt thự/Nhà liền kề' and district=='Hà Đông' and price<=15e9""}","[2291, 3850, 4600, 6722, 8442, 9535, 9541, 11687, 12349, 14859, 17904, 19018, 19245]",
+C4,constraint,hybrid,Nhà ở Cầu Giấy dưới 10 tỷ có thang máy.,"{""query"": ""property_type=='Nhà' and district=='Cầu Giấy' and price<=10e9 and description.str.contains('thang máy', case=False, na=False)""}","[3894, 4032, 4262, 8506, 9645, 13054, 15443, 16880, 17283]",
+C5,constraint,hybrid,"Căn hộ ở Quận 7 có hồ bơi, giá dưới 5 tỷ.","{""query"": ""property_type=='Căn hộ chung cư' and district=='Quận 7' and price<=5e9 and description.str.contains('hồ bơi', case=False, na=False)""}","[342, 1918, 2937, 4175, 5464, 6027, 7063, 7768, 7904, 9720, 9748, 10289, 12762, 13018, 13020, 13846, 13952, 15003, 15088, 15821, 16941, 17282, 17314, 18575, 18672, 19845]",
+C6,constraint,hybrid,Nhà hẻm xe hơi ở Gò Vấp giá dưới 7 tỷ.,"{""query"": ""property_type=='Nhà' and district=='Gò Vấp' and price<=7e9 and description.str.contains('hẻm xe hơi', case=False, na=False)""}","[61, 79, 485, 610, 1012, 1070, 1171, 1641, 1930, 1951, 2696, 2909, 3141, 3223, 3534, 4250, 4276, 4403, 4568, 5128, 5809, 6268, 6879, 7043, 7345, 7555, 9191, 9277, 10239, 10264, 10294, 10430, 11428, 11950, 12356, 12713, 14141, 14317, 14582, 14632, 14662, 15529, 16075, 16311, 17127, 17181, 17278, 17483, 18527, 19569, 19588, 19820]",
+A1,aggregate,graph,"Ở Hồ Chí Minh, quận nào có giá/m² trung bình thấp nhất (chỉ tính quận có ít nhất 20 tin)?","{""query"": ""province=='Hồ Chí Minh'"", ""groupby"": [""district""], ""value"": ""price_m2_mil"", ""agg"": ""mean"", ""pick"": ""min"", ""min_count"": 20}",[],Củ Chi (19.98)
+A2,aggregate,graph,"Ở Hà Nội, quận nào có giá/m² trung bình cao nhất (chỉ tính quận có ít nhất 20 tin)?","{""query"": ""province=='Hà Nội'"", ""groupby"": [""district""], ""value"": ""price_m2_mil"", ""agg"": ""mean"", ""pick"": ""max"", ""min_count"": 20}",[],Hoàn Kiếm (528.96)
+A3,aggregate,graph,Có bao nhiêu tin đăng bán đất ở Đà Nẵng?,"{""query"": ""property_type=='Đất' and province=='Đà Nẵng'"", ""agg"": ""count""}",[],506
+A4,aggregate,graph,Giá trung vị của căn hộ chung cư ở Thủ Đức là bao nhiêu tỷ?,"{""query"": ""property_type=='Căn hộ chung cư' and district=='Thủ Đức'"", ""value"": ""price_bn"", ""agg"": ""median""}",[],5.90
+A5,aggregate,graph,Diện tích trung bình của nhà ở Gò Vấp là bao nhiêu m²?,"{""query"": ""property_type=='Nhà' and district=='Gò Vấp'"", ""value"": ""area"", ""agg"": ""mean""}",[],99.58
+A6,aggregate,graph,"Ở Bình Dương, loại hình bất động sản nào có nhiều tin đăng nhất?","{""query"": ""province=='Bình Dương'"", ""groupby"": [""property_type""], ""agg"": ""count"", ""pick"": ""max""}",[],Đất (314)
+M1,multihop,graph,Năm quận nào của Hồ Chí Minh có nhiều tin đăng nhất?,"{""query"": ""province=='Hồ Chí Minh'"", ""groupby"": [""district""], ""agg"": ""count"", ""pick"": ""top5""}",[],Thủ Đức (1367); Gò Vấp (545); Bình Thạnh (514); Quận 7 (498); Tân Bình (468)
+M2,multihop,graph,"Ở Hà Nội, phường nào có nhiều tin căn hộ chung cư nhất?","{""query"": ""province=='Hà Nội' and property_type=='Căn hộ chung cư'"", ""groupby"": [""district"", ""ward""], ""agg"": ""count"", ""pick"": ""max""}",[],"Nam Từ Liêm, Tây Mỗ (68)"
+M3,multihop,graph,Thủ Đức có bao nhiêu phường có tin đăng?,"{""query"": ""district=='Thủ Đức'"", ""value"": ""ward"", ""agg"": ""nunique""}",[],34
+M4,multihop,graph,"Trong các phường của Quận 7, phường nào có giá/m² trung bình cao nhất (ít nhất 10 tin)?","{""query"": ""district=='Quận 7'"", ""groupby"": [""ward""], ""value"": ""price_m2_mil"", ""agg"": ""mean"", ""pick"": ""max"", ""min_count"": 10}",[],Tân Quy (186.54)
+M5,multihop,graph,"Ngoài Hà Nội và Hồ Chí Minh, tỉnh nào có nhiều tin đăng nhất?","{""query"": ""province not in ['Hà Nội', 'Hồ Chí Minh']"", ""groupby"": [""province""], ""agg"": ""count"", ""pick"": ""max""}",[],Đà Nẵng (1055)
+M6,multihop,graph,"Ở Đà Nẵng, quận nào có nhiều tin đăng đất nhất?","{""query"": ""province=='Đà Nẵng' and property_type=='Đất'"", ""groupby"": [""district""], ""agg"": ""count"", ""pick"": ""max""}",[],Ngũ Hành Sơn (166)
+U1,unanswerable,basic_rag,Giá căn hộ trên sao Hỏa hiện nay là bao nhiêu?,"{""unanswerable"": true}",[],
+U2,unanswerable,graph,Giá căn hộ chung cư ở Quận 7 đã tăng bao nhiêu phần trăm so với năm 2020?,"{""unanswerable"": true}",[],
+U3,unanswerable,graph,Giá căn hộ chung cư ở Thủ Đức năm 2030 sẽ là bao nhiêu?,"{""unanswerable"": true}",[],
+U4,unanswerable,basic_rag,Chủ đầu tư Vinhomes đạt doanh thu bao nhiêu trong năm 2024?,"{""unanswerable"": true}",[],
