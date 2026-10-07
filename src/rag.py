@@ -2,6 +2,7 @@
 
 import re
 import threading
+from dataclasses import replace
 from time import perf_counter
 
 import numpy as np
@@ -265,10 +266,15 @@ FILTER_DROPPED_PROMPT = ("LƯU Ý: không có tin nào thoả mọi điều ki�
                          "không thoả trước khi giới thiệu tin.")
 
 
+_FAKE_TAG = re.compile(r"<\s*(/?)\s*tai_lieu\s*>", re.I)
+
+
 def wrap_documents(contexts: list[str]) -> str:
     """Bọc từng tài liệu trong thẻ để LLM tách dữ liệu khỏi chỉ thị (chống prompt injection từ tin đăng).
-    Thẻ đóng giả mạo trong nội dung bị vô hiệu hoá để tài liệu không thoát ra ngoài thẻ."""
-    return "\n\n".join(f"<tai_lieu>\n{c.replace('</tai_lieu>', '</ tai_lieu>')}\n</tai_lieu>" for c in contexts)
+    Thẻ mở/đóng giả mạo trong nội dung (mọi kiểu hoa thường, khoảng trắng) bị đổi thành [tai_lieu]
+    để tài liệu không thoát ra ngoài thẻ."""
+    safe = (_FAKE_TAG.sub(r"[\1tai_lieu]", c) for c in contexts)
+    return "\n\n".join(f"<tai_lieu>\n{c}\n</tai_lieu>" for c in safe)
 
 
 def build_prompt(question: str, contexts: list[str], note: str = "") -> str:
@@ -276,8 +282,18 @@ def build_prompt(question: str, contexts: list[str], note: str = "") -> str:
     return f"{FILTER_DROPPED_PROMPT}\n\n{prompt}" if note == FILTER_DROPPED else prompt
 
 
+_CITATION = re.compile(r"[\[【［]\s*Tin\s*#\s*(\d+)\s*[\]】］]")
+
+
+def normalize_citations(answer: str) -> str:
+    """Đưa trích dẫn về đúng dạng [Tin#ID]: mô hình đôi khi viết 【Tin#ID】 hoặc [Tin # ID], khi đó
+    giao diện không tạo được liên kết tới thẻ tin nguồn."""
+    return _CITATION.sub(r"[Tin#\1]", answer)
+
+
 def generate(question: str, contexts: list[str], note: str = "", system: str = ANSWER_SYSTEM) -> LLMResult:
-    return ask_llm(build_prompt(question, contexts, note), system=system)
+    result = ask_llm(build_prompt(question, contexts, note), system=system)
+    return replace(result, text=normalize_citations(result.text))
 
 
 def cited_ids(answer: str) -> list[int]:

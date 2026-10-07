@@ -14,7 +14,7 @@ from src.config import (CYPHER_MAX_ROWS, CYPHER_TIMEOUT, LOAD_CYPHER, NEO4J_PASS
                         NEO4J_USER)
 from src.data import text
 from src.llm import ask_llm
-from src.rag import check_citations, wrap_documents
+from src.rag import check_citations, normalize_citations, wrap_documents
 
 _driver = None
 _uri = NEO4J_URI
@@ -508,9 +508,10 @@ def ask_graph(question: str) -> dict:
     rows = t2c["rows"]
     context = f"Cypher:\n{t2c['cypher']}\n\nKẾT QUẢ TRUY VẤN ({len(rows)} dòng):\n{rows_context(rows)}"
     answer = ask_llm(f"{wrap_documents([context])}\n\nCÂU HỎI: {question}", system=GRAPH_ANSWER_SYSTEM)
+    reply = normalize_citations(answer.text)
     sources = rows["listing_id"].dropna().astype(int).tolist() if "listing_id" in rows else []
-    cited, unsupported = check_citations(answer.text, sources)
-    return dict(system="graph", question=question, answer=answer.text, sources=sources,
+    cited, unsupported = check_citations(reply, sources)
+    return dict(system="graph", question=question, answer=reply, sources=sources,
                 cited=cited, unsupported_citations=unsupported,
                 contexts=[context], cypher=t2c["cypher"], error=t2c["error"],
                 attempts=len(t2c["attempts"]), n_rows=len(rows), latency=perf_counter() - start,
