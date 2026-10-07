@@ -2,7 +2,8 @@
 
 Trợ lý hỏi đáp thị trường bất động sản Việt Nam trên dữ liệu tin đăng
 [tinixai/vietnam-real-estates](https://huggingface.co/datasets/tinixai/vietnam-real-estates).
-Dự án so sánh ba cách trả lời trên cùng dữ liệu và cùng bộ câu hỏi:
+Dự án so sánh ba cách trả lời trên cùng dữ liệu và cùng bộ câu hỏi, cùng với baseline **LLM only**
+(cùng mô hình, không có ngữ cảnh) để đo truy xuất thêm được gì:
 
 | Hệ thống | Cách tìm bằng chứng | Mạnh ở |
 | --- | --- | --- |
@@ -78,7 +79,7 @@ Câu trả lời được kiểm trích dẫn: mọi `[Tin#ID]` không nằm tro
 
 [notebooks/](notebooks/) dựng theo `Outline_chia_cell_code_RAG_KnowledgeGraph_BDS.pdf`: 5 notebook,
 51 cell, gồm 19 LIVE (chạy trước lớp), 22 CACHE (chạy sẵn, trên lớp chỉ đọc từ đĩa) và 10 ẨN (gọi hàm
-trong `src/`). Mỗi cell code có một cell markdown phía trên ghi mã, nhãn, slide, tiêu đề là câu kết luận
+trong `src/`). Mỗi cell code có một cell markdown phía trên ghi mã, nhãn, tiêu đề là câu kết luận
 và mục tiêu. Cell toy có `assert` khớp số trên slide. Chỗ còn chờ số liệu thật ghi `[ĐIỀN SAU]`.
 
 | Notebook | Người | Nội dung | Đầu ra |
@@ -175,8 +176,12 @@ Basic RAG, Graph và Hybrid. Nhờ baseline này, ta đo được RAG thêm đư
 nên ở câu tra cứu/ràng buộc nó luôn được 0 điểm.
 
 Tin đăng do người dùng tự nhập nên không được coi là đáng tin. `build_prompt` bọc từng tài liệu trong
-`<tai_lieu>…</tai_lieu>` và vô hiệu hoá thẻ đóng giả mạo trong nội dung. System prompt yêu cầu coi nội dung trong thẻ
-là dữ liệu và bỏ qua mọi chỉ thị nằm trong đó (chống prompt injection).
+`<tai_lieu>…</tai_lieu>` và vô hiệu hoá thẻ mở/đóng giả mạo trong nội dung (mọi kiểu hoa thường, khoảng trắng).
+System prompt yêu cầu coi nội dung trong thẻ là dữ liệu và bỏ qua mọi chỉ thị nằm trong đó (chống prompt injection).
+Trích dẫn mô hình viết lệch dạng (`【Tin#ID】`, `[Tin # ID]`) được đưa về `[Tin#ID]` để giao diện tạo liên kết.
+
+Phân tích lỗi (P4-13) bỏ baseline LLM only, vì nó sai câu tra cứu/ràng buộc theo thiết kế. Câu bị lỗi khi chạy
+(exception, câu trả lời rỗng) vẫn được 0 điểm nhưng được ghi nguyên nhân "lỗi khi chạy", không bị coi là bịa.
 
 Notebook 04 còn tính Faithfulness, Answer Relevancy và Context Precision theo định nghĩa của RAGAS
 (chấm bằng LLM giám khảo). Nó cũng lập bảng độ chính xác theo loại câu × hệ thống, chi phí, độ trễ, tỷ lệ câu trả lời
@@ -221,8 +226,9 @@ Test không cần mạng, LLM, Qdrant hay Neo4j. Chúng kiểm tra:
 - Chunk theo ngân sách token, bộ lọc và đơn vị tiền (cả "1 tỷ 50 triệu", "3.000.000.000", chuỗi không có số).
 - Nạp đồ thị: khoá địa danh theo cấp cha.
 - Chặn lệnh ghi/quản trị, thêm `LIMIT`, cơ chế thử lại của Text2Cypher, prompt lui về mặc định khi mất Neo4j.
-- Hybrid search một lượt Qdrant, kết quả rỗng vẫn đủ cột, kiểm trích dẫn, báo bỏ lọc cho LLM.
-- Đường lui của Hybrid (đồ thị rỗng hoặc Neo4j lỗi), cách tính token, luật tính đáp án chuẩn, căn độ dài phán quyết RAGAS.
+- Hybrid search một lượt Qdrant, kết quả rỗng vẫn đủ cột, kiểm và chuẩn hoá trích dẫn, báo bỏ lọc cho LLM,
+  thẻ `<tai_lieu>` giả mạo trong tin đăng.
+- Đường lui của Hybrid (đồ thị rỗng hoặc Neo4j lỗi), cách tính token, luật tính đáp án chuẩn, thang điểm 0–2, phân tích lỗi, căn độ dài phán quyết RAGAS.
 - Khung notebook: đúng 51 cell, 19 LIVE · 22 CACHE · 10 ẨN, không lộ khoá API hay số điện thoại trong output.
 - Route HTTP của chatbot, header bảo mật, và các lớp chặn: Content-Type, kích thước body, độ dài câu hỏi,
   tần suất, API key, không lộ lỗi nội bộ.
