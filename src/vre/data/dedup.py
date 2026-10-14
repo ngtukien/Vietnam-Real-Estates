@@ -65,7 +65,7 @@ def build_dup_map(con: duckdb.DuckDBPyConnection) -> None:
                     WHEN r.r1 = 1 THEN 'prefix_dup' ELSE 'exact_dup' END AS reason
         FROM interim i
         LEFT JOIN rep1 r USING (source_shard, source_row)
-        LEFT JOIN lid_map m ON m.listing_id = i.listing_id AND i.drop_reason IS NULL""")
+        LEFT JOIN lid_map m ON m.listing_id = i.listing_id""")  # điều kiện drop_reason để ở CASE: giữ hash join
     con.execute("""CREATE OR REPLACE TEMP VIEW kept AS
         SELECT i.*, n.n_raw_rows FROM interim i
         JOIN dup_map d USING (source_shard, source_row)

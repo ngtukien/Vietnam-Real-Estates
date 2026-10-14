@@ -115,7 +115,10 @@ def run(settings: Settings) -> dict:
     out = interim_dir(settings)
     out.mkdir(parents=True, exist_ok=True)
     with ProcessPoolExecutor(max_workers=settings.ingest_workers, mp_context=mp.get_context("spawn")) as pool:
-        futures = [pool.submit(process_shard, s, str(settings.raw_dir), str(out)) for s in range(N_SHARDS)]
+        # Resume: shard trung gian đã ghi xong (os.replace) được dùng lại; xoá data/interim/ để làm lại từ đầu.
+        todo = [s for s in range(N_SHARDS) if not (out / f"shard_{s:04d}.parquet").is_file()]
+        print(f"ingest: {N_SHARDS - len(todo)} shard trung gian dùng lại, {len(todo)} shard cần xử lý", flush=True)
+        futures = [pool.submit(process_shard, s, str(settings.raw_dir), str(out)) for s in todo]
         for fut in futures:
             print("ingest shard:", fut.result(), flush=True)
     con = duck.connect(settings, views=False)
