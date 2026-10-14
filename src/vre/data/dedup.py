@@ -22,6 +22,9 @@ PRICE_FIXED = (0.05, 2000.0)  # tr/m²
 AREA_P = (0.005, 0.995)
 AREA_FIXED = (10.0, 10000.0)  # m²
 ROW_GROUP = 100_000
+# cột nhẹ của `flagged` (không có title/description/amenities): đủ cho outlier, cụm SimHash và ingest_report
+LIGHT_COLUMNS = ("source_shard, source_row, listing_id, province, property_type, deal_type, price_vnd, "
+                 "price_fixed_thousand, area_m2, ward, street, project, bedrooms, simhash, simhash_valid")
 CLEAN_COLUMNS = """listing_id, dup_cluster_id, n_raw_rows::INTEGER AS n_raw_rows, source_shard::SMALLINT AS source_shard,
   source_row::INTEGER AS source_row, title, description, property_type, deal_type, province, province_2025, district, ward,
   street, project, price_vnd, price_fixed_thousand, area_m2, floors::SMALLINT AS floors, frontage_m, depth_m, road_width_m,
@@ -76,7 +79,7 @@ def build_dup_map(con: duckdb.DuckDBPyConnection) -> None:
 
 def flag_outliers(con: duckdb.DuckDBPyConnection) -> None:
     con.execute(f"""CREATE OR REPLACE TEMP TABLE flagged AS
-        WITH k AS (SELECT *, CASE WHEN price_vnd IS NOT NULL AND area_m2 IS NOT NULL
+        WITH k AS (SELECT {LIGHT_COLUMNS}, CASE WHEN price_vnd IS NOT NULL AND area_m2 IS NOT NULL
                                   THEN price_vnd / area_m2 / 1e6 END AS pm2 FROM kept),
         pg AS (SELECT deal_type, property_type, province, count(pm2) AS n,
                       quantile_cont(pm2, {PRICE_P[0]}) AS lo, quantile_cont(pm2, {PRICE_P[1]}) AS hi
@@ -116,7 +119,11 @@ def _copy(con: duckdb.DuckDBPyConnection, query: str, path: Path) -> None:
 
 def write_outputs(con: duckdb.DuckDBPyConnection, clean_path: Path, dup_map_path: Path) -> None:
     _copy(con, "SELECT * FROM dup_map ORDER BY source_shard, source_row", dup_map_path)
-    _copy(con, f"""SELECT {CLEAN_COLUMNS} FROM flagged f JOIN clusters_df c USING (listing_id)
+    # Văn bản đọc thẳng từ parquet trung gian lúc ghi; `flagged` chỉ giữ cột nhẹ (bộ nhớ có giới hạn).
+    _copy(con, f"""SELECT {CLEAN_COLUMNS} FROM (
+                     SELECT k.*, f.is_price_outlier, f.is_area_outlier, c.dup_cluster_id FROM kept k
+                     JOIN flagged f USING (source_shard, source_row)
+                     JOIN clusters_df c ON c.listing_id = k.listing_id)
                    ORDER BY listing_id""", clean_path)
 
 
