@@ -95,9 +95,9 @@ def _small_int(values: pd.Series) -> pd.Series:
     return values.where(values <= SMALLINT_MAX).round().astype("Int16")
 
 
-def clean_frame(raw: pd.DataFrame, shard: int) -> pd.DataFrame:
+def clean_frame(raw: pd.DataFrame, shard: int, row_offset: int = 0) -> pd.DataFrame:
     """Bảng trung gian của một shard: định danh + cột sạch + `drop_reason` (null nếu giữ lại)."""
-    out = pd.DataFrame({"source_shard": np.int16(shard), "source_row": np.arange(len(raw), dtype=np.int32)})
+    out = pd.DataFrame({"source_shard": np.int16(shard), "source_row": np.arange(row_offset, row_offset + len(raw), dtype=np.int32)})
     name_norm, desc_norm = norm(raw["name"]), norm(raw["description"])
     out["listing_id"], out["key_hash2"] = listing_ids(name_norm, desc_norm)
     out["prefix_key"] = prefix_keys(raw["name"], raw["description"])

@@ -28,6 +28,7 @@ RAW_COLUMNS = ["name", "description", "property_type_name", "province_name", "di
                "project_name", "price", "area", "floor_count", "frontage_width", "house_depth", "road_width", "bedroom_count",
                "bathroom_count", "house_direction", "balcony_direction", "published_at"]
 N_SHARDS = 10
+BATCH_ROWS = 50_000  # bộ nhớ mỗi worker có giới hạn (8 worker chạy song song)
 BENCH_SOURCE = Path(".cache") / "scratch" / "bench_final.jsonl"
 MISSING_COLS = ("ward", "street", "project", "bedrooms")
 
@@ -42,19 +43,30 @@ def peak_rss_gb() -> float:
 
 
 def process_shard(shard: int, raw_dir: str, out_dir: str) -> dict:
-    """Một shard → parquet trung gian (ghi .tmp rồi os.replace). Chạy trong tiến trình con."""
+    """Một shard → parquet trung gian theo lô BATCH_ROWS dòng (bộ nhớ có giới hạn); ghi .tmp rồi os.replace."""
     t0 = time.perf_counter()
-    raw = pq.read_table(Path(raw_dir) / f"shard_{shard:04d}.parquet", columns=RAW_COLUMNS).to_pandas()
-    frame = clean_frame(raw, shard)
-    frame["simhash"], frame["simhash_valid"] = simhashes(norm(raw["description"]))
-    del raw
-    gc.collect()
+    source = pq.ParquetFile(Path(raw_dir) / f"shard_{shard:04d}.parquet")
     path = Path(out_dir) / f"shard_{shard:04d}.parquet"
     tmp = path.with_name(path.name + ".tmp")
-    pq.write_table(pa.Table.from_pandas(frame, preserve_index=False), tmp, compression="zstd")
+    writer: pq.ParquetWriter | None = None
+    rows = 0
+    try:
+        for batch in source.iter_batches(batch_size=BATCH_ROWS, columns=RAW_COLUMNS):
+            raw = batch.to_pandas()
+            frame = clean_frame(raw, shard, row_offset=rows)
+            frame["simhash"], frame["simhash_valid"] = simhashes(norm(raw["description"]))
+            table = pa.Table.from_pandas(frame, preserve_index=False)
+            if writer is None:
+                schema = pa.schema([f.with_type(pa.string()) if pa.types.is_null(f.type) else f for f in table.schema])
+                writer = pq.ParquetWriter(tmp, schema, compression="zstd")
+            writer.write_table(table.cast(writer.schema))
+            rows += len(frame)
+            del raw, frame, table
+            gc.collect()
+    finally:
+        if writer is not None:
+            writer.close()
     os.replace(tmp, path)
-    rows = len(frame)
-    del frame
     return {"shard": shard, "rows": rows, "seconds": round(time.perf_counter() - t0, 1), "peak_rss_gb": round(peak_rss_gb(), 2)}
 
 
