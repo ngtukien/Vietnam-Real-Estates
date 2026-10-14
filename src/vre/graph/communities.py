@@ -16,14 +16,21 @@ def modularity(edges, comms) -> float:
     return Q
 
 
-def ward_profiles(df: pd.DataFrame, min_listings: int = 8) -> pd.DataFrame:
-    """Hồ sơ mỗi phường: giá/m² trung vị, số tin (log) và tỷ lệ từng loại hình."""
-    d = df.dropna(subset=["province", "district", "ward", "price_m2_mil", "property_type"])
-    keys = ["province", "district", "ward"]
-    sizes = d.groupby(keys).size()
-    prof = d.groupby(keys)["price_m2_mil"].median().to_frame("median_price_m2")
+WARD_KEYS = ["province", "district", "ward"]
+
+
+def ward_profiles(agg: pd.DataFrame, min_listings: int = 8) -> pd.DataFrame:
+    """Hồ sơ mỗi phường: giá/m² trung vị, số tin (log) và tỷ lệ từng loại hình.
+
+    `agg` là bảng tổng hợp đã tính sẵn ở DuckDB (không nạp từng tin vào pandas), một dòng mỗi
+    `(province, district, ward, property_type)` với cột `n` (số tin của loại đó trong phường) và
+    `median_price_m2` (giá/m² trung vị của CẢ phường, lặp lại trên mọi dòng của phường đó)."""
+    d = agg.dropna(subset=[*WARD_KEYS, "property_type", "median_price_m2"])
+    sizes = d.groupby(WARD_KEYS)["n"].sum()
+    prof = d.groupby(WARD_KEYS)["median_price_m2"].first().to_frame("median_price_m2")
     prof["log_n"] = np.log1p(sizes)
-    prof = prof.join(pd.crosstab([d[k] for k in keys], d["property_type"], normalize="index"))
+    counts = d.pivot_table(index=WARD_KEYS, columns="property_type", values="n", aggfunc="sum", fill_value=0)
+    prof = prof.join(counts.div(sizes, axis=0))
     return prof[sizes >= min_listings]
 
 
