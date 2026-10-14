@@ -1,0 +1,150 @@
+[
+  {
+    "model": "BAAI/bge-m3",
+    "params_m": 568,
+    "dim": 1024,
+    "corpus": 20000,
+    "queries": 1000,
+    "docs_per_s": 120.3,
+    "hours_2_8m_chunks": 6.47,
+    "peak_vram_gb": 1.61,
+    "recall_at_1": 0.626,
+    "recall_at_10": 0.782,
+    "mrr_at_10": 0.6809,
+    "min_free_commit_gb": 7.1,
+    "token_budget": 16384,
+    "sweep": {
+      "16384": {
+        "docs_per_s": 162.2,
+        "peak_vram_gb": 1.56
+      },
+      "32768": {
+        "docs_per_s": 139.6,
+        "peak_vram_gb": 1.98
+      },
+      "65536": {
+        "docs_per_s": 127.9,
+        "peak_vram_gb": 2.79
+      },
+      "131072": {
+        "docs_per_s": 111.4,
+        "peak_vram_gb": 4.45
+      }
+    },
+    "gpu_util_avg": 93.1,
+    "vram_used_max_mb": 2733.0,
+    "power_avg_w": 40.2,
+    "sm_clock_avg_mhz": 1279
+  },
+  {
+    "model": "intfloat/multilingual-e5-large",
+    "params_m": 560,
+    "dim": 1024,
+    "corpus": 20000,
+    "queries": 1000,
+    "docs_per_s": 98.8,
+    "hours_2_8m_chunks": 7.87,
+    "peak_vram_gb": 2.0,
+    "recall_at_1": 0.656,
+    "recall_at_10": 0.816,
+    "mrr_at_10": 0.711,
+    "min_free_commit_gb": 6.5,
+    "token_budget": 32768,
+    "sweep": {
+      "16384": {
+        "docs_per_s": 102.0,
+        "peak_vram_gb": 1.55
+      },
+      "32768": {
+        "docs_per_s": 104.3,
+        "peak_vram_gb": 1.97
+      },
+      "65536": {
+        "docs_per_s": 97.5,
+        "peak_vram_gb": 2.78
+      },
+      "131072": {
+        "docs_per_s": 99.4,
+        "peak_vram_gb": 4.42
+      }
+    },
+    "gpu_util_avg": 91.4,
+    "vram_used_max_mb": 3449.0,
+    "power_avg_w": 35.1,
+    "sm_clock_avg_mhz": 1131
+  },
+  {
+    "model": "intfloat/multilingual-e5-base",
+    "params_m": 278,
+    "dim": 768,
+    "corpus": 20000,
+    "queries": 1000,
+    "docs_per_s": 429.6,
+    "hours_2_8m_chunks": 1.81,
+    "peak_vram_gb": 0.92,
+    "recall_at_1": 0.589,
+    "recall_at_10": 0.759,
+    "mrr_at_10": 0.6429,
+    "min_free_commit_gb": 8.5,
+    "token_budget": 16384,
+    "sweep": {
+      "16384": {
+        "docs_per_s": 426.5,
+        "peak_vram_gb": 0.89
+      },
+      "32768": {
+        "docs_per_s": 420.0,
+        "peak_vram_gb": 1.21
+      },
+      "65536": {
+        "docs_per_s": 399.4,
+        "peak_vram_gb": 1.82
+      },
+      "131072": {
+        "docs_per_s": 361.2,
+        "peak_vram_gb": 3.05
+      }
+    },
+    "gpu_util_avg": 92.6,
+    "vram_used_max_mb": 1971.0,
+    "power_avg_w": 44.8,
+    "sm_clock_avg_mhz": 1406
+  },
+  {
+    "model": "intfloat/multilingual-e5-small",
+    "params_m": 118,
+    "dim": 384,
+    "corpus": 20000,
+    "queries": 1000,
+    "docs_per_s": 802.3,
+    "hours_2_8m_chunks": 0.97,
+    "peak_vram_gb": 0.42,
+    "recall_at_1": 0.591,
+    "recall_at_10": 0.769,
+    "mrr_at_10": 0.6494,
+    "min_free_commit_gb": 8.5,
+    "token_budget": 16384,
+    "sweep": {
+      "16384": {
+        "docs_per_s": 726.1,
+        "peak_vram_gb": 0.41
+      },
+      "32768": {
+        "docs_per_s": 690.3,
+        "peak_vram_gb": 0.57
+      },
+      "65536": {
+        "docs_per_s": 678.3,
+        "peak_vram_gb": 0.89
+      },
+      "131072": {
+        "docs_per_s": 626.8,
+        "peak_vram_gb": 1.52
+      }
+    },
+    "gpu_util_avg": 46.8,
+    "vram_used_max_mb": 1447.0,
+    "power_avg_w": 42.6,
+    "sm_clock_avg_mhz": 1766
+  }
+]
