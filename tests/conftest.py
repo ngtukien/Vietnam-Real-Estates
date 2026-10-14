@@ -41,7 +41,10 @@ def raw_frame():
     ]
     cols = ["name", "description", "property_type_name", "province_name", "district_name", "ward_name", "price", "area"]
     df = pd.DataFrame(rows, columns=cols)
-    df["street_name"] = None
-    df["project_name"] = None
+    for col in ("street_name", "project_name", "house_direction", "balcony_direction"):
+        df[col] = None
+    for col in ("floor_count", "frontage_width", "house_depth", "road_width", "bedroom_count", "bathroom_count"):
+        df[col] = float("nan")
+    df.loc[4, "bedroom_count"] = 5.0
     df["published_at"] = "2025-06-01T05:12:56.941000"
     return df
