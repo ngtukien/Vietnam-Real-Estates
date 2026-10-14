@@ -1,26 +1,25 @@
-"""Gọi LLM (mặc định Groq qua OpenAI SDK; tuỳ chọn OpenAI hoặc Claude, chọn bằng LLM_PROVIDER), có cache đĩa
-để cell CACHE không gọi lại mô hình trên lớp.
+"""Gọi LLM (mặc định Groq qua OpenAI SDK; tuỳ chọn OpenAI hoặc Claude, chọn bằng `Settings.llm_provider`),
+có cache đĩa (`vre.llm.cache`). Chuyển nguyên từ `src/llm.py`.
 
-Khoá API đọc từ GROQ_API_KEY, OPENAI_API_KEY hoặc ANTHROPIC_API_KEY (hoặc profile `ant auth login`);
-không ghi trong notebook.
+Khoá API đọc từ Settings (`GROQ_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`); Claude còn nhận
+`ANTHROPIC_AUTH_TOKEN` (profile `ant auth login`).
 """
 
-import hashlib
+from __future__ import annotations
+
 import json
 import os
 import threading
-from contextlib import contextmanager
 from dataclasses import dataclass
 
 from pydantic import BaseModel
 
-from src.config import CACHE_DIR, LLM_EFFORT, LLM_FALLBACK_MODELS, LLM_MODEL, LLM_PROVIDER, LLM_TIMEOUT
+from vre.config import get_settings
+from vre.llm import cache
 
-LLM_CACHE = CACHE_DIR / "llm"
 _client = None
 _client_lock = threading.Lock()  # chatbot gọi từ nhiều luồng: chỉ tạo một client
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
-_read_cache = True
 
 
 @dataclass
@@ -41,21 +40,21 @@ def client():
 
 
 def _new_client():
-    if LLM_PROVIDER == "anthropic":
-        if not (os.getenv("ANTHROPIC_API_KEY") or os.getenv("ANTHROPIC_AUTH_TOKEN")):
+    s = get_settings()
+    if s.llm_provider == "anthropic":
+        if not (s.anthropic_api_key or os.getenv("ANTHROPIC_AUTH_TOKEN")):
             raise RuntimeError("Thiếu xác thực Claude: đặt ANTHROPIC_API_KEY trong .env hoặc chạy `ant auth login`.")
         import anthropic
-        return anthropic.Anthropic(timeout=LLM_TIMEOUT, max_retries=2)
+        return anthropic.Anthropic(api_key=s.anthropic_api_key or None, timeout=s.llm_timeout, max_retries=2)
     import openai
-    if LLM_PROVIDER == "openai":
-        if not os.getenv("OPENAI_API_KEY"):
+    if s.llm_provider == "openai":
+        if not s.openai_api_key:
             raise RuntimeError("Thiếu xác thực OpenAI: đặt OPENAI_API_KEY trong .env.")
-        return openai.OpenAI(timeout=LLM_TIMEOUT, max_retries=2)
-    if not os.getenv("GROQ_API_KEY"):
+        return openai.OpenAI(api_key=s.openai_api_key, timeout=s.llm_timeout, max_retries=2)
+    if not s.groq_api_key:
         raise RuntimeError("Thiếu xác thực Groq: đặt GROQ_API_KEY trong .env.")
     # Groq giới hạn token/phút theo từng mô hình: SDK tự chờ và thử lại khi gặp 429.
-    return openai.OpenAI(api_key=os.environ["GROQ_API_KEY"], base_url=GROQ_BASE_URL, timeout=LLM_TIMEOUT,
-                         max_retries=4)
+    return openai.OpenAI(api_key=s.groq_api_key, base_url=GROQ_BASE_URL, timeout=s.llm_timeout, max_retries=4)
 
 
 def _close_objects(node):
@@ -80,33 +79,23 @@ def _schema(output: type[BaseModel] | dict | None) -> dict | None:
     return _close_objects(output.model_json_schema())
 
 
-@contextmanager
-def fresh():
-    """Trong khối này mọi lượt gọi đều đến API (vẫn ghi cache): dùng khi đo độ trễ và token thật."""
-    global _read_cache
-    _read_cache = False
-    try:
-        yield
-    finally:
-        _read_cache = True
-
-
 def ask_llm(prompt: str, system: str = "", output: type[BaseModel] | dict | None = None,
-            effort: str = LLM_EFFORT, max_tokens: int = 4000, use_cache: bool = True,
+            effort: str | None = None, max_tokens: int = 4000, use_cache: bool = True,
             model: str | None = None) -> LLMResult:
     """Một lượt hỏi LLM. `output` (pydantic model hoặc JSON schema) bật structured output;
     khi đó `data` là dict đã parse. Cùng (model, system, prompt, schema) trả lại kết quả đã lưu.
-    `model` mặc định là LLM_MODEL (eval.py dùng JUDGE_MODEL để chấm)."""
-    model = model or LLM_MODEL
+    `model` mặc định `Settings.llm_model` (eval dùng `Settings.judge_model`); `effort` mặc định `Settings.llm_effort`."""
+    s = get_settings()
+    model = model or s.llm_model
+    effort = effort or s.llm_effort
     schema = _schema(output)
-    key = hashlib.sha256(json.dumps([model, effort, system, prompt, schema],
-                                    ensure_ascii=False, sort_keys=True).encode()).hexdigest()[:24]
-    path = LLM_CACHE / f"{key}.json"
-    if use_cache and _read_cache and path.exists():
-        saved = json.loads(path.read_text(encoding="utf-8"))
-        return LLMResult(**{**saved, "cached": True})
+    key = cache.cache_key(model, effort, system, prompt, schema)
+    if use_cache:
+        saved = cache.read(key)
+        if saved is not None:
+            return LLMResult(**{**saved, "cached": True})
 
-    ask = _ask_anthropic if LLM_PROVIDER == "anthropic" else _ask_openai
+    ask = _ask_anthropic if s.llm_provider == "anthropic" else _ask_openai
     text, input_tokens, output_tokens, truncated = ask(model, prompt, system, schema, effort, max_tokens)
     if truncated and schema:
         raise RuntimeError(f"Đầu ra có cấu trúc bị cắt ở max_tokens={max_tokens}")
@@ -114,11 +103,7 @@ def ask_llm(prompt: str, system: str = "", output: type[BaseModel] | dict | None
     if isinstance(output, type) and issubclass(output, BaseModel):
         data = output.model_validate(data).model_dump()
     result = LLMResult(text, data, input_tokens, output_tokens, False)
-    LLM_CACHE.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(f".{threading.get_ident()}.tmp")
-    tmp.write_text(json.dumps({k: v for k, v in result.__dict__.items() if k != "cached"},
-                              ensure_ascii=False), encoding="utf-8")
-    tmp.replace(path)  # ghi nguyên tử: luồng khác không bao giờ đọc phải file dở
+    cache.write(key, {k: v for k, v in result.__dict__.items() if k != "cached"})
     return result
 
 
@@ -150,7 +135,7 @@ def _ask_openai(model: str, prompt: str, system: str, schema: dict | None, effor
         request["response_format"] = {"type": "json_schema",
                                       "json_schema": {"name": "output", "schema": schema, "strict": True}}
     import openai
-    models = list(dict.fromkeys([model, *LLM_FALLBACK_MODELS]))
+    models = list(dict.fromkeys([model, *get_settings().llm_fallback_list]))
     response = None
     for i, name in enumerate(models):
         for attempt in range(3):

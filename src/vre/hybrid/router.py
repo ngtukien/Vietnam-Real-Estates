@@ -1,4 +1,6 @@
-"""GraphRAG lai (Notebook 4): router chọn nguồn, ask_hybrid gộp ngữ cảnh và lui về Basic RAG khi cần."""
+"""GraphRAG lai: router chọn nguồn, ask_hybrid gộp ngữ cảnh và lui về Basic RAG khi cần (chuyển nguyên từ `src/hybrid.py`)."""
+
+from __future__ import annotations
 
 import logging
 from concurrent.futures import ThreadPoolExecutor
@@ -7,10 +9,11 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from src.config import TOP_K
-from src.graph import rows_context, text2cypher
-from src.llm import ask_llm
-from src.rag import ANSWER_SYSTEM, check_citations, format_context, generate, retrieve
+from vre.graph.text2cypher import rows_context, text2cypher
+from vre.llm.client import ask_llm
+from vre.rag.citations import check_citations
+from vre.rag.generate import ANSWER_SYSTEM, format_context, generate
+from vre.rag.retrieve import retrieve
 
 ROUTES = ("basic_rag", "graph", "hybrid")
 # Ngữ cảnh có kết quả Cypher: số tổng hợp không gắn với tin nào, nên không được đòi [Tin#ID] cho mọi ý
@@ -57,12 +60,12 @@ def _graph(question: str) -> dict | None:
         return None
 
 
-def ask_hybrid(question: str, k: int = TOP_K) -> dict:
+def ask_hybrid(question: str, k: int | None = None) -> dict:
     """router -> (basic_rag | graph | hybrid). Đồ thị lỗi hoặc rỗng thì lui về Basic RAG.
 
     Truy xuất RAG (bộ lọc LLM + hybrid search) chạy song song với router và Text2Cypher, nên tuyến
     hybrid hay đường lui không phải chờ thêm một lượt LLM. Khi đồ thị đã trả lời đủ (tuyến graph),
-    kết quả RAG bị bỏ nhưng token của nó vẫn được tính vào chi phí."""
+    kết quả RAG bị bỏ nhưng token của nó vẫn được tính vào chi phí. `k=None`: dùng `Settings.top_k`."""
     start = perf_counter()
     with ThreadPoolExecutor(max_workers=1) as pool:
         rag_job = pool.submit(retrieve, question, k)
