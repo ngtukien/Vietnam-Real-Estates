@@ -32,6 +32,11 @@ def offline_env() -> None:
     os.environ["HF_HUB_OFFLINE"] = "1"
     os.environ["TRANSFORMERS_OFFLINE"] = "1"
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+    # Tiến trình con (tokenize/BM25/upload) không dùng BLAS: mặc định OpenBLAS mở 1 luồng + buffer cho mỗi lõi (32)
+    # trong MỖI tiến trình ⇒ cạn commit memory ("OpenBLAS error: Memory allocation still failed"). Tiến trình chính đã
+    # nạp numpy trước đó nên không bị ảnh hưởng.
+    for var in ("OPENBLAS_NUM_THREADS", "OMP_NUM_THREADS", "MKL_NUM_THREADS"):
+        os.environ[var] = "1"
 
 
 def keep_awake(on: bool) -> None:

@@ -59,6 +59,11 @@ def now_iso() -> str:
     return dt.datetime.now(dt.UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
+def log(message: str) -> None:
+    """Một dòng log có dấu thời gian UTC (night.ps1 ghi stdout vào logs/night-*.log)."""
+    print(f"[{now_iso()}] {message}", flush=True)
+
+
 def new_state(collection: str, n_parts: int, fingerprint: dict) -> dict:
     return {"schema_version": 1, "model_slug": EMBED_MODEL_SLUG, "collection": collection, "n_parts": n_parts,
             "listings_fingerprint": fingerprint, "parts": {}, "bm25_avgdl": None,

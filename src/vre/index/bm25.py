@@ -93,5 +93,20 @@ def corpus_avgdl(layout, parts: list[int]) -> float:
 
 
 def make_pool(workers: int):
-    """Pool `spawn`: tạo TRƯỚC khi nạp CUDA để tiến trình con không kế thừa trạng thái GPU (Windows không có fork)."""
-    return mp.get_context("spawn").Pool(workers)
+    """Pool tiến trình `spawn` (tiến trình con không kế thừa trạng thái CUDA; Windows không có fork).
+
+    Dùng `ProcessPoolExecutor` thay `multiprocessing.Pool`: worker chết đột ngột ⇒ `BrokenProcessPool` được raise,
+    còn `Pool.imap_unordered` thì treo vĩnh viễn (lượt chạy dài sẽ không bao giờ thoát mã 20 để tự chạy lại).
+    """
+    from concurrent.futures import ProcessPoolExecutor
+
+    return ProcessPoolExecutor(max_workers=workers, mp_context=mp.get_context("spawn"))
+
+
+def terminate_pool(pool) -> None:
+    """Dừng ngay: huỷ việc chưa chạy và kill worker đang chạy (không chờ part dở dang; checkpoint lo phần còn lại)."""
+    processes = list((getattr(pool, "_processes", None) or {}).values())
+    pool.shutdown(wait=False, cancel_futures=True)
+    for process in processes:
+        if process.is_alive():
+            process.kill()

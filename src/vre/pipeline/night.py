@@ -9,19 +9,16 @@ import queue
 import threading
 import time
 import traceback
+from concurrent.futures import as_completed
 
 from vre.index import bm25 as bm25_mod
 from vre.index import qdrant_upload, tokenize
 from vre.pipeline import stages
 from vre.pipeline.report import Report, finish
-from vre.pipeline.state import layout_for, now_iso
+from vre.pipeline.state import layout_for, log
 
 EXIT_OK, EXIT_NEEDS_HUMAN = 0, 20
 POLL_S = 5
-
-
-def log(message: str) -> None:
-    print(f"[{now_iso()}] {message}", flush=True)
 
 
 class NightRun:
@@ -57,8 +54,9 @@ class NightRun:
             pending = []
 
             def submit_bm25(part):
-                pending.append(bm25_pool.apply_async(stages.bm25_task, ((layout, part),), callback=lambda out: (
-                    ledger.mark(out["part"], "bm25"), self.report.progress("bm25", ledger.count("bm25")))))
+                pending.append(bm25_pool.submit(stages.bm25_task, (layout, part)))
+                pending[-1].add_done_callback(lambda f: f.exception() is None and (
+                    ledger.mark(part, "bm25"), self.report.progress("bm25", ledger.count("bm25"))))
 
             for part in parts:
                 if ledger.done(part, "chunked"):
@@ -66,7 +64,8 @@ class NightRun:
                     if not ledger.done(part, "bm25"):
                         submit_bm25(part)
             todo = [(self.settings, layout, p) for p in parts if not ledger.done(p, "chunked")]
-            for out in tok_pool.imap_unordered(stages.chunk_task, todo):
+            for future in as_completed([tok_pool.submit(stages.chunk_task, args) for args in todo]):
+                out = future.result()  # worker chết ⇒ BrokenProcessPool, không treo
                 ledger.mark(out["part"], "chunked", n_chunks=out["n_chunks"])
                 chunked[out["part"]].set()
                 self.report.progress("chunk", ledger.count("chunked"))
@@ -74,8 +73,8 @@ class NightRun:
                     submit_bm25(out["part"])
             self.report.end("chunk")
             step = "bm25"
-            for result in pending:
-                result.get()
+            for future in pending:
+                future.result()
             if ledger.state["bm25_avgdl"] is None:
                 ledger.set(bm25_avgdl=bm25_mod.corpus_avgdl(layout, list(parts)))
             self.report.end("bm25", note=f"avgdl={ledger.state['bm25_avgdl']:.2f}")
@@ -192,7 +191,7 @@ def run(settings, resume: bool = True, dry_run: bool = False) -> int:
     finally:
         job.stop.set()
         for pool in (tok_pool, bm25_pool):
-            pool.terminate()
+            bm25_mod.terminate_pool(pool)
         if status != "skipped":
             finish(job, status)
             log(f"report → {job.layout.report_path} (status={status})")
