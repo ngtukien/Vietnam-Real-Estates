@@ -32,7 +32,7 @@ def listing_means(emb: np.ndarray, listing_ids: np.ndarray) -> tuple[np.ndarray,
     if len(np.unique(ids)) != len(ids):
         raise ValueError("chunk của một tin không liền nhau trong part")
     sums = np.add.reduceat(np.asarray(emb, dtype=np.float32), starts, axis=0)
-    counts = np.diff(np.r_[starts, len(listing_ids)])
+    counts = np.diff(np.r_[starts, len(listing_ids)]).astype(np.float32)
     return ids, sums / counts[:, None]
 
 
