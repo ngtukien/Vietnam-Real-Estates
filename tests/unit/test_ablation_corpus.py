@@ -149,7 +149,7 @@ def test_sub_scope_builds_measures_drops_and_keeps_full_runs(tmp_path):
     settings, items, hits = _fake_env(tmp_path)
     out = tmp_path / "ablation.json"
     search = mock.Mock(return_value=(hits, False))
-    build = mock.Mock(side_effect=lambda s, size, ids, log: (sub.make_layout(s, size), {0: ids},
+    build = mock.Mock(side_effect=lambda s, size, ids, log, **kw: (sub.make_layout(s, size), {0: ids},
                                                              {"chunk_tokens": min(size, 507)}))
     with contextlib.ExitStack() as stack:
         for p in _patches(items, hits, search, cached=True):
@@ -193,3 +193,20 @@ def test_extract_filters_offline_skips_misses_and_never_calls(monkeypatch):
     monkeypatch.setattr(rf, "parse_filters", lambda q: (rf.QueryFilters(), client.LLMResult("", {}, 1, 1, False)))
     with pytest.raises(RuntimeError, match="offline"):
         ablation.extract_filters(items[:1], lambda _m: None)
+
+
+def test_build_only_builds_without_filters_or_json(tmp_path):
+    settings, items, hits = _fake_env(tmp_path)
+    out = tmp_path / "ablation.json"
+    build = mock.Mock(return_value=(None, {}, {"chunk_tokens": 256}))
+    with mock.patch.object(ablation, "load_items", return_value=items), \
+            mock.patch.object(ablation, "extract_filters") as filters, \
+            mock.patch.object(sub, "all_listing_ids", return_value=np.array([11, 12, 21, 30], dtype=np.int64)), \
+            mock.patch.object(sub, "build_artifacts", build), mock.patch.object(ablation, "release_gpu"):
+        doc = ablation.run(settings, scope="sub", chunk_sizes=(256,), subcorpus_size=1, build_only=True,
+                           embed_token_budget=8192, vram_cap_gb=2.0, out=out, log=lambda m: None)
+        with pytest.raises(ValueError, match="build_only"):
+            ablation.run(settings, scope="full", build_only=True, out=out, log=lambda m: None)
+    assert doc["subcorpus_builds"] == {"c256": {"chunk_tokens": 256}} and not out.exists()
+    filters.assert_not_called()
+    assert build.call_args.kwargs == {"embed_token_budget": 8192, "vram_cap_gb": 2.0}

@@ -173,9 +173,19 @@ def make_layout(settings: Settings, size: int) -> Any:
     return Layout(root, root / "state.json", root / "report.json", collection_name(size), False)
 
 
-def build_artifacts(settings: Settings, size: int, ids: np.ndarray, log: Log) -> tuple[Any, dict[int, np.ndarray], dict]:
+def private_gb() -> float:
+    """Bộ nhớ riêng (commit) của tiến trình này, GB — số mà memory guard của máy theo dõi."""
+    import psutil
+
+    info = psutil.Process().memory_info()
+    return float(getattr(info, "private", info.rss)) / 1e9
+
+
+def build_artifacts(settings: Settings, size: int, ids: np.ndarray, log: Log, *, embed_token_budget: int | None = None,
+                    vram_cap_gb: float | None = None, allow_embed: bool = True) -> tuple[Any, dict[int, np.ndarray], dict]:
     """Artifact subcorpus cho cỡ `size` dưới `index/ablation/c{size}/`; part đủ 3 file thì bỏ qua (resume).
-    Dấu vân tay subcorpus lệch ⇒ xoá thư mục làm lại."""
+    Dấu vân tay subcorpus lệch ⇒ xoá thư mục làm lại. `embed_token_budget`/`vram_cap_gb` thu nhỏ encoder GPU khi máy
+    thiếu commit (bộ nhớ CUDA tính vào commit trên Windows); không đổi kết quả embedding, chỉ cỡ lô."""
     from vre.index import tokenize
 
     layout = make_layout(settings, size)
@@ -197,19 +207,33 @@ def build_artifacts(settings: Settings, size: int, ids: np.ndarray, log: Log) ->
         if size == REUSED_CHUNK_SIZE:
             n_chunks += _reuse_part(settings, layout, part, part_ids)
         else:
+            if not allow_embed:
+                raise RuntimeError(f"c{size}: part {part:04d} chưa embed; chạy `ablation --scope sub --build-only "
+                                   f"--chunk-sizes {size}` trước (encoder GPU không chung tiến trình với bước đo)")
             if encoder is None:
-                from vre.index.embed import get_encoder
+                from vre.index import embed
 
-                encoder = get_encoder(settings)
+                if vram_cap_gb is not None:
+                    embed.VRAM_CAP_GB = min(embed.VRAM_CAP_GB, vram_cap_gb)
+                updates = {} if embed_token_budget is None else {
+                    "embed_token_budget": embed_token_budget,
+                    "embed_min_token_budget": min(settings.embed_min_token_budget, embed_token_budget)}
+                encoder = embed.get_encoder(settings.model_copy(update=updates))
             n, t = _rechunk_part(chunk_settings, layout, part, part_ids, tok, special, encoder)
             n_chunks, truncated = n_chunks + n, truncated + t
         built += 1
         elapsed = time.perf_counter() - start
         log(f"c{size}: part {part:04d} xong ({built}/{len(parts)} part, {n_chunks} chunk mới, {elapsed:.0f}s, "
-            f"{n_chunks / max(elapsed, 1e-9):.0f} chunk/s)")
-    return layout, parts, {"chunk_tokens": tokens, "build_seconds": round(time.perf_counter() - start, 1),
-                           "parts_built": built, "n_chunks_built": n_chunks, "truncated_listings": truncated,
-                           "reused_phase2": size == REUSED_CHUNK_SIZE}
+            f"{n_chunks / max(elapsed, 1e-9):.0f} chunk/s, private {private_gb():.2f} GB)")
+    build = {"chunk_tokens": tokens, "build_seconds": round(time.perf_counter() - start, 1), "parts_built": built,
+             "n_chunks_built": n_chunks, "truncated_listings": truncated, "reused_phase2": size == REUSED_CHUNK_SIZE}
+    if built:  # tiến trình dựng (GPU) ghi số liệu để tiến trình đo (CPU) chép vào ablation.json
+        if encoder is not None:
+            build.update(embed_token_budget=encoder.budget, embed_oom_retries=encoder.oom_retries)
+        write_json_atomic(layout.report_path, {**build, "private_gb_end": round(private_gb(), 2)})
+    elif layout.report_path.exists():
+        build = json.loads(layout.report_path.read_text(encoding="utf-8"))
+    return layout, parts, build
 
 
 def load_collection(settings: Settings, layout: Any, parts: dict[int, np.ndarray], log: Log) -> dict:

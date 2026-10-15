@@ -271,6 +271,9 @@ def ablation(limit: int | None = typer.Option(None, "--limit", help="chỉ N câ
              chunk_sizes: str = typer.Option("256,400,512", "--chunk-sizes", help="cỡ chunk của scope sub"),
              subcorpus_size: int = typer.Option(200_000, "--subcorpus-size", help="số tin ngẫu nhiên (smoke: nhỏ)"),
              rerank_device: str = typer.Option("cpu", "--rerank-device", help="cpu | cuda cho cross-encoder"),
+             build_only: bool = typer.Option(False, "--build-only", help="scope sub: chỉ dựng artifact (GPU) rồi thoát"),
+             embed_token_budget: int | None = typer.Option(None, "--embed-token-budget", help="thu nhỏ lô encoder"),
+             vram_cap_gb: float | None = typer.Option(None, "--vram-cap-gb", help="hạ trần CUDA của encoder"),
              out: Path | None = typer.Option(None, "--out", help="ghi đè đường dẫn kết quả (smoke)"),
              download_rerank: bool = typer.Option(False, "--download-rerank",
                                                   help="chỉ tải RERANK_MODEL vào HF_HOME rồi thoát")) -> None:
@@ -284,7 +287,11 @@ def ablation(limit: int | None = typer.Option(None, "--limit", help="chỉ N câ
     require(settings, "qdrant_healthy", "clean_data_ready")
     sizes = [int(c) for c in chunk_sizes.split(",") if c.strip()]
     doc = ab.run(settings, limit=limit, scope=scope, chunk_sizes=sizes, subcorpus_size=subcorpus_size,
-                 rerank_device=rerank_device, out=out)
+                 rerank_device=rerank_device, build_only=build_only, embed_token_budget=embed_token_budget,
+                 vram_cap_gb=vram_cap_gb, out=out)
+    if build_only:
+        _echo(doc)
+        return
     _echo({"corpus": doc["corpus"], "subcorpus": doc["subcorpus"],
            "runs": {r["name"]: round(r["recall_at_5"], 4) for r in doc["runs"]}, "notes": doc["notes"]})
 

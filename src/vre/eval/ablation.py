@@ -259,9 +259,12 @@ def kept_runs(old: dict[str, Any], corpus: dict, subcorpus: dict, n_questions: i
 
 def run(settings: Settings, limit: int | None = None, *, scope: str = "all",
         chunk_sizes: Iterable[int] = sub.CHUNK_SIZES, subcorpus_size: int = sub.SUBCORPUS_SIZE,
-        rerank_device: str = "cpu", out: Path | None = None, log: Log = _print) -> dict:
+        rerank_device: str = "cpu", build_only: bool = False, embed_token_budget: int | None = None,
+        vram_cap_gb: float | None = None, out: Path | None = None, log: Log = _print) -> dict:
     """Chạy (tiếp) các run của `scope` (`all|full|sub`), ghi `results/ablation.json` sau mỗi run, trả dict cuối.
-    `limit` = trần số câu hỏi; `subcorpus_size` = số tin ngẫu nhiên (smoke: vài nghìn); `out` ghi đè đường dẫn."""
+    `limit` = trần số câu hỏi; `subcorpus_size` = số tin ngẫu nhiên (smoke: vài nghìn); `out` ghi đè đường dẫn.
+    `build_only` (scope sub): chỉ dựng artifact (encoder GPU) rồi thoát, không bộ lọc LLM, không encoder truy vấn,
+    không ghi ablation.json — tiến trình đo sau đó chỉ dùng CPU (máy thiếu commit: hai việc không chung tiến trình)."""
     if limit is not None and limit <= 0:
         raise ValueError("limit phải > 0")
     if scope not in SCOPES:
@@ -277,6 +280,15 @@ def run(settings: Settings, limit: int | None = None, *, scope: str = "all",
     gt_all = {i for it in items for i in it.gt_ids}  # tin GT của MỌI câu ids, kể cả câu thiếu cache bộ lọc
     ids = sub.subcorpus_ids(sub.all_listing_ids(settings), gt_all, subcorpus_size, SEED)
     subcorpus = sub.descriptor(ids, len(gt_all), subcorpus_size)
+    if build_only:
+        if scope != "sub":
+            raise ValueError("build_only chỉ dùng với scope=sub")
+        builds = {}
+        for size in sizes:
+            _, _, builds[f"c{size}"] = sub.build_artifacts(settings, size, ids, log, embed_token_budget=embed_token_budget,
+                                                            vram_cap_gb=vram_cap_gb)
+            release_gpu()
+        return {"subcorpus": subcorpus, "subcorpus_builds": builds}
     notes: list[str] = []
     filters, calls, missing = extract_filters(items, log)
     notes.append(f"filter_llm_calls={calls} (questions not served from the LLM cache in this run)")
@@ -317,7 +329,7 @@ def run(settings: Settings, limit: int | None = None, *, scope: str = "all",
             notes.append(f"{name}: {drops} question(s) had 0 hits under the filter ⇒ filter dropped")
         flush()
         log(f"{name}: recall@5={scores['recall_at_5']:.3f} ndcg@10={scores['ndcg_at_10']:.3f} "
-            f"({time.perf_counter() - start:.1f}s)")
+            f"({time.perf_counter() - start:.1f}s, private {sub.private_gb():.2f} GB)")
 
     try:
         if scope in ("all", "full"):
@@ -332,7 +344,7 @@ def run(settings: Settings, limit: int | None = None, *, scope: str = "all",
                 if all(sub_run_name(size, r, p) in runs for r, p in plan_sub_runs()):
                     log(f"c{size}: mọi run đã có, bỏ qua")
                     continue
-                layout, parts, build = sub.build_artifacts(settings, size, ids, log)
+                layout, parts, build = sub.build_artifacts(settings, size, ids, log, allow_embed=False)
                 release_gpu()  # encoder re-embed xong; run subcorpus không rerank
                 build.update(sub.load_collection(settings, layout, parts, log))
                 builds[f"c{size}"] = build
