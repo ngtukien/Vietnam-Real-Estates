@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-15T13:28:50Z",
+  "git_sha": "dirty",
+  "status": "completed",
+  "model_slug": "e5_large",
+  "collection": "vre_chunks_e5_large",
+  "started_at": "2026-10-15T02:06:13Z",
+  "finished_at": "2026-10-15T13:20:47Z",
+  "wall_hours": 11.243,
+  "resumed_runs": 1,
+  "steps": [
+    {
+      "name": "checks",
+      "status": "done",
+      "started_at": "2026-10-15T11:59:55Z",
+      "finished_at": "2026-10-15T11:59:57Z",
+      "seconds": 1.8,
+      "items_done": 0,
+      "items_total": 0,
+      "note": "vre.checks.require (CLI) + fingerprint/state"
+    },
+    {
+      "name": "chunk",
+      "status": "done",
+      "started_at": "2026-10-15T11:59:57Z",
+      "finished_at": "2026-10-15T11:59:57Z",
+      "seconds": 0.0,
+      "items_done": 0,
+      "items_total": 51,
+      "note": null
+    },
+    {
+      "name": "bm25",
+      "status": "done",
+      "started_at": "2026-10-15T11:59:57Z",
+      "finished_at": "2026-10-15T11:59:57Z",
+      "seconds": 0.0,
+      "items_done": 0,
+      "items_total": 51,
+      "note": "avgdl=117.28"
+    },
+    {
+      "name": "embed",
+      "status": "done",
+      "started_at": "2026-10-15T11:59:57Z",
+      "finished_at": "2026-10-15T11:59:57Z",
+      "seconds": 0.0,
+      "items_done": 0,
+      "items_total": 51,
+      "note": null
+    },
+    {
+      "name": "upload",
+      "status": "done",
+      "started_at": "2026-10-15T11:59:57Z",
+      "finished_at": "2026-10-15T13:02:35Z",
+      "seconds": 3758.5,
+      "items_done": 51,
+      "items_total": 51,
+      "note": null
+    },
+    {
+      "name": "hnsw",
+      "status": "done",
+      "started_at": "2026-10-15T13:02:35Z",
+      "finished_at": "2026-10-15T13:17:22Z",
+      "seconds": 887.0,
+      "items_done": 0,
+      "items_total": 0,
+      "note": null
+    },
+    {
+      "name": "verify",
+      "status": "done",
+      "started_at": "2026-10-15T13:17:22Z",
+      "finished_at": "2026-10-15T13:17:39Z",
+      "seconds": 16.3,
+      "items_done": 0,
+      "items_total": 0,
+      "note": "smoke hits {'căn hộ 2 phòng ngủ quận 7 dưới 4 tỷ': 10, 'nhà mặt tiền kinh doanh Hà Nội': 10, 'đất nền sổ đỏ Bình Dương': 10}"
+    },
+    {
+      "name": "pca",
+      "status": "done",
+      "started_at": "2026-10-15T13:17:39Z",
+      "finished_at": "2026-10-15T13:20:47Z",
+      "seconds": 188.6,
+      "items_done": 0,
+      "items_total": 51,
+      "note": "2537920 tin, explained_variance=0.407"
+    },
+    {
+      "name": "report",
+      "status": "done",
+      "started_at": "2026-10-15T13:20:47Z",
+      "finished_at": "2026-10-15T13:20:47Z",
+      "seconds": 0.0,
+      "items_done": 0,
+      "items_total": 0,
+      "note": null
+    }
+  ],
+  "counters": {
+    "parts_total": 51,
+    "parts_embedded": 51,
+    "parts_uploaded": 51,
+    "chunks": 2685246,
+    "points_in_qdrant": 2685246,
+    "chunks_truncated_listings": 0,
+    "oom_retries": 0,
+    "upload_retries": 0,
+    "batch_size_final": 0
+  },
+  "embed": {
+    "token_budget": 32768,
+    "chunks_per_s_avg": 100.9
+  },
+  "bm25": {
+    "avgdl": 117.27933939758219
+  },
+  "peaks": {
+    "ram_used_gb": null,
+    "vram_peak_gb": null
+  },
+  "qdrant": {
+    "status": "green",
+    "points": 2685246,
+    "indexed_vectors": 5373052
+  },
+  "errors": [
+    {
+      "at": "2026-10-15T13:28:50Z",
+      "step": "report",
+      "part": null,
+      "type": "warn",
+      "message": "run 1 was stopped by hand at 44/51 uploaded (commit memory); its report was never written. embed.chunks_per_s_avg recomputed from the 51 per-part lines of logs/night-261015-0905.log; peaks unknown (null); counters.batch_size_final not recorded (0)."
+    }
+  ]
+}
