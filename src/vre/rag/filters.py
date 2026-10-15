@@ -18,11 +18,14 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from vre.data.places import normalize_place, normalize_text
 from vre.llm.client import LLMResult, ask_llm
+from vre.rag import names
 
 log = logging.getLogger(__name__)
 
 # Giá trị `note` của sự kiện `filters` (api-contract §4) khi bộ lọc cho 0 kết quả nên đã bỏ lọc.
 FILTER_DROPPED = "filter_dropped"
+# `note` khi chỉ nới một phần bộ lọc: "filter_relaxed:project,price" (các trường đã bỏ, theo thứ tự nới).
+FILTER_RELAXED = "filter_relaxed"
 PROPERTY_TYPES = ("Nhà", "Đất", "Căn hộ chung cư", "Biệt thự/Nhà liền kề", "Shophouse")
 DEAL_TYPES = ("sale", "rent")
 # Khoảng tháng có dữ liệu (data-contract §7.7: ngoài 2025-06…2026-03 là câu không trả lời được). Qdrant chỉ khớp
@@ -77,7 +80,8 @@ class ExtractedFilters(BaseModel):
     district: str | None = Field(None, description="Quận/huyện/thành phố thuộc tỉnh, ví dụ 'Thủ Đức', 'Quận 7'")
     ward: str | None = Field(None, description="Phường/xã, ví dụ 'Phường 5', 'Dịch Vọng'")
     property_type: str | None = Field(None, description="Một trong: " + ", ".join(PROPERTY_TYPES))
-    deal_type: str | None = Field(None, description="'sale' nếu mua/bán, 'rent' nếu thuê/cho thuê; null nếu không nói")
+    deal_type: str | None = Field(None, description=(
+        "Loại TIN cần tìm: 'sale' = tin rao bán, 'rent' = tin cho thuê (giá theo tháng); null nếu không rõ"))
     bedrooms: int | None = Field(None, description="Số phòng ngủ; '2PN' -> 2")
     min_price: str | None = Field(None, description="Giá tối thiểu đúng như câu hỏi viết, ví dụ '3 tỷ'")
     max_price: str | None = Field(None, description="Giá tối đa đúng như câu hỏi viết, ví dụ '5 tỷ'")
@@ -192,13 +196,24 @@ def merge(extracted: QueryFilters | None, manual: dict[str, Any] | QueryFilters 
 FILTER_PROMPT = """Trích bộ lọc tìm kiếm bất động sản từ câu hỏi. Chỉ điền trường được nói rõ trong câu hỏi,
 còn lại để null. Không suy đoán tỉnh từ tên quận nếu câu hỏi không nói. Viết tắt thường gặp: 'q7' = Quận 7,
 'sg'/'hcm' = Hồ Chí Minh, 'hn' = Hà Nội, '2pn' = 2 phòng ngủ, 'cc' = căn hộ chung cư.
+deal_type là loại TIN cần tìm, không phải việc người hỏi định làm với căn nhà: giá tổng ghi 'X tỷ' (hay
+'X triệu' cho cả căn) ⇒ 'sale', kể cả khi câu hỏi nhắc tới cho thuê/thu nhập cho thuê của căn đó; chỉ 'rent'
+khi tìm tin cho thuê (giá theo tháng, 'triệu/tháng', 'thuê', 'cho thuê' là loại tin).
 
 Câu hỏi: {question}"""
 
 
+# Giá tổng tính bằng tỷ chỉ có ở tin bán (tin cho thuê ghi triệu/tháng): chặn LLM đọc nhầm "đang cho thuê" là `rent`.
+_TOTAL_PRICE_TY = re.compile(rf"{_NUM}\s*(?:tỷ|tỉ|ty)(?!\w)", re.I)
+
+
 def parse_filters(question: str) -> tuple[QueryFilters, LLMResult]:
     result = ask_llm(FILTER_PROMPT.format(question=question), output=ExtractedFilters)
-    return QueryFilters.from_extracted(result.data or {}), result
+    filters = QueryFilters.from_extracted(result.data or {})
+    if filters.deal_type == "rent" and _TOTAL_PRICE_TY.search(question):
+        log.info("deal_type rent → sale: câu hỏi có giá tổng theo tỷ")
+        filters = filters.model_copy(update={"deal_type": "sale"})
+    return filters, result
 
 
 # ---- một danh sách điều kiện, ba trình biên dịch (B4)
@@ -213,7 +228,7 @@ class Condition:
     value: Any
 
 
-_EQ_FIELDS = ("province", "district", "ward", "property_type", "deal_type", "bedrooms", "project", "street")
+_EQ_FIELDS = ("property_type", "deal_type", "bedrooms")
 _RANGES: tuple[tuple[str, str, Op, float], ...] = (("min_price_mil", "price_vnd", "gte", 1e6), ("max_price_mil", "price_vnd", "lte", 1e6),
            ("min_area_m2", "area_m2", "gte", 1.0), ("max_area_m2", "area_m2", "lte", 1.0))
 _SQL_COLUMN = {"published_month": "month"}
@@ -233,7 +248,17 @@ def month_span(lo: str | None, hi: str | None) -> list[str]:
 def conditions(f: QueryFilters | None) -> list[Condition]:
     if f is None:
         return []
-    out = [Condition(name, "eq", getattr(f, name)) for name in _EQ_FIELDS if getattr(f, name) is not None]
+    out: list[Condition] = []
+    for name in names.PLACE_FIELDS:  # địa danh thiếu dấu ('Thu Duc') → tên thật; tên lạ ⇒ bỏ (xem `unresolved`)
+        value = getattr(f, name)
+        if value is not None:
+            out += _resolved(name, names.resolve(name, value), value)
+    out += [Condition(name, "eq", getattr(f, name)) for name in _EQ_FIELDS if getattr(f, name) is not None]
+    for name in names.NAME_FIELDS:  # tên tự do: phân giải về tên thật (≤ 20) thay vì khớp đúng chuỗi
+        value = getattr(f, name)
+        if value is None:
+            continue
+        out += _resolved(name, names.resolve(name, value, f.district, f.province), value)
     for name, column, op, scale in _RANGES:
         value = getattr(f, name)
         if value is not None:
@@ -243,6 +268,67 @@ def conditions(f: QueryFilters | None) -> list[Condition]:
         # Khoảng nằm ngoài dữ liệu: khớp đúng tháng biên (không point nào có) ⇒ 0 kết quả ở cả ba dạng.
         out.append(Condition("published_month", "in", months or [f.month_from or f.month_to]))
     return out
+
+
+def _resolved(field: str, found: tuple[str, ...] | None, value: str) -> list[Condition]:
+    """None (không có từ vựng) ⇒ khớp đúng chuỗi như cũ (đã log trong `names`); () ⇒ không điều kiện;
+    đúng một tên bằng chính giá trị ⇒ `eq`; còn lại ⇒ `in` trên các tên thật."""
+    if found is None or found == (value,):
+        return [Condition(field, "eq", value)]
+    return [Condition(field, "in", list(found))] if found else []
+
+
+def unresolved(f: QueryFilters | None) -> list[str]:
+    """Trường địa danh/tên có giá trị nhưng không khớp tên thật nào ⇒ đã bị bỏ khỏi `conditions`."""
+    if f is None:
+        return []
+    out = [name for name in names.PLACE_FIELDS
+           if getattr(f, name) is not None and names.resolve(name, getattr(f, name)) == ()]
+    return out + [name for name in names.NAME_FIELDS
+                  if getattr(f, name) is not None and names.resolve(name, getattr(f, name), f.district, f.province) == ()]
+
+
+# Nới bộ lọc theo bậc khi 0 kết quả: tên tự do → các đẳng thức số (số phòng, giá/diện tích min = max) → bỏ hết.
+_RELAX_STEPS: tuple[tuple[tuple[str, tuple[str, ...]], ...], ...] = (
+    (("project", ("project",)), ("street", ("street",))),
+    (("bedrooms", ("bedrooms",)), ("price", ("min_price_mil", "max_price_mil")),
+     ("area", ("min_area_m2", "max_area_m2"))),
+)
+
+
+def _is_set(f: QueryFilters, keys: tuple[str, ...]) -> bool:
+    if len(keys) == 1:
+        return getattr(f, keys[0]) is not None
+    lo, hi = (getattr(f, k) for k in keys)  # khoảng chỉ nới khi là đẳng thức (min = max)
+    return lo is not None and lo == hi
+
+
+def relaxations(f: QueryFilters) -> list[tuple[QueryFilters, list[str]]]:
+    """Các bộ lọc nới dần (không gồm bản gốc, không gồm bộ lọc rỗng = bỏ hết), kèm nhãn trường đã nới tới bậc đó.
+    Bậc không đổi điều kiện nào thì bị bỏ qua."""
+    out: list[tuple[QueryFilters, list[str]]] = []
+    current, previous = f, conditions(f)
+    labels: list[str] = []
+    for step in _RELAX_STEPS:
+        update = {}
+        for label, keys in step:
+            if _is_set(current, keys):
+                update.update(dict.fromkeys(keys))
+                labels = [*labels, label]
+        if not update:
+            continue
+        current = current.model_copy(update=update)
+        conds = conditions(current)
+        if current.is_empty() or not conds:
+            break
+        if conds != previous:
+            out.append((current, labels))
+            previous = conds
+    return out
+
+
+def relaxed_note(labels: list[str]) -> str | None:
+    return f"{FILTER_RELAXED}:{','.join(dict.fromkeys(labels))}" if labels else None
 
 
 def to_qdrant(f: QueryFilters | None) -> Any:

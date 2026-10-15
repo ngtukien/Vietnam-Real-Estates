@@ -10,7 +10,7 @@ import pandas as pd
 
 from vre.llm.client import LLMResult, ask_llm
 from vre.rag.citations import normalize_citations
-from vre.rag.filters import FILTER_DROPPED
+from vre.rag.filters import FILTER_DROPPED, FILTER_RELAXED
 
 ANSWER_SYSTEM = """Bạn là trợ lý thị trường bất động sản Việt Nam. Chỉ trả lời từ NGỮ CẢNH được cung cấp.
 Mỗi nhận định phải kèm nguồn dạng [Tin#ID]; chép NGUYÊN VẸN dãy số ID trong ngữ cảnh. Nếu ngữ cảnh không đủ để trả lời hoặc để tính toán, nói rõ là
@@ -26,6 +26,10 @@ Nếu không biết hoặc không chắc, nói rõ là không đủ dữ liệu 
 FILTER_DROPPED_PROMPT = ("LƯU Ý: không có tin nào thoả mọi điều kiện (giá, khu vực, loại hình, số phòng, diện tích) "
                          "trong câu hỏi. Các tin dưới đây chỉ gần giống; nói rõ điều này và nêu điều kiện nào "
                          "không thoả trước khi giới thiệu tin.")
+
+# Nới một phần (tên dự án/đường không khớp, hoặc bỏ đẳng thức số): các điều kiện còn lại vẫn đúng.
+FILTER_RELAXED_PROMPT = ("LƯU Ý: không có tin khớp đúng mọi điều kiện; đã nới các điều kiện: {fields}. Các điều kiện "
+                         "khác vẫn được giữ. Nói rõ tin nào chỉ gần đúng với điều kiện đã nới.")
 
 _FAKE_TAG = re.compile(r"<\s*(/?)\s*tai_lieu\s*>", re.I)
 
@@ -44,7 +48,11 @@ def wrap_documents(contexts: list[str]) -> str:
 
 def build_prompt(question: str, contexts: list[str], note: str | None = None) -> str:
     prompt = "NGỮ CẢNH:\n" + wrap_documents(contexts) + f"\n\nCÂU HỎI: {question}"
-    return f"{FILTER_DROPPED_PROMPT}\n\n{prompt}" if note == FILTER_DROPPED else prompt
+    if note == FILTER_DROPPED:
+        return f"{FILTER_DROPPED_PROMPT}\n\n{prompt}"
+    if note and note.startswith(FILTER_RELAXED + ":"):
+        return f"{FILTER_RELAXED_PROMPT.format(fields=note.split(':', 1)[1])}\n\n{prompt}"
+    return prompt
 
 
 def generate(question: str, contexts: list[str], note: str | None = None, system: str = ANSWER_SYSTEM) -> LLMResult:
