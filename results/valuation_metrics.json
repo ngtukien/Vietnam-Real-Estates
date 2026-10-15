@@ -1,0 +1,358 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-15T10:00:58Z",
+  "git_sha": "4a08ad7",
+  "split": {
+    "train_months": [
+      "2025-06",
+      "2026-01"
+    ],
+    "test_months": [
+      "2026-02",
+      "2026-03"
+    ]
+  },
+  "rent_model": {
+    "trained": false,
+    "n_rent": 253,
+    "reason": "n_rent=253 < rent_min_rows=20000"
+  },
+  "variants": {
+    "tabular": {
+      "n_train": 1865193,
+      "n_test": 395910,
+      "mae_mil_m2": 32.62449477886695,
+      "mape": 0.24024704284149945,
+      "r2": 0.7270032759517872,
+      "by_property_type": [
+        {
+          "property_type": "Biệt thự/Nhà liền kề",
+          "n": 32103,
+          "mae_mil_m2": 37.71447056509742,
+          "mape": 0.20026479388005478,
+          "r2": 0.7390168082720521
+        },
+        {
+          "property_type": "Căn hộ chung cư",
+          "n": 94213,
+          "mae_mil_m2": 13.476984846485662,
+          "mape": 0.16157188565606098,
+          "r2": 0.6616036214760337
+        },
+        {
+          "property_type": "Nhà",
+          "n": 172451,
+          "mae_mil_m2": 50.219257583699594,
+          "mape": 0.24319076075621213,
+          "r2": 0.6024469238548302
+        },
+        {
+          "property_type": "Shophouse",
+          "n": 6734,
+          "mae_mil_m2": 35.45171857098076,
+          "mape": 0.250854191161598,
+          "r2": 0.608846429040744
+        },
+        {
+          "property_type": "Đất",
+          "n": 90409,
+          "mae_mil_m2": 16.99848293404834,
+          "mape": 0.3300245770186644,
+          "r2": 0.7551437730808604
+        }
+      ],
+      "by_province_top10": [
+        {
+          "province": "Hồ Chí Minh",
+          "n": 176546,
+          "mae_mil_m2": 32.85873200837309,
+          "mape": 0.23010455586112288,
+          "r2": 0.6301557634792905
+        },
+        {
+          "province": "Hà Nội",
+          "n": 104584,
+          "mae_mil_m2": 53.29880760988052,
+          "mape": 0.22873003241042203,
+          "r2": 0.639357124847914
+        },
+        {
+          "province": "Đà Nẵng",
+          "n": 22549,
+          "mae_mil_m2": 21.116515929841132,
+          "mape": 0.19191718539432098,
+          "r2": 0.7446007051282337
+        },
+        {
+          "province": "Bình Dương",
+          "n": 18192,
+          "mae_mil_m2": 6.6892570816164305,
+          "mape": 0.17859527338626777,
+          "r2": 0.7489100124495891
+        },
+        {
+          "province": "Khánh Hòa",
+          "n": 12534,
+          "mae_mil_m2": 18.271114719008878,
+          "mape": 0.2610449872114354,
+          "r2": 0.7397384181011588
+        },
+        {
+          "province": "Hải Phòng",
+          "n": 7944,
+          "mae_mil_m2": 14.84529441435812,
+          "mape": 0.22620827523740367,
+          "r2": 0.7749678037947995
+        },
+        {
+          "province": "Đồng Nai",
+          "n": 7383,
+          "mae_mil_m2": 7.131202473209281,
+          "mape": 0.3026073657508196,
+          "r2": 0.7813971477233377
+        },
+        {
+          "province": "Hưng Yên",
+          "n": 7266,
+          "mae_mil_m2": 13.64993673858144,
+          "mape": 0.14787502392424387,
+          "r2": 0.862808023382217
+        },
+        {
+          "province": "Long An",
+          "n": 5343,
+          "mae_mil_m2": 5.119025225544239,
+          "mape": 0.3627009541365819,
+          "r2": 0.8499022143674987
+        },
+        {
+          "province": "Bà Rịa - Vũng Tàu",
+          "n": 5304,
+          "mae_mil_m2": 15.465959388259911,
+          "mape": 0.3321987566675267,
+          "r2": 0.7188323824082534
+        }
+      ],
+      "train_seconds": 3436.9,
+      "shap_top": [
+        {
+          "feature": "property_type",
+          "mean_abs_contribution": 0.28086909651756287
+        },
+        {
+          "feature": "te_district_key",
+          "mean_abs_contribution": 0.26087239384651184
+        },
+        {
+          "feature": "te_ward_key",
+          "mean_abs_contribution": 0.15334546566009521
+        },
+        {
+          "feature": "te_province",
+          "mean_abs_contribution": 0.08585700392723083
+        },
+        {
+          "feature": "area_m2",
+          "mean_abs_contribution": 0.07912743836641312
+        },
+        {
+          "feature": "te_street_key",
+          "mean_abs_contribution": 0.0757724940776825
+        },
+        {
+          "feature": "te_project_key",
+          "mean_abs_contribution": 0.060898829251527786
+        },
+        {
+          "feature": "am_mat_tien",
+          "mean_abs_contribution": 0.05763959884643555
+        },
+        {
+          "feature": "month_idx",
+          "mean_abs_contribution": 0.04309477284550667
+        },
+        {
+          "feature": "bedrooms",
+          "mean_abs_contribution": 0.03398597240447998
+        },
+        {
+          "feature": "bathrooms",
+          "mean_abs_contribution": 0.029640384018421173
+        },
+        {
+          "feature": "house_direction",
+          "mean_abs_contribution": 0.020623859018087387
+        },
+        {
+          "feature": "am_thang_may",
+          "mean_abs_contribution": 0.020506802946329117
+        },
+        {
+          "feature": "frontage_m",
+          "mean_abs_contribution": 0.019121652469038963
+        },
+        {
+          "feature": "floors",
+          "mean_abs_contribution": 0.019016241654753685
+        },
+        {
+          "feature": "road_width_m",
+          "mean_abs_contribution": 0.016067424789071083
+        },
+        {
+          "feature": "am_hem_xe_hoi",
+          "mean_abs_contribution": 0.007931487634778023
+        },
+        {
+          "feature": "am_so_hong",
+          "mean_abs_contribution": 0.006560629233717918
+        },
+        {
+          "feature": "am_gan_truong",
+          "mean_abs_contribution": 0.004416497889906168
+        },
+        {
+          "feature": "am_ho_boi",
+          "mean_abs_contribution": 0.0038603637367486954
+        },
+        {
+          "feature": "am_noi_that",
+          "mean_abs_contribution": 0.00321867479942739
+        },
+        {
+          "feature": "am_view_song",
+          "mean_abs_contribution": 0.003021474462002516
+        },
+        {
+          "feature": "am_gara",
+          "mean_abs_contribution": 0.002126602455973625
+        },
+        {
+          "feature": "am_an_ninh",
+          "mean_abs_contribution": 0.0007872899295762181
+        }
+      ],
+      "model_path": "models/valuation/xgb_tabular_sale.json"
+    },
+    "full": null,
+    "baseline_ward_median": {
+      "n_train": 1865193,
+      "n_test": 395910,
+      "mae_mil_m2": 50.61392834807191,
+      "mape": 0.4604243343260495,
+      "r2": 0.47639371481259674,
+      "by_property_type": [
+        {
+          "property_type": "Biệt thự/Nhà liền kề",
+          "n": 32103,
+          "mae_mil_m2": 76.46691686935579,
+          "mape": 0.3695272673386488,
+          "r2": 0.10366941723498235
+        },
+        {
+          "property_type": "Căn hộ chung cư",
+          "n": 94213,
+          "mae_mil_m2": 47.84581641619897,
+          "mape": 0.66614862015917,
+          "r2": -2.473155668543295
+        },
+        {
+          "property_type": "Nhà",
+          "n": 172451,
+          "mae_mil_m2": 62.89830598129073,
+          "mape": 0.3243929463030721,
+          "r2": 0.4105464893676214
+        },
+        {
+          "property_type": "Shophouse",
+          "n": 6734,
+          "mae_mil_m2": 66.98008705086292,
+          "mape": 0.45683980613649733,
+          "r2": -0.004966227260218448
+        },
+        {
+          "property_type": "Đất",
+          "n": 90409,
+          "mae_mil_m2": 19.667570341766773,
+          "mape": 0.538061002236099,
+          "r2": 0.7182455685847593
+        }
+      ],
+      "by_province_top10": [
+        {
+          "province": "Hồ Chí Minh",
+          "n": 176546,
+          "mae_mil_m2": 46.2465649581053,
+          "mape": 0.41167131887258107,
+          "r2": 0.3699425306739209
+        },
+        {
+          "province": "Hà Nội",
+          "n": 104584,
+          "mae_mil_m2": 88.75034253799997,
+          "mape": 0.5301662863939121,
+          "r2": 0.2762610089597045
+        },
+        {
+          "province": "Đà Nẵng",
+          "n": 22549,
+          "mae_mil_m2": 34.19635399491899,
+          "mape": 0.2930084729460382,
+          "r2": 0.37137290989416494
+        },
+        {
+          "province": "Bình Dương",
+          "n": 18192,
+          "mae_mil_m2": 11.375488992917608,
+          "mape": 0.32106406987353286,
+          "r2": 0.2904651653923157
+        },
+        {
+          "province": "Khánh Hòa",
+          "n": 12534,
+          "mae_mil_m2": 33.05374086610996,
+          "mape": 0.4900708136721454,
+          "r2": 0.28645061590730003
+        },
+        {
+          "province": "Hải Phòng",
+          "n": 7944,
+          "mae_mil_m2": 27.12688168370828,
+          "mape": 0.4481836583467777,
+          "r2": 0.3333681787207897
+        },
+        {
+          "province": "Đồng Nai",
+          "n": 7383,
+          "mae_mil_m2": 11.903367665463342,
+          "mape": 0.5842331205641833,
+          "r2": 0.42395702352586007
+        },
+        {
+          "province": "Hưng Yên",
+          "n": 7266,
+          "mae_mil_m2": 33.22263365727335,
+          "mape": 0.3891151150266173,
+          "r2": 0.12574554208534527
+        },
+        {
+          "province": "Long An",
+          "n": 5343,
+          "mae_mil_m2": 9.602147635150162,
+          "mape": 0.5616949952597524,
+          "r2": 0.4187452984774992
+        },
+        {
+          "province": "Bà Rịa - Vũng Tàu",
+          "n": 5304,
+          "mae_mil_m2": 22.690515247724715,
+          "mape": 0.8862133504922646,
+          "r2": 0.529454408589273
+        }
+      ],
+      "shap_top": [],
+      "model_path": null,
+      "train_seconds": 0.0
+    }
+  }
+}

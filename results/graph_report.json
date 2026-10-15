@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-15T00:46:04Z",
+  "git_sha": "fdad924",
+  "import_seconds": 74.9,
+  "nodes": {
+    "Listing": 2537920,
+    "PropertyType": 5,
+    "Province": 63,
+    "District": 648,
+    "Ward": 6258,
+    "Street": 21864,
+    "Project": 5056,
+    "Month": 10,
+    "Amenity": 10,
+    "Cluster": 29,
+    "MarketStat": 123936
+  },
+  "relationships": {
+    "HAS_AMENITY": 3407508,
+    "IN_CLUSTER": 3391,
+    "IN_DISTRICT": 332415,
+    "IN_PROJECT": 724475,
+    "IN_PROVINCE": 76051,
+    "IN_WARD": 2163114,
+    "OF_TYPE": 2537920,
+    "ON_STREET": 1523852,
+    "POSTED_IN": 2537920,
+    "STAT_OF": 123936
+  },
+  "invariants": {
+    "listing_count_ok": true,
+    "price_sum_ok": true
+  },
+  "communities": {
+    "n_wards": 3391,
+    "n_clusters": 29,
+    "modularity": 0.8833194416042154,
+    "k": 5,
+    "seed": 42
+  }
+}

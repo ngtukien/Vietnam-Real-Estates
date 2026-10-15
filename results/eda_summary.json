@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-14T21:12:37Z",
+  "git_sha": "56de65f",
+  "n_listings": 2537920,
+  "period": {
+    "min_month": "2025-06",
+    "max_month": "2026-03"
+  },
+  "by_property_type": [
+    {
+      "property_type": "Nhà",
+      "n": 1141962,
+      "median_price_m2_mil": 162.2449
+    },
+    {
+      "property_type": "Đất",
+      "n": 619426,
+      "median_price_m2_mil": 36.5
+    },
+    {
+      "property_type": "Căn hộ chung cư",
+      "n": 554699,
+      "median_price_m2_mil": 67.5676
+    },
+    {
+      "property_type": "Biệt thự/Nhà liền kề",
+      "n": 181634,
+      "median_price_m2_mil": 151.0
+    },
+    {
+      "property_type": "Shophouse",
+      "n": 40199,
+      "median_price_m2_mil": 100.0
+    }
+  ],
+  "top_provinces": [
+    {
+      "province": "Hồ Chí Minh",
+      "n": 978016,
+      "share": 0.3854
+    },
+    {
+      "province": "Hà Nội",
+      "n": 812703,
+      "share": 0.3202
+    },
+    {
+      "province": "Đà Nẵng",
+      "n": 137727,
+      "share": 0.0543
+    },
+    {
+      "province": "Bình Dương",
+      "n": 110335,
+      "share": 0.0435
+    },
+    {
+      "province": "Khánh Hòa",
+      "n": 72713,
+      "share": 0.0287
+    },
+    {
+      "province": "Hải Phòng",
+      "n": 51706,
+      "share": 0.0204
+    },
+    {
+      "province": "Hưng Yên",
+      "n": 45749,
+      "share": 0.018
+    },
+    {
+      "province": "Đồng Nai",
+      "n": 43698,
+      "share": 0.0172
+    },
+    {
+      "province": "Long An",
+      "n": 35883,
+      "share": 0.0141
+    },
+    {
+      "province": "Bà Rịa - Vũng Tàu",
+      "n": 34843,
+      "share": 0.0137
+    },
+    {
+      "province": "Lâm Đồng",
+      "n": 19047,
+      "share": 0.0075
+    },
+    {
+      "province": "Quảng Ninh",
+      "n": 15540,
+      "share": 0.0061
+    },
+    {
+      "province": "Bắc Ninh",
+      "n": 15182,
+      "share": 0.006
+    },
+    {
+      "province": "Quảng Nam",
+      "n": 15093,
+      "share": 0.0059
+    },
+    {
+      "province": "Hòa Bình",
+      "n": 9736,
+      "share": 0.0038
+    }
+  ],
+  "hn_hcm_share": 0.7056,
+  "monthly": [
+    {
+      "month": "2025-06",
+      "n": 214955,
+      "median_price_m2_mil": 92.0
+    },
+    {
+      "month": "2025-07",
+      "n": 277358,
+      "median_price_m2_mil": 90.4762
+    },
+    {
+      "month": "2025-08",
+      "n": 255202,
+      "median_price_m2_mil": 91.8605
+    },
+    {
+      "month": "2025-09",
+      "n": 266649,
+      "median_price_m2_mil": 92.5926
+    },
+    {
+      "month": "2025-10",
+      "n": 306595,
+      "median_price_m2_mil": 100.0
+    },
+    {
+      "month": "2025-11",
+      "n": 289932,
+      "median_price_m2_mil": 96.1538
+    },
+    {
+      "month": "2025-12",
+      "n": 303536,
+      "median_price_m2_mil": 100.0
+    },
+    {
+      "month": "2026-01",
+      "n": 181602,
+      "median_price_m2_mil": 95.0
+    },
+    {
+      "month": "2026-02",
+      "n": 129432,
+      "median_price_m2_mil": 99.0
+    },
+    {
+      "month": "2026-03",
+      "n": 312659,
+      "median_price_m2_mil": 95.1613
+    }
+  ],
+  "missing_pct": {
+    "title": 0.0,
+    "description": 0.0,
+    "province": 0.0,
+    "province_2025": 0.0,
+    "district": 2.97,
+    "ward": 14.77,
+    "street": 39.82,
+    "project": 71.45,
+    "price_vnd": 8.24,
+    "area_m2": 0.0,
+    "floors": 76.35,
+    "frontage_m": 49.41,
+    "depth_m": 97.32,
+    "road_width_m": 80.8,
+    "bedrooms": 46.18,
+    "bathrooms": 49.62,
+    "house_direction": 68.9,
+    "balcony_direction": 83.99,
+    "published_at": 0.0
+  },
+  "description_chars": {
+    "p50": 456.0,
+    "p90": 938.0,
+    "p99": 1845.0
+  },
+  "tokens_per_listing": {
+    "p50": 172.0,
+    "p90": 307.1,
+    "p99": 589.0
+  },
+  "figures": [
+    {
+      "file": "price_m2_by_type.png",
+      "title": "Giá/m² theo loại bất động sản",
+      "caption": "Trung vị và khoảng tứ phân vị giá/m² (triệu đồng) của tin bán, đã loại outlier giá và diện tích."
+    },
+    {
+      "file": "price_m2_by_region.png",
+      "title": "Giá/m² theo tỉnh/thành",
+      "caption": "Trung vị giá/m² (triệu đồng) của tin bán ở các tỉnh/thành nhiều tin nhất."
+    },
+    {
+      "file": "monthly_trend.png",
+      "title": "Số tin và giá/m² theo tháng",
+      "caption": "Cột: số tin đăng mỗi tháng; đường: trung vị giá/m² (triệu đồng) của tin bán."
+    },
+    {
+      "file": "missing_values.png",
+      "title": "Tỷ lệ thiếu dữ liệu theo cột",
+      "caption": "Phần trăm giá trị rỗng của từng cột trong bảng sạch."
+    },
+    {
+      "file": "outliers.png",
+      "title": "Tỷ lệ outlier theo loại bất động sản",
+      "caption": "Phần trăm tin bị gắn cờ outlier giá/m² và outlier diện tích theo từng loại."
+    },
+    {
+      "file": "duplicates.png",
+      "title": "Mức độ trùng lặp tin đăng",
+      "caption": "Số tin đại diện theo số dòng thô đã gộp vào (trùng chính xác và trùng tiền tố)."
+    },
+    {
+      "file": "top_provinces.png",
+      "title": "Tỉnh/thành nhiều tin nhất",
+      "caption": "Số tin và tỷ trọng của các tỉnh/thành đứng đầu (địa giới cũ)."
+    },
+    {
+      "file": "top_districts_hcm_hn.png",
+      "title": "Quận/huyện nhiều tin nhất ở Hà Nội và TP. Hồ Chí Minh",
+      "caption": "Mười quận/huyện có nhiều tin đăng nhất ở mỗi thành phố."
+    }
+  ]
+}

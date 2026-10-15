@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vre"
+version = "0.2.0"
+description = "Vietnam Real Estates: RAG/GraphRAG và định giá trên 3,5M tin đăng"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["vre*"]
+
+[tool.setuptools.package-data]
+"vre.data" = ["*.yaml", "*.csv", "*.sql"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = [
+    "integration: cần dịch vụ Docker (Neo4j/Qdrant) đang chạy",
+    "gpu: cần GPU CUDA (chỉ phiên p2 chạy)",
+    "slow: chạy lâu",
+]
+
+[tool.ruff]
+line-length = 130
+target-version = "py311"
+src = ["src", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501", "B008"]
+
+[tool.mypy]
+python_version = "3.13"
+mypy_path = "src"
+ignore_missing_imports = true
+warn_unused_ignores = true

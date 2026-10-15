@@ -1,25 +1,12 @@
-services:
-  graph_db:
-    # Đồ thị Neo4j cho notebook 03, 04 và chatbot (chế độ Graph, Hybrid).
-    image: neo4j:5.26-community
-    restart: unless-stopped
-    environment:
-      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-local_dev_password}
-      NEO4J_server_memory_heap_max__size: 2G
-      NEO4J_server_memory_pagecache_size: 1G
-    ports:
-      - "127.0.0.1:7474:7474"
-      - "127.0.0.1:7687:7687"
-    volumes:
-      - neo4j_data:/data
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:7474 >/dev/null || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
+# Một bộ dịch vụ cho cả hai worktree (coordination §7): luôn chạy bằng
+#   docker compose -f D:\Vietnam-Real-Estates\docker-compose.yaml up -d --wait qdrant neo4j
+# Dữ liệu Neo4j/Qdrant nằm trong named volume (ext4 trong ổ đĩa WSL của Docker Desktop, đặt ở D:\DockerDesktopWSL).
+# Không dùng bind mount NTFS cho store: Neo4j/Qdrant dùng mmap, trên drvfs/9p bị chậm và mất nhất quán
+# (import 2026-10-15: 87 phút, thiếu 118 node Listing). Log Neo4j vẫn bind mount ra docker-data/ để đọc.
+name: vre
 
-  vector_db:
-    # Qdrant: collection listings_sample (notebook) và listings_full (chatbot).
+services:
+  qdrant:
     image: qdrant/qdrant:v1.15.5
     restart: unless-stopped
     ports:
@@ -32,28 +19,36 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
+      start_period: 30s
 
-  # ---- Đồ thị toàn bộ dataset cho chatbot: docker compose --profile full up -d --wait
-  graph_db_full:
-    # Đồ thị toàn bộ dataset, tách khỏi graph_db để notebook 03 (mẫu 20k) không ghi đè.
+  neo4j:
     image: neo4j:5.26-community
-    profiles: [full]
     restart: unless-stopped
     environment:
       NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-local_dev_password}
-      NEO4J_server_memory_heap_max__size: 2G
-      NEO4J_server_memory_pagecache_size: 2G
+      # Không đặt tên NEO4J_*: entrypoint coi mọi NEO4J_* là thiết lập cấu hình.
+      GRAPH_PASSWORD: ${NEO4J_PASSWORD:-local_dev_password}
+      # Chia máy với lượt chạy dài của p2 (coordination §8).
+      NEO4J_server_memory_heap_initial__size: 4G
+      NEO4J_server_memory_heap_max__size: 4G
+      NEO4J_server_memory_pagecache_size: 4G
+      NEO4J_dbms_memory_transaction_total_max: 2G
     ports:
-      - "127.0.0.1:7688:7687"
+      - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
     volumes:
-      - neo4j_full_data:/data
+      - neo4j_data:/data
+      - ${VRE_DATA_ROOT:-D:/Vietnam-Real-Estates}/docker-data/neo4j/logs:/logs
+      - ${VRE_DATA_ROOT:-D:/Vietnam-Real-Estates}/data/graph_import:/import:ro
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:7474 >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p \"$${GRAPH_PASSWORD}\" \"RETURN 1\" || exit 1"]
       interval: 10s
-      timeout: 5s
-      retries: 12
+      timeout: 10s
+      retries: 30
+      start_period: 90s
 
 volumes:
   neo4j_data:
-  neo4j_full_data:
+    name: vre_neo4j_data
   qdrant_data:
+    name: vre_qdrant_data

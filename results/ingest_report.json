@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-14T21:11:43Z",
+  "git_sha": "2ae47f2",
+  "raw_rows": 3500744,
+  "shards": 10,
+  "seconds": 32.3,
+  "dropped": {
+    "no_text": 1868,
+    "bad_type": 0
+  },
+  "dedup": {
+    "exact_dup": 416939,
+    "prefix_dup": 544017,
+    "kept": 2537920,
+    "simhash_clusters_multi": 185704,
+    "simhash_listings_in_multi": 407138,
+    "simhash_skipped_buckets": 0
+  },
+  "price": {
+    "null_or_unparsable": 209160,
+    "fixed_thousand": 1178,
+    "outliers": 46285
+  },
+  "area_outliers": 27199,
+  "deal_type": {
+    "sale": 2537601,
+    "rent": 319
+  },
+  "missing_pct": {
+    "ward": 14.77,
+    "street": 39.82,
+    "project": 71.45,
+    "bedrooms": 46.18
+  },
+  "listing_id_collisions": 0
+}

@@ -3,8 +3,20 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
-logs/
-# Dữ liệu sạch, chỉ mục và cache sinh lại được từ notebook 01–04
-data/
-index/
-results/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+/logs/
+# Dữ liệu, chỉ mục, model, dữ liệu dịch vụ Docker: sinh lại bằng scripts/vre_pipeline.py
+/data/
+/index/
+/models/
+/docker-data/
+# results/: JSON nhỏ được commit; cache, raw eval, parquet và tín hiệu phối hợp thì không
+results/cache/
+results/eval/raw/
+results/**/*.parquet
+results/handoff/
+.claude/
+.cache/

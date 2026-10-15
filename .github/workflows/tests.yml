@@ -1,22 +1,29 @@
-# Bộ test trong tests/ không cần mạng, LLM, Qdrant hay Neo4j: chỉ cài các thư viện mà src/ import ở đầu file.
+# Unit test của package vre (không mạng, không GPU, không Docker). Phase 3 bổ sung CI đầy đủ.
 name: tests
 
 on:
   push:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  unittest:
+  unit:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VRE_LOAD_DOTENV: "0"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.13"
           cache: pip
-      - name: Cài thư viện cho test
-        run: >
-          pip install "pandas>=2.2" "numpy>=1.26" "pydantic>=2,<3" "qdrant-client>=1.15,<1.16"
-          "neo4j>=5,<7" "networkx>=3.2,<4" "python-dotenv>=1,<2" "nbformat>=5.10,<6"
-      - name: Chạy unittest
-        run: python -m unittest discover -s tests -v
+      - name: Cài thư viện
+        run: pip install -r requirements/dev.txt xgboost
+      - name: Chạy unit test
+        run: python -m pytest -q -m "not integration and not gpu"
+      - name: Ruff
+        run: python -m ruff check src tests scripts

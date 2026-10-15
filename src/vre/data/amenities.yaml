@@ -1,0 +1,12 @@
+# key: {name: tên hiển thị, patterns: [regex áp trên lower(NFC(title + "\n" + description))]}
+# Khoá đã có không đổi tên (Phase 3 viết benchmark dựa trên chúng); chỉ được THÊM (≤ 30 khoá). data-contract §3.2.
+thang_may:   {name: "Thang máy",      patterns: ['thang\s*máy', '\btm\b']}
+ho_boi:      {name: "Hồ bơi",         patterns: ['hồ\s*bơi', 'bể\s*bơi']}
+hem_xe_hoi:  {name: "Hẻm xe hơi",     patterns: ['hẻm\s*(xe\s*hơi|ô\s*tô|oto)', '\bhxh\b']}
+so_hong:     {name: "Sổ hồng/sổ đỏ",  patterns: ['sổ\s*(hồng|đỏ)', '\bshr\b']}
+mat_tien:    {name: "Mặt tiền",       patterns: ['mặt\s*tiền', '\bmt\b']}
+gan_truong:  {name: "Gần trường",     patterns: ['gần\s*trường']}
+view_song:   {name: "View sông",      patterns: ['view\s*sông', 'view\s*hồ']}
+gara:        {name: "Gara/ô tô vào nhà", patterns: ['gara', 'ô\s*tô\s*(vào|đỗ)\s*(trong\s*)?nhà']}
+noi_that:    {name: "Đầy đủ nội thất", patterns: ['full\s*nội\s*thất', 'đầy\s*đủ\s*nội\s*thất', '\bfull\s*nt\b']}
+an_ninh:     {name: "An ninh 24/7",   patterns: ['bảo\s*vệ\s*24', 'an\s*ninh\s*24']}
