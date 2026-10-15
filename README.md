@@ -50,7 +50,7 @@ flowchart LR
 - **Bảng sạch** (`data/clean/listings.parquet`): DuckDB đọc các shard thô, chuẩn hoá địa danh, sửa giá nhập theo nghìn đồng, ẩn số điện thoại
   và email, khử trùng chính xác + trùng tiền tố, gom tin gần trùng bằng SimHash (giữ lại, đánh dấu `dup_cluster_id`).
 - **Chỉ mục vector**: collection Qdrant `vre_chunks_e5_large` (alias `vre_chunks`), mỗi điểm có vector dense và vector sparse BM25
-  (tách từ `pyvi`), payload index cho lọc trước. Lý do chọn `multilingual-e5-large` ở notebook `02_rag` (đọc `results/embedding_benchmark.json`).
+  (tách từ `pyvi`), payload index cho lọc trước. Lý do chọn `multilingual-e5-large` ở notebook `01_rag_indexing` (đọc `results/embedding_benchmark.json`).
 - **Đồ thị tri thức**: `Listing` gắn với `Ward`/`District`/`Province`, `Street`, `Project`, `PropertyType`, `Month`, `Amenity`; `MarketStat`
   là thống kê giá tính sẵn theo vùng × loại × tháng; `Cluster` là cộng đồng Leiden của các phường. Text2Cypher chạy trong giao dịch chỉ đọc,
   có chặn regex, `LIMIT` và timeout.
@@ -106,7 +106,7 @@ kiểm điều kiện tiên quyết trước khi chạy (thiếu shard, thiếu 
 | `& $VRE_PY scripts/vre_pipeline.py status` | Tiến độ lượt chạy dài | |
 
 **Lượt chạy dài** (`night`): embed và upload toàn bộ chunk mất nhiều giờ (thời gian thật của lần chạy gần nhất ở
-`results/night_report.json` → `wall_hours`, hiển thị trong notebook `02_rag`). Bị ngắt (mất điện, tắt máy, lỗi bộ nhớ) thì chạy lại
+`results/night_report.json` → `wall_hours`, hiển thị trong notebook `01_rag_indexing`). Bị ngắt (mất điện, tắt máy, lỗi bộ nhớ) thì chạy lại
 **đúng lệnh cũ**: pipeline đọc trạng thái từng phần và tiếp tục từ phần chưa xong. Chạy thử nhỏ trước bằng `--dry-run`.
 
 ## Đánh giá
@@ -199,7 +199,7 @@ Khối dưới đây do `scripts/vre_pipeline.py report readme` sinh từ `resul
 
 ```powershell
 & $VRE_PY -m pytest -q -m "not integration and not gpu and not notebooks"   # unit, không mạng/GPU/Docker
-& $VRE_PY -m pytest -q -m notebooks tests/test_notebooks.py                   # chạy cả năm notebook bằng nbclient
+& $VRE_PY -m pytest -q -m notebooks tests/test_notebooks.py                   # chạy cả sáu notebook bằng nbclient
 & $VRE_PY -m pytest -q -m integration                                         # cần Qdrant + Neo4j đang chạy
 & $VRE_PY -m ruff check src tests scripts
 ```
@@ -227,7 +227,7 @@ data/ index/ models/ docker-data/   Sinh ra khi chạy pipeline, không đưa v�
 ## Hạn chế
 
 - Giá chào bán do người dùng tự nhập: có nhiễu, có tin đăng lại có sửa chữ mà SimHash không gom được; không phản ánh giá giao dịch.
-- Dữ liệu tập trung mạnh ở Hà Nội và Hồ Chí Minh (tỷ trọng in ở notebook `01_eda`); kết luận cho tỉnh ít tin kém tin cậy hơn.
+- Dữ liệu tập trung mạnh ở Hà Nội và Hồ Chí Minh (tỷ trọng in ở notebook `01_rag_indexing`); kết luận cho tỉnh ít tin kém tin cậy hơn.
 - Địa danh theo địa giới trước sắp xếp năm `2025`; bản đồ và đồ thị chưa phản ánh đơn vị hành chính mới.
 - Số tin thuê quá ít để huấn luyện mô hình định giá thuê (lý do ghi ở `results/valuation_metrics.json` → `rent_model`).
 - Bộ lọc, Cypher, router và câu trả lời phụ thuộc LLM; cần khoá Groq khi chạy lần đầu, lần sau đọc cache. LLM có thể chép sai id trong
