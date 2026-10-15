@@ -1,0 +1,30 @@
+{
+ "examples": [
+  [
+   "Q.7",
+   "district",
+   "Quận 7"
+  ],
+  [
+   "TP. Hồ Chí Minh",
+   "province",
+   "Hồ Chí Minh"
+  ],
+  [
+   "P.5",
+   "ward",
+   "Phường 5"
+  ],
+  [
+   "Huyện Củ Chi",
+   "district",
+   "Củ Chi"
+  ]
+ ],
+ "ward_key": "Hồ Chí Minh|Quận 7|Phường 5",
+ "_meta": {
+  "cell": "P3-04",
+  "mode": "live",
+  "generated_at": "2026-10-15T15:47:07Z"
+ }
+}

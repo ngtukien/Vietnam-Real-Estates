@@ -1,0 +1,41 @@
+{
+ "listing_id": 1067994395475051,
+ "title": "BÁN SHOPHOUSE TẦNG 1 KHỐI ĐẾ CHUNG CƯ EVERGREEN BẮC GIANG, SỔ ĐỎ CHÍNH CHỦ, CÓ HĐ CHO THUÊ GIÁ TỐT",
+ "triples": [
+  [
+   "Amenity",
+   "HAS_AMENITY",
+   "Sổ hồng/sổ đỏ"
+  ],
+  [
+   "Amenity",
+   "HAS_AMENITY",
+   "Gần trường"
+  ],
+  [
+   "Month",
+   "POSTED_IN",
+   "2025-11"
+  ],
+  [
+   "Project",
+   "IN_PROJECT",
+   "Evergreen Bắc Giang"
+  ],
+  [
+   "Ward",
+   "IN_WARD",
+   "Nếnh"
+  ],
+  [
+   "PropertyType",
+   "OF_TYPE",
+   "Shophouse"
+  ]
+ ],
+ "_meta": {
+  "cell": "P3-02",
+  "mode": "live",
+  "generated_at": "2026-10-15T15:47:07Z"
+ }
+}
