@@ -9,6 +9,8 @@ services:
   qdrant:
     image: qdrant/qdrant:v1.15.5
     restart: unless-stopped
+    # Giới hạn bộ nhớ: mmap file vector làm VM WSL phình tới 17 GB và cạn commit của Windows (2026-10-15).
+    mem_limit: 12g
     ports:
       - "127.0.0.1:6333:6333"
       - "127.0.0.1:6334:6334"
