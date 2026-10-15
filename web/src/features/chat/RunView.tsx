@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Alert, Badge, Spinner } from "@/components/ui/primitives";
 import { ValuationResultView } from "@/features/valuation/ValuationResultView";
+import { describeFilterNote } from "@/lib/filterNote";
 import { formatInt, formatMs, formatUsd } from "@/lib/format";
 import { ERROR_LABEL, FILTER_SOURCE_LABEL, ROUTE_LABEL } from "@/lib/labels";
 import { Answer } from "./Answer";
@@ -12,13 +13,19 @@ function FiltersLine({ run }: { run: SystemRun }) {
   const f = run.filters;
   if (!f) return null;
   const entries = Object.entries(f.filters).filter(([, v]) => v !== null);
+  const note = describeFilterNote(f.note);
   return (
     <p className="text-xs text-muted-foreground" data-testid="filters-line">
       Bộ lọc ({FILTER_SOURCE_LABEL[f.source]}):{" "}
       {entries.length ? entries.map(([k, v]) => `${k}=${String(v)}`).join(" · ") : "không có"}
-      {f.note === "filter_dropped" ? (
-        <Badge tone="warning" className="ml-2">
-          đã bỏ lọc vì 0 kết quả
+      {note ? (
+        <Badge
+          tone={note.kind === "dropped" ? "warning" : "outline"}
+          className="ml-2"
+          data-testid={note.kind === "dropped" ? "filter-dropped-badge" : "filter-relaxed-badge"}
+          title={note.kind === "relaxed" ? "Bộ lọc gốc không có kết quả; đã bỏ bớt các trường này" : undefined}
+        >
+          {note.label}
         </Badge>
       ) : null}
     </p>
