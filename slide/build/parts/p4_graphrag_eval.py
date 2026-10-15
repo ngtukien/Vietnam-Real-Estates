@@ -149,7 +149,14 @@ def setup(d: Deck) -> None:
     s.text(MX, 3.75, W - 2 * MX, 0.4, "Mô hình sinh", size=SIZE["caption"], bold=True, color="teal")
     s.text(MX, 4.1, W - 2 * MX, 0.5, d.T(ES + ":llm.generator"), size=20, bold=True, color="ink")
     s.text(MX, 4.75, W - 2 * MX, 0.4, "Cách chấm", size=SIZE["caption"], bold=True, color="teal")
-    s.text(MX, 5.1, W - 2 * MX, 1.3, d.T(ES + ":scoring"), size=SIZE["small"])
+    rules = [d.A("Câu hỏi tìm tin: Recall@5 theo cụm tin trùng; ≥ 0,8 được 2 điểm, > 0 được 1 điểm",
+                 "luật chấm, eval_summary.scoring_rules"),
+             d.A("Câu hỏi ra số: có số trong câu trả lời lệch ≤ 5% so với đáp án SQL được 2 điểm, ≤ 20% được 1 điểm",
+                 "luật chấm, eval_summary.scoring_rules"),
+             d.A("Câu hỏi ra tên (quận, tháng): câu trả lời chứa đúng tên được 2 điểm", "luật chấm, eval_summary.scoring_rules"),
+             "Câu không trả lời được: phải có câu từ chối mới được điểm",
+             d.A("“Đúng” = đạt 2/2 điểm; faithfulness để trống vì cần LLM chấm", "định nghĩa accuracy trong eval")]
+    s.text(MX, 5.1, W - 2 * MX, 1.5, rules, size=SIZE["small"], bullets=True, spacing=1.0)
 
 
 def ablation(d: Deck) -> None:
@@ -191,11 +198,12 @@ def results(d: Deck) -> None:
 
 def pairwise(d: Deck) -> None:
     rows_all = d.V(f"{ES}:pairwise") or []
-    keep = [i for i, r in enumerate(rows_all) if r.get("metric") == "accuracy" and r.get("b") == "basic_rag"
-            and r.get("a") in ("graph", "hybrid")][:8]
+    keep = [i for i, r in enumerate(rows_all) if r.get("metric") == "accuracy" and r.get("scope") in ("overall", "aggregate")]
+    keep.sort(key=lambda i: (rows_all[i]["scope"] != "overall", rows_all[i]["a"], rows_all[i]["b"]))
     s = d.slide("ev-pairwise", SEC_E, "So từng cặp trên cùng câu hỏi: khoảng tin cậy cho biết chênh lệch nào đáng tin",
                 notes=(
-        "Bảng so Graph và Hybrid với Basic RAG trên cùng câu hỏi. Chênh lệch là hiệu độ chính xác; khoảng tin cậy chín mươi "
+        "Bảng so ba cặp trên cùng câu hỏi: Basic RAG với LLM thuần, Hybrid với Basic RAG, và Hybrid với Graph, ở toàn tập "
+        "và ở nhóm tổng hợp. Chênh lệch là hiệu độ chính xác tính bằng điểm phần trăm; khoảng tin cậy chín mươi "
         "lăm phần trăm lấy bằng bootstrap mười nghìn mẫu theo câu hỏi, ghép cặp giữa hai hệ. Khoảng nào chứa số không thì "
         "chưa đủ bằng chứng nói hệ này hơn hệ kia trên tập con này. Đó là cách đọc trung thực với cỡ mẫu nhỏ. "
         "Slide sau: chi phí và độ trễ."))
@@ -203,9 +211,8 @@ def pairwise(d: Deck) -> None:
     for i in keep:
         k = f"{ES}:pairwise[{i}]"
         r = rows_all[i]
-        rows.append([f"{SYSTEM[r['a']][0]} − Basic RAG", CATS.get(r["scope"], "Tổng" if r["scope"] in ("overall", "all")
-                                                                   else d.A(r["scope"], "tên phạm vi")),
-                     d.N(k + ".diff", "spct0") + " điểm", f"{d.N(k + '.ci95[0]', 'spct0')} … {d.N(k + '.ci95[1]', 'spct0')}",
+        rows.append([f"{SYSTEM[r['a']][0]} − {SYSTEM[r['b']][0]}", "Tổng" if r["scope"] == "overall" else CATS[r["scope"]],
+                     d.N(k + ".diff", "spct0") + " điểm %", f"{d.N(k + '.ci95[0]', 'spct0')} … {d.N(k + '.ci95[1]', 'spct0')}",
                      d.N(k + ".p_value", "dec2")])
     if len(rows) == 1:
         rows.append(["⟨?⟩"] * 5)
@@ -246,7 +253,12 @@ def errors(d: Deck) -> None:
                                   for x in syss])
     s.table(MX, 1.95, 6.6, rows, col_w=[2.4] + [4.2 / len(syss)] * len(syss), size=SIZE["small"], row_h=0.44)
     ex = d.V("error_analysis.json:examples") or []
-    for j, i in enumerate([i for i, e in enumerate(ex) if e.get("system") != "llm_only"][:2]):
+    picked, seen = [], set()
+    for i, e in enumerate(ex):
+        if e.get("system") != "llm_only" and e.get("id") not in seen:
+            picked.append(i)
+            seen.add(e.get("id"))
+    for j, i in enumerate(picked[:2]):
         k = f"error_analysis.json:examples[{i}]"
         y = 1.95 + j * 2.3
         s.rect(7.5, y, 5.2, 2.1, fill="soft", line=None, radius=0.04)

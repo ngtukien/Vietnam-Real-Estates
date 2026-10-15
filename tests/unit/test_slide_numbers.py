@@ -125,3 +125,18 @@ def test_html_check_and_apply(tmp_path, results):
                                  {"text": "Bỏ 9 tin", "allow": "ví dụ"}])
     assert _run("html", page, "--map", m, "--results", results, "--apply") == 0
     assert "Còn 2.537.920 tin" in page.read_text(encoding="utf-8") and "[10,20]" in page.read_text(encoding="utf-8")
+
+
+def test_table_cells_scoped_by_cell(tmp_path, results):
+    """Hai ô của cùng một bảng: mẫu "{}" của ô này không được khớp số ở ô khác (lỗi gặp khi dựng deck)."""
+    prs = Presentation()
+    s = prs.slides.add_slide(prs.slide_layouts[6])
+    s._element.cSld.set("name", "x")
+    tbl = s.shapes.add_table(1, 2, Inches(1), Inches(1), Inches(4), Inches(1))
+    tbl.table.cell(0, 0).text, tbl.table.cell(0, 1).text = "2.537.920", "20"
+    deck = tmp_path / "t.pptx"
+    prs.save(deck)
+    sid = tbl.shape_id
+    m = _map(tmp_path, [{"slide": "x", "shape": sid, "cell": [0, 0], "full": True, "text": "{}", "key": "r.json:kept"},
+                        {"slide": "x", "shape": sid, "cell": [0, 1], "full": True, "text": "{}", "key": "r.json:counts[1]"}])
+    assert _run("check", deck, "--map", m, "--results", results) == 0

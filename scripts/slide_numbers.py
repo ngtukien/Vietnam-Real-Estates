@@ -60,7 +60,9 @@ def _slide_ok(entry, fr) -> bool:
 
 def _scope(entry, fr) -> bool:
     where = entry.get("in", "any")
-    return _slide_ok(entry, fr) and where in ("any", fr.where) and entry.get("shape") in (None, fr.shape_id)
+    cell = entry.get("cell")
+    return (_slide_ok(entry, fr) and where in ("any", fr.where) and entry.get("shape") in (None, fr.shape_id)
+            and (cell is None or tuple(cell) == getattr(fr, "cell", None)))
 
 
 class Report:
@@ -96,7 +98,7 @@ def run_entries(items, texts, res, rep, apply_fn=None):
                 covered.add((id(fr), 0, len(text)))
                 hits += 1
                 continue
-            found = list(tpl.finditer(text))
+            found = ([m] if (m := tpl.fullmatch(text)) else []) if e.get("full") else list(tpl.finditer(text))
             for m in (reversed(found) if apply_fn else found):
                 hits += 1
                 if want is None:

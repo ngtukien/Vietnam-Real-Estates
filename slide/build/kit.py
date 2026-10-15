@@ -93,7 +93,7 @@ class Deck:
         self.marks.append({"kind": "allow", "value": text, "reason": reason})
         return f"{len(self.marks) - 1}"
 
-    def resolve(self, s: str, slide: "Slide", where: str, shape_id: int) -> str:
+    def resolve(self, s: str, slide: "Slide", where: str, shape_id: int, cell: tuple | None = None) -> str:
         """Thay dấu mốc, ghi mục map cho shape; trả chuỗi cuối cùng."""
         ids = [int(i) for i in _SENT.findall(s)]
         if not ids:
@@ -103,12 +103,13 @@ class Deck:
         if nums:
             tpl = _SENT.sub(lambda m: "{}" if self.marks[int(m.group(1))]["kind"] == "num"
                             else self.marks[int(m.group(1))]["value"], s)
-            self.entries.append({"slide": slide.name, "in": where, "shape": shape_id, "text": tpl,
+            self.entries.append({"slide": slide.name, "in": where, "shape": shape_id, **({"cell": list(cell)} if cell else {}),
+                                 "full": True, "text": tpl,
                                  "keys": [n["key"] for n in nums], "fmt": [n["fmt"] for n in nums]})
         for i in ids:
             mk = self.marks[i]
             if mk["kind"] == "allow" and any(ch.isdigit() for ch in mk["value"]):
-                self.entries.append({"slide": slide.name, "in": where, "shape": shape_id,
+                self.entries.append({"slide": slide.name, "in": where, "shape": shape_id, **({"cell": list(cell)} if cell else {}),
                                      "text": mk["value"],
                                      "allow": mk["reason"]})
         return final
@@ -147,7 +148,9 @@ class Slide:
             self.text(MX + 0.18, 0.36, 8, 0.42, section.upper(), size=SIZE["caption"], bold=True,
                       color="teal", name="section")
         if title:
-            self.text(MX, 0.78, W - 2 * MX, 0.95, title, size=SIZE["title"], bold=True,
+            plain = _SENT.sub(lambda m: self.d.marks[int(m.group(1))]["value"], title)
+            size = SIZE["title"] if len(plain) <= 52 else 24  # tiêu đề dài: 24pt, hai dòng vẫn trên vùng nội dung
+            self.text(MX, 0.78, W - 2 * MX, 0.95, title, size=size, bold=True,
                       color="white" if self.dark else "ink", font=FONT_HEAD, anchor="top", name="title")
 
     @staticmethod
@@ -255,7 +258,7 @@ class Slide:
                 cell.margin_left = cell.margin_right = Inches(0.08)
                 cell.vertical_anchor = MSO_ANCHOR.MIDDLE
                 tf = cell.text_frame
-                self.d.resolve(val, self, "body", gt.shape_id)
+                self.d.resolve(val, self, "body", gt.shape_id, (r, c))
                 tf.paragraphs[0].text = ""
                 run = tf.paragraphs[0].add_run()
                 run.text = _SENT.sub(lambda m: self.d.marks[int(m.group(1))]["value"], val)

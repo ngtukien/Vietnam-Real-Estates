@@ -225,8 +225,17 @@ def basic_fails(d: Deck) -> None:
            size=SIZE["small"], color="ink")
     s.rect(6.3, 5.3, 6.4, 0.9, fill="teal_bg", line=None, radius=0.04)
     s.text(6.55, 5.38, 6.0, 0.75, [[("Đáp án chuẩn (SQL)  ", {"bold": True, "color": "teal"}),
-           (d.T(k + ".gt_value") if k else d.A("⟨?⟩", "chưa có ví dụ"), {"bold": True, "color": "ink"})]],
+           (_gt(d, k + ".gt_value") if k else d.A("⟨?⟩", "chưa có ví dụ"), {"bold": True, "color": "ink"})]],
            size=18, anchor="middle")
+
+
+def _gt(d: Deck, key: str) -> str:
+    """Đáp án chuẩn: số thì định dạng kiểu Việt (91,26), chữ (tên quận) thì in nguyên văn."""
+    try:
+        float(d.V(key))
+        return d.N(key, "dec2")
+    except (TypeError, ValueError):
+        return d.T(key)
 
 
 def _excerpt(d: Deck, key: str, limit: int = 330) -> str:
@@ -241,9 +250,10 @@ def practice(d: Deck) -> None:
     cat = "eval_summary.json:by_category"
     cats = [("lookup", "Tra cứu"), ("constraint", "Ràng buộc"), ("aggregate", "Tổng hợp")]
     acc = {c: d.V(f"{cat}.{c}.basic_rag.accuracy") for c, _ in cats}
-    good = acc["lookup"] is not None and acc["aggregate"] is not None and acc["aggregate"] < acc["lookup"]
-    title = ("Thực hành 2: Basic RAG làm tốt câu tìm tin, tụt rõ ở câu tổng hợp" if good
-             else "Thực hành 2: độ chính xác của Basic RAG theo ba nhóm câu đầu")
+    strong = [label for c, label in cats if acc[c] is not None and acc[c] >= 0.5]
+    weak = [label.lower() for c, label in cats if acc[c] is not None and acc[c] < 0.5]
+    title = (f"Thực hành 2: Basic RAG đạt ở câu {', '.join(x.lower() for x in strong)}, hụt ở câu {' và '.join(weak)}"
+             if strong and weak else "Thực hành 2: độ chính xác của Basic RAG theo ba nhóm câu đầu")
     s = d.slide("ret-practice-2", SEC, title, notes=(
         "Ba nhóm câu chạy thật qua pipeline Basic RAG trong lượt eval. "
         f"Tra cứu đúng {d.N(cat + '.lookup.basic_rag.accuracy', 'pct0')}%, ràng buộc "

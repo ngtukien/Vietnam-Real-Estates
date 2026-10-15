@@ -23,6 +23,7 @@ class Frame:
     where: str            # body | notes
     shape_id: int
     text_frame: object = field(repr=False)
+    cell: tuple | None = None  # (hàng, cột) khi là ô bảng
     segments: list = field(default_factory=list, repr=False)  # (start, end, run|None)
     text: str = ""
 
@@ -82,9 +83,9 @@ def frames(prs) -> list[Frame]:
             if sh.has_text_frame:
                 out.append(Frame(i, name, "body", sh.shape_id, sh.text_frame).build())
             if getattr(sh, "has_table", False) and sh.has_table:
-                for row in sh.table.rows:
-                    for cell in row.cells:
-                        out.append(Frame(i, name, "body", sh.shape_id, cell.text_frame).build())
+                for r, row in enumerate(sh.table.rows):
+                    for c, cell in enumerate(row.cells):
+                        out.append(Frame(i, name, "body", sh.shape_id, cell.text_frame, (r, c)).build())
         if s.has_notes_slide:
             out.append(Frame(i, name, "notes", 0, s.notes_slide.notes_text_frame).build())
     return out
