@@ -83,6 +83,10 @@ def test_assign_cause_rules():
     assert errors.assign_cause(agg, _answer(agg.id, "basic_rag", unsupported_citations=[1]), bad) == "llm_hallucination"
     assert errors.assign_cause(agg, _answer(agg.id, "graph", cypher="MATCH"), bad) == "cypher_wrong_result"
     assert errors.assign_cause(agg, _answer(agg.id, "basic_rag"), bad) == "insufficient_context"
+    unfaithful = {**bad, "faithfulness": 0.0}
+    assert errors.assign_cause(agg, _answer(agg.id, "basic_rag"), unfaithful) == "llm_hallucination"
+    refused = _answer(agg.id, "basic_rag", answer="Không đủ dữ liệu để tính")
+    assert errors.assign_cause(agg, refused, unfaithful) == "insufficient_context"
 
 
 def test_error_build_counts_and_examples():

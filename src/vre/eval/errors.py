@@ -8,7 +8,8 @@ Thứ tự luật (luật đầu tiên khớp thắng — nguyên nhân gốc tr
 4. `cypher_error` — Cypher lỗi (kể cả khi đã lui về RAG).
 5. Câu `gt_kind=ids` thiếu tin đúng: `filter_wrong` khi bộ lọc LLM trích từ câu hỏi loại mất MỌI tin GT (kiểm bằng SQL
    trên `v_listings`), `insufficient_context` cho llm_only (không truy xuất), còn lại `retrieval_miss`.
-6. `llm_hallucination` — trích `[Tin#id]` không có trong nguồn, hoặc faithfulness < 0,5 (nhận định không có trong ngữ cảnh).
+6. `llm_hallucination` — trích `[Tin#id]` không có trong nguồn; câu trả lời tự nói "không đủ dữ liệu" ⇒ `insufficient_context`;
+   còn lại faithfulness < 0,5 (nhận định không có trong ngữ cảnh) ⇒ `llm_hallucination`.
 7. `cypher_wrong_result` — Cypher chạy được nhưng câu trả lời sai.
 8. `insufficient_context` — còn lại.
 """
@@ -16,6 +17,7 @@ Thứ tự luật (luật đầu tiên khớp thắng — nguyên nhân gốc tr
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Callable
 from typing import Any
 
@@ -32,6 +34,7 @@ HALLUCINATION_FAITHFULNESS = 0.5
 EXAMPLES_PER_CAUSE = 3
 EXCERPT_CHARS = 300
 SCHEMA_VERSION = 1
+NO_DATA = re.compile(r"không (đủ|có) (dữ liệu|thông tin)|không tìm thấy", re.IGNORECASE)
 
 
 def assign_cause(q: Question, answer: dict, score: dict,
@@ -56,8 +59,12 @@ def assign_cause(q: Question, answer: dict, score: dict,
         if not score.get("recall_at_5") and system in FILTER_SYSTEMS and filters_exclude_gt(q):
             return "filter_wrong"
         return "retrieval_miss"
+    if answer.get("unsupported_citations"):
+        return "llm_hallucination"
+    if NO_DATA.search(text):  # tự nói thiếu dữ liệu: nhận định đó không có trong ngữ cảnh nhưng không phải bịa
+        return "insufficient_context"
     faithfulness = score.get("faithfulness")
-    if answer.get("unsupported_citations") or (faithfulness is not None and faithfulness < HALLUCINATION_FAITHFULNESS):
+    if faithfulness is not None and faithfulness < HALLUCINATION_FAITHFULNESS:
         return "llm_hallucination"
     if cypher:
         return "cypher_wrong_result"
