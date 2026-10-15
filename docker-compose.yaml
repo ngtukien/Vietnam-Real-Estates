@@ -1,7 +1,8 @@
 # Một bộ dịch vụ cho cả hai worktree (coordination §7): luôn chạy bằng
 #   docker compose -f D:\Vietnam-Real-Estates\docker-compose.yaml up -d --wait qdrant neo4j
-# Dữ liệu nằm ở bind mount tuyệt đối trên ổ D (docker-data/, gitignored), không dùng named volume
-# và không cần đổi thiết lập Docker. Volume cũ neo4j_data/neo4j_full_data/qdrant_data (mẫu 20k) không bị đụng tới.
+# Dữ liệu Neo4j/Qdrant nằm trong named volume (ext4 trong ổ đĩa WSL của Docker Desktop, đặt ở D:\DockerDesktopWSL).
+# Không dùng bind mount NTFS cho store: Neo4j/Qdrant dùng mmap, trên drvfs/9p bị chậm và mất nhất quán
+# (import 2026-10-15: 87 phút, thiếu 118 node Listing). Log Neo4j vẫn bind mount ra docker-data/ để đọc.
 name: vre
 
 services:
@@ -12,7 +13,7 @@ services:
       - "127.0.0.1:6333:6333"
       - "127.0.0.1:6334:6334"
     volumes:
-      - ${VRE_DATA_ROOT:-D:/Vietnam-Real-Estates}/docker-data/qdrant:/qdrant/storage
+      - qdrant_data:/qdrant/storage
     healthcheck:
       test: ["CMD-SHELL", "bash -c ':> /dev/tcp/127.0.0.1/6333' || exit 1"]
       interval: 10s
@@ -36,7 +37,7 @@ services:
       - "127.0.0.1:7474:7474"
       - "127.0.0.1:7687:7687"
     volumes:
-      - ${VRE_DATA_ROOT:-D:/Vietnam-Real-Estates}/docker-data/neo4j/data:/data
+      - neo4j_data:/data
       - ${VRE_DATA_ROOT:-D:/Vietnam-Real-Estates}/docker-data/neo4j/logs:/logs
       - ${VRE_DATA_ROOT:-D:/Vietnam-Real-Estates}/data/graph_import:/import:ro
     healthcheck:
@@ -45,3 +46,9 @@ services:
       timeout: 10s
       retries: 30
       start_period: 90s
+
+volumes:
+  neo4j_data:
+    name: vre_neo4j_data
+  qdrant_data:
+    name: vre_qdrant_data
