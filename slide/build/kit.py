@@ -235,7 +235,7 @@ class Slide:
     def stat(self, x, y, w, value, label, accent="teal", h=1.5):
         self.rect(x, y, w, h, fill="soft", line=None, radius=0.06)
         self.text(x + 0.2, y + 0.12, w - 0.4, 0.75, value, size=SIZE["stat"], bold=True, color=accent)
-        self.text(x + 0.2, y + 0.85, w - 0.4, h - 0.9, label, size=SIZE["caption"], color="text")
+        self.text(x + 0.2, y + 0.9, w - 0.4, h - 0.95, label, size=SIZE["caption"], color="text")
 
     def caption(self, text, y=6.55):
         return self.text(MX, y, W - 2 * MX, 0.4, text, size=SIZE["caption"], color="muted")
