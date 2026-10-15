@@ -10,7 +10,10 @@ from __future__ import annotations
 import json
 import os
 import threading
+from collections.abc import Iterator
 from dataclasses import dataclass
+from types import SimpleNamespace
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -99,7 +102,7 @@ def ask_llm(prompt: str, system: str = "", output: type[BaseModel] | dict | None
     text, input_tokens, output_tokens, truncated = ask(model, prompt, system, schema, effort, max_tokens)
     if truncated and schema:
         raise RuntimeError(f"Đầu ra có cấu trúc bị cắt ở max_tokens={max_tokens}")
-    data = json.loads(text) if schema else None
+    data: dict | None = json.loads(text) if schema else None
     if isinstance(output, type) and issubclass(output, BaseModel):
         data = output.model_validate(data).model_dump()
     result = LLMResult(text, data, input_tokens, output_tokens, False)
@@ -128,20 +131,24 @@ def _ask_anthropic(model: str, prompt: str, system: str, schema: dict | None, ef
             response.stop_reason == "max_tokens")
 
 
-def _ask_openai(model: str, prompt: str, system: str, schema: dict | None, effort: str, max_tokens: int):
+def _openai_request(prompt: str, system: str, schema: dict | None, effort: str, max_tokens: int) -> dict[str, Any]:
     messages = ([{"role": "developer", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
-    request = dict(messages=messages, max_completion_tokens=max_tokens, reasoning_effort=effort)
+    request: dict[str, Any] = dict(messages=messages, max_completion_tokens=max_tokens, reasoning_effort=effort)
     if schema:
         request["response_format"] = {"type": "json_schema",
                                       "json_schema": {"name": "output", "schema": schema, "strict": True}}
+    return request
+
+
+def _create_with_fallback(model: str, request: dict[str, Any]) -> Any:
+    """`chat.completions.create` thử lần lượt model chính rồi model dự phòng khi gặp 429/5xx (lỗi lúc tạo
+    request; với stream, lỗi giữa chừng không được chuyển model vì đã phát token)."""
     import openai
     models = list(dict.fromkeys([model, *get_settings().llm_fallback_list]))
-    response = None
     for i, name in enumerate(models):
         for attempt in range(3):
             try:
-                response = client().chat.completions.create(model=name, **request)
-                break
+                return client().chat.completions.create(model=name, **request)
             except openai.BadRequestError as error:
                 # Groq đôi khi trả JSON rỗng cho structured output (json_validate_failed): thử lại cùng model.
                 if "json_validate_failed" not in str(error) or (attempt == 2 and i == len(models) - 1):
@@ -150,10 +157,80 @@ def _ask_openai(model: str, prompt: str, system: str, schema: dict | None, effor
                 if i == len(models) - 1:
                     raise
                 break
-        if response is not None:
-            break
+    raise RuntimeError("LLM không trả lời sau khi thử mọi model")
+
+
+def _ask_openai(model: str, prompt: str, system: str, schema: dict | None, effort: str, max_tokens: int):
+    response = _create_with_fallback(model, _openai_request(prompt, system, schema, effort, max_tokens))
     choice = response.choices[0]
     if choice.message.refusal:
         raise RuntimeError(f"Mô hình từ chối yêu cầu này: {choice.message.refusal}")
     return (choice.message.content or "", response.usage.prompt_tokens, response.usage.completion_tokens,
             choice.finish_reason == "length")
+
+
+class LLMStream:
+    """Câu trả lời dạng stream: lặp để nhận từng mảnh văn bản; sau khi lặp hết, `result` là `LLMResult` đầy đủ
+    (token lấy từ usage cuối stream). Bản cache phát cả câu trả lời như MỘT mảnh. Chỉ lặp được một lần."""
+
+    def __init__(self, prompt: str, system: str, max_tokens: int, use_cache: bool, model: str | None,
+                 effort: str | None):
+        s = get_settings()
+        self._prompt, self._system, self._max_tokens, self._use_cache = prompt, system, max_tokens, use_cache
+        self._model, self._effort = model or s.llm_model, effort or s.llm_effort
+        self._started = False
+        self.result: LLMResult | None = None
+
+    def __iter__(self) -> Iterator[str]:
+        if self._started:
+            raise RuntimeError("LLMStream chỉ lặp được một lần")
+        self._started = True
+        key = cache.cache_key(self._model, self._effort, self._system, self._prompt, None)
+        saved = cache.read(key) if self._use_cache else None
+        if saved is not None:
+            self.result = LLMResult(**{**saved, "cached": True})
+            if self.result.text:
+                yield self.result.text
+            return
+        if get_settings().llm_provider == "anthropic":  # chưa stream với Claude: một mảnh duy nhất
+            result = ask_llm(self._prompt, self._system, None, self._effort, self._max_tokens, self._use_cache, self._model)
+            self.result = result
+            if result.text:
+                yield result.text
+            return
+        request = _openai_request(self._prompt, self._system, None, self._effort, self._max_tokens)
+        request.update(stream=True, stream_options={"include_usage": True})
+        parts: list[str] = []
+        usage = None
+        truncated = False
+        for chunk in _create_with_fallback(self._model, request):
+            usage = _chunk_usage(chunk) or usage
+            for choice in chunk.choices or []:
+                piece = getattr(choice.delta, "content", None)
+                if piece:
+                    parts.append(piece)
+                    yield piece
+                truncated = truncated or choice.finish_reason == "length"
+        text = "".join(parts)
+        input_tokens = int(getattr(usage, "prompt_tokens", 0) or 0)
+        output_tokens = int(getattr(usage, "completion_tokens", 0) or 0)
+        self.result = LLMResult(text, None, input_tokens, output_tokens, False)
+        if not truncated:  # câu bị cắt ở max_tokens: không lưu, lần sau gọi lại
+            cache.write(key, {k: v for k, v in self.result.__dict__.items() if k != "cached"})
+
+
+def _chunk_usage(chunk: Any) -> Any:
+    """Usage ở chunk cuối: chuẩn OpenAI (`chunk.usage`) hoặc Groq cũ (`chunk.x_groq.usage`)."""
+    usage = getattr(chunk, "usage", None)
+    if usage is not None:
+        return usage
+    extra = getattr(chunk, "x_groq", None)
+    if isinstance(extra, dict):
+        return SimpleNamespace(**extra["usage"]) if extra.get("usage") else None
+    return getattr(extra, "usage", None)
+
+
+def stream_llm(prompt: str, system: str = "", max_tokens: int = 4000, use_cache: bool = True,
+               model: str | None = None, effort: str | None = None) -> LLMStream:
+    """Bản stream của `ask_llm` (văn bản tự do, không structured output). Cùng khoá cache với `ask_llm`."""
+    return LLMStream(prompt, system, max_tokens, use_cache, model, effort)

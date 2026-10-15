@@ -8,12 +8,16 @@ from __future__ import annotations
 import hashlib
 import json
 import threading
+from collections.abc import Iterator
 from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 
 from vre.config import get_settings
 
-_read_cache = True
+# Theo ngữ cảnh (luồng / task), không phải biến toàn cục: `fresh()` ở một luồng đo không làm luồng chatbot khác
+# bỏ qua cache (bug B1). ThreadPoolExecutor KHÔNG chép ngữ cảnh sang luồng con — dùng `contextvars.copy_context().run`.
+_read_cache: ContextVar[bool] = ContextVar("vre_llm_read_cache", default=True)
 
 
 def cache_dir() -> Path:
@@ -29,7 +33,7 @@ def cache_key(model: str, effort: str, system: str, prompt: str, schema: dict | 
 def read(key: str) -> dict | None:
     """Kết quả đã lưu cho `key`; None nếu chưa có hoặc đang trong khối `fresh()`."""
     path = cache_dir() / f"{key}.json"
-    if _read_cache and path.exists():
+    if _read_cache.get() and path.exists():
         return json.loads(path.read_text(encoding="utf-8"))
     return None
 
@@ -44,12 +48,16 @@ def write(key: str, payload: dict) -> None:
     tmp.replace(path)
 
 
+def reading() -> bool:
+    """False khi đang trong khối `fresh()` của ngữ cảnh hiện tại."""
+    return _read_cache.get()
+
+
 @contextmanager
-def fresh():
-    """Trong khối này mọi lượt gọi đều đến API (vẫn ghi cache): dùng khi đo độ trễ và token thật."""
-    global _read_cache
-    _read_cache = False
+def fresh() -> Iterator[None]:
+    """Trong khối này mọi lượt gọi CỦA NGỮ CẢNH HIỆN TẠI đều đến API (vẫn ghi cache): dùng khi đo độ trễ và token thật."""
+    token = _read_cache.set(False)
     try:
         yield
     finally:
-        _read_cache = True
+        _read_cache.reset(token)
