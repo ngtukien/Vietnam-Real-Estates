@@ -50,3 +50,20 @@ def test_score_row_kinds():
     assert out["points"] == 2 and out["predicted_value"] == 5.3 and out["faithfulness"] is None
     empty = R.score_row(_q(lambda q: q.category == "aggregate"), {"gt_value": "1"}, {"system": "graph", "answer": ""}, {}, "d")
     assert empty["points"] == 0 and empty["correct"] is False
+
+
+def test_comparison_needs_winner_before_comparative():
+    q = "Giá/m² căn hộ ở Cầu Giấy hay Nam Từ Liêm cao hơn?"
+    assert R.value_points("Nhìn chung, giá/m² tại **Cầu Giấy cao hơn** so với Nam Từ Liêm.", "Cầu Giấy", None, q) == 2
+    assert R.value_points("Nam Từ Liêm cao hơn Cầu Giấy.", "Cầu Giấy", None, q) == 0
+    assert R.value_points("Cầu Giấy và Nam Từ Liêm tương đương.", "Cầu Giấy", None, q) == 0
+
+
+def test_negative_truth_needs_down_word():
+    assert R.value_points("thấp hơn 13,46% so với toàn thành phố", "-13.46", 0.05) == 2
+    assert R.value_points("cao hơn 13,46% so với toàn thành phố", "-13.46", 0.05) == 0
+
+
+def test_forecast_range_midpoint():
+    assert R.forecast_bn("dao động khoảng **3,5 đến 6,5 tỷ đồng**") == 5.0
+    assert R.forecast_bn("từ 4,68 - 8,59 tỷ") == pytest.approx(6.635)

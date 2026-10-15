@@ -28,8 +28,13 @@ RULES = [
     "ids: capped cluster Recall@5 over the system's sources; 2 if >= 0.8, 1 if > 0, else 0",
     "value (numeric GT): any number in the answer within value_tolerance (default 5%) of gt_value => 2; "
     "within max(20%, 2x tolerance) => 1; else 0 (lenient any-number match)",
-    "value (text GT): diacritic-folded, lower-cased answer contains gt_value => 2, else 0",
-    "valuation: first amount followed by 'tỷ'/'triệu' (converted to tỷ) within value_tolerance => 2, within 2x => 1",
+    "value (numeric GT < 0, e.g. '% lower'): an answer number matches by absolute value only if the answer also says "
+    "thấp hơn/giảm/rẻ hơn/kém",
+    "value (text GT not in the question): diacritic-folded, lower-cased answer contains gt_value => 2, else 0",
+    "value (text GT that the question itself names, i.e. comparisons): gt_value must appear within 60 characters before "
+    "the first 'cao/đắt/lớn/nhiều hơn' in the answer => 2, else 0",
+    "valuation: first amount or range ('a đến b tỷ' => midpoint) with unit 'tỷ'/'triệu' (converted to tỷ) "
+    "within value_tolerance => 2, within 2x => 1",
     "refusal: answer contains a refusal phrase (no data / insufficient information / out of range) => 2, else 0",
     "empty answer => 0; faithfulness = null (needs an LLM)",
 ]
@@ -39,13 +44,18 @@ REFUSAL_PHRASES = (
     "khong the cung cap", "khong co du thong tin",
 )
 _NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
-_MONEY = re.compile(r"(\d+(?:[.,]\d+)*)\s*(ty|trieu)\b")
+_NUM = r"(\d+(?:[.,]\d+)*)"
+_MONEY = re.compile(_NUM + r"(?:\s*(?:-|–|den|toi)\s*" + _NUM + r")?\s*(ty|trieu)\b")
+UP_WORDS = re.compile(r"\b(cao hon|dat hon|lon hon|nhieu hon)\b")
+DOWN_WORDS = re.compile(r"\b(thap hon|giam|re hon|kem)\b")
+COMPARE_WINDOW = 60
 
 
 def fold(text: str) -> str:
-    """Bỏ dấu tiếng Việt (kể cả đ), viết thường, gộp khoảng trắng."""
+    """Bỏ dấu tiếng Việt (kể cả đ), viết thường, bỏ ký tự nhấn mạnh markdown, gộp khoảng trắng."""
     text = unicodedata.normalize("NFD", text.replace("đ", "d").replace("Đ", "D"))
     text = "".join(ch for ch in text if unicodedata.category(ch) != "Mn")
+    text = re.sub(r"[*_#`]", "", text)
     return re.sub(r"\s+", " ", text.lower()).strip()
 
 
@@ -82,27 +92,45 @@ def _as_float(value: Any) -> float | None:
         return None
 
 
-def value_points(answer: str, gt_value: Any, tolerance: float | None) -> int:
+def _winner_named(answer: str, target: str) -> bool:
+    """So sánh: đáp án đúng đứng trong COMPARE_WINDOW ký tự trước từ so sánh chiều lên ('cao hơn'…) đầu tiên."""
+    folded = fold(answer)
+    match = UP_WORDS.search(folded)
+    if match is None:
+        return False
+    return target in folded[max(0, match.start() - COMPARE_WINDOW):match.start()]
+
+
+def value_points(answer: str, gt_value: Any, tolerance: float | None, question: str = "") -> int:
     tol = DEFAULT_TOLERANCE if tolerance is None else float(tolerance)
     truth = _as_float(gt_value)
     if truth is None:  # đáp án chữ
         target = fold(str(gt_value or ""))
-        return 2 if target and target in fold(answer) else 0
+        if not target:
+            return 0
+        if target in fold(question):  # câu hỏi tự nêu đáp án (A hay B): phải chỉ đúng bên thắng
+            return 2 if _winner_named(answer, target) else 0
+        return 2 if target in fold(answer) else 0
+    found = numbers(answer)
     if truth == 0:
-        return 2 if any(n == 0 for n in numbers(answer)) else 0
-    errors = [abs(n - truth) / abs(truth) for n in numbers(answer)]
+        return 2 if any(n == 0 for n in found) else 0
+    if truth < 0 and DOWN_WORDS.search(fold(answer)):  # "thấp hơn 13,46%" ⇔ -13,46
+        found = found + [-n for n in found]
+    errors = [abs(n - truth) / abs(truth) for n in found]
     return max((_band(e, tol) for e in errors), default=0)
 
 
 def forecast_bn(answer: str) -> float | None:
-    """Số tiền đầu tiên có đơn vị tỷ/triệu, đổi ra tỷ đồng."""
+    """Số tiền (hoặc khoảng 'a đến b' ⇒ điểm giữa) đầu tiên có đơn vị tỷ/triệu, đổi ra tỷ đồng."""
     match = _MONEY.search(fold(answer))
     if not match:
         return None
-    value = parse_number(match.group(1))
-    if value is None:
+    low = parse_number(match.group(1))
+    high = parse_number(match.group(2)) if match.group(2) else low
+    if low is None or high is None:
         return None
-    return value if match.group(2) == "ty" else value / 1000
+    value = (low + high) / 2
+    return value if match.group(3) == "ty" else value / 1000
 
 
 def is_refusal(answer: str) -> bool:
@@ -133,7 +161,7 @@ def score_row(q: Question, gt: dict, row: dict, cluster_of: dict[int, int], dige
         out["points"] = M.value_points(predicted, float(gt["gt_value"]), float(q.value_tolerance or 0.15))
         out["reason"] = f"dự báo {predicted} tỷ so với {gt['gt_value']}"
     else:
-        out["points"] = value_points(answer, gt.get("gt_value"), q.value_tolerance)
+        out["points"] = value_points(answer, gt.get("gt_value"), q.value_tolerance, q.question)
         out["reason"] = f"so với gt_value {gt.get('gt_value')}"
     out["correct"] = out["points"] == 2
     return out
