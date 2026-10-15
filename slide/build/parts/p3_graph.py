@@ -1,6 +1,6 @@
 """Chặng 3 — Knowledge Graph: bảng → đồ thị, triple, mô hình dữ liệu, schema thật, dựng đồ thị, Cypher, cộng đồng, thực hành 3.
 
-Số lấy từ `graph_report.json`, `ingest_report.json`; Cypher và kết quả từ `examples.json:graph[i]` (chỉ số i ở `CYPHER_IDX`).
+Số lấy từ `graph_report.json`, `ingest_report.json`; Cypher và kết quả từ `examples.json:graph`, chọn theo câu benchmark.
 Schema theo `src/vre/index/graph_export.py` (NODES, RELS) và data-contract §6.
 """
 from __future__ import annotations
@@ -17,8 +17,6 @@ NODE_LABELS = ["Listing", "PropertyType", "Province", "District", "Ward", "Stree
                "Cluster", "MarketStat"]
 REL_TYPES = ["HAS_AMENITY", "IN_CLUSTER", "IN_DISTRICT", "IN_PROJECT", "IN_PROVINCE", "IN_WARD", "OF_TYPE",
              "ON_STREET", "POSTED_IN", "STAT_OF"]
-# Chỉ số trong examples.json:graph ứng với (tra cứu, tổng hợp, đa chặng). Lead đổi khi file đã có.
-CYPHER_IDX = [("Tra cứu", 0, "blue"), ("Tổng hợp", 1, "amber"), ("Đa chặng", 2, "teal")]
 CYPHER_HOT = ["IN_WARD|IN_DISTRICT", "MarketStat", "STAT_OF", "IN_DISTRICT", "IN_PROVINCE", "IN_WARD"]
 
 
@@ -304,25 +302,33 @@ def _right_arrow():
 
 
 def cypher(d: Deck) -> None:
-    keys = {i: f"examples.json:graph[{i}]" for _, i, _ in CYPHER_IDX}
-    s = d.slide("kg-cypher", SEC, "Cypher truy vấn bằng cách vẽ mẫu đồ thị: tra cứu, tổng hợp, đa chặng", notes=(
-        "Ba truy vấn này lấy nguyên văn từ lần chạy đánh giá thật trên Neo4j. Cypher mô tả hình dạng cần tìm: node "
-        "trong ngoặc tròn, cạnh trong ngoặc vuông có mũi tên. Truy vấn tra cứu lọc tin theo thuộc tính và vị trí. "
-        "Truy vấn tổng hợp không quét hàng triệu tin mà đọc node MarketStat tính sẵn. Truy vấn đa chặng đi qua nhiều cạnh liên tiếp, việc mà SQL cần nhiều phép JOIN. Phần tô màu là chỗ "
-        "đáng chú ý: mẫu IN_WARD|IN_DISTRICT bắt cả tin có phường lẫn tin chỉ có quận. Dưới mỗi khối là số dòng trả "
-        "về và độ trễ đo được. Slide sau chuyển sang thuật toán trên đồ thị."))
-    n = len(CYPHER_IDX)
-    gap = 0.3
-    cw = (W - 2 * MX - gap * (n - 1)) / n
-    for j, (lab, i, col) in enumerate(CYPHER_IDX):
-        x = MX + j * (cw + gap)
-        k = keys[i]
-        s.rect(x, 1.9, 0.08, 0.42, fill=col, line=None)
-        s.text(x + 0.18, 1.88, cw - 0.2, 0.45, lab, size=SIZE["body"], bold=True, color=col)
-        s.text(x, 2.35, cw, 0.75, d.T(f"{k}.question"), size=SIZE["caption"], color="muted")
-        s.code(x, 3.15, cw, 2.75, d.T(f"{k}.cypher"), highlight=CYPHER_HOT)
-        s.text(x, 6.0, cw, 0.45, [[(f"{d.N(k + '.rows|len')} dòng", {"bold": True, "color": "ink"}),
-                                    (f"  ·  {d.N(k + '.latency_ms')} ms", {})]], size=SIZE["small"])
+    """Một khối Cypher mỗi slide; ví dụ chọn theo câu benchmark trong examples.json (không theo thứ tự)."""
+    cases = [
+        ("kg-cypher-agg", "AG01", "Tổng hợp", "amber",
+         "Câu tổng hợp đọc node MarketStat tính sẵn thay vì quét hàng triệu tin",
+         "Câu hỏi tổng hợp như giá trung vị theo quận không cần quét hàng triệu tin lúc hỏi. Khi dựng đồ thị, DuckDB đã "
+         "tính sẵn trung vị theo khu vực, loại hình và tháng, lưu thành node MarketStat. Mô hình chỉ cần viết một MATCH "
+         "đến đúng node đó. Phần tô màu là điều kiện chọn khu vực và loại hình. Dưới khối code là số dòng trả về và độ "
+         "trễ đo trong lượt chạy thật. Slide sau: câu đa chặng."),
+        ("kg-cypher-multihop", "MH01", "Đa chặng", "teal",
+         "Câu đa chặng đi qua nhiều cạnh liên tiếp, việc SQL cần nhiều phép JOIN",
+         "Câu đa chặng phải đi từ dự án sang quận, rồi từ quận sang tỉnh, sau đó so sánh với thống kê của cả tỉnh. "
+         "Trong Cypher, mỗi bước là một cạnh trong cùng một mẫu MATCH; SQL tương đương cần nhiều phép JOIN. Phần tô "
+         "màu là các cạnh được đi qua. Đây là câu Cypher mô hình sinh thật trong lượt eval, chạy trên Neo4j với giao "
+         "dịch chỉ đọc. Slide sau chuyển sang thuật toán trên đồ thị."),
+    ]
+    for name, qid, lab, col, title, notes in cases:
+        k = d.pick("examples.json:graph", qid)
+        s = d.slide(name, SEC, title, notes=notes)
+        s.rect(MX, 1.95, 0.08, 0.42, fill=col, line=None)
+        s.text(MX + 0.18, 1.93, 3.0, 0.45, lab, size=SIZE["body"], bold=True, color=col)
+        q = d.T(f"{k}.question") if k else d.A(d.Q(qid)["question"], f"đề bài {qid}")
+        s.text(MX + 2.0, 1.97, W - 2 * MX - 2.0, 0.6, "“" + q + "”", size=SIZE["small"], color="ink")
+        s.code(MX, 2.75, W - 2 * MX, 3.25, d.T(f"{k}.cypher") if k else d.A("⟨?⟩", "chưa có ví dụ"),
+               highlight=CYPHER_HOT, size=SIZE["small"])
+        if k:
+            s.text(MX, 6.15, W - 2 * MX, 0.45, [[(f"{d.N(k + '.rows|len')} dòng kết quả", {"bold": True, "color": "ink"}),
+                   (f"  ·  {d.N(k + '.latency_ms', 'int')} ms trên Neo4j", {})]], size=SIZE["small"])
 
 
 def communities(d: Deck) -> None:

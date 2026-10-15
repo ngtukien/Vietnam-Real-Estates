@@ -71,7 +71,7 @@ def compare(d: Deck) -> None:
 
 
 def patterns(d: Deck) -> None:
-    ex = "examples.json:graph[1]"
+    ex = d.pick("examples.json:graph", "AG03") or "examples.json:graph[0]"
     s = d.slide("gr-patterns", SEC_G, "Text2Cypher: mô hình viết truy vấn, Neo4j tính; năm lớp an toàn bọc quanh", notes=(
         "Có ba mẫu truy xuất trên đồ thị: local đi từ một thực thể ra láng giềng, global dùng bản tóm tắt cộng đồng, và "
         "Text2Cypher để mô hình viết truy vấn. Câu hỏi bất động sản phần lớn là lọc và tính trên cột nên nhóm chọn Text2Cypher. "
@@ -87,11 +87,10 @@ def patterns(d: Deck) -> None:
         s.rect(MX, y, 5.2, 0.8, fill="soft", line=None, radius=0.08)
         s.text(MX + 0.2, y + 0.08, 5.0, 0.65, [[(t + "  ", {"bold": True, "color": "amber"}), (body, {})]],
                size=SIZE["small"], anchor="middle")
-    s.text(6.2, 1.95, 6.5, 0.4, "Cypher mô hình sinh · " + d.A("câu tổng hợp", "nhãn"), size=SIZE["caption"],
+    s.text(6.2, 1.95, 6.5, 0.4, "Cypher mô hình sinh · " + d.A("câu đếm", "nhãn"), size=SIZE["caption"],
            bold=True, color="teal")
     s.text(6.2, 2.35, 6.5, 0.8, "“" + d.T(ex + ".question") + "”", size=SIZE["small"], color="ink")
-    s.code(6.2, 3.2, 6.5, 3.2, d.T(ex + ".cypher"), highlight=["avg(", "percentileCont(", "count(", "WHERE n >=",
-                                                                   "ORDER BY", "LIMIT"])
+    s.code(6.2, 3.2, 6.5, 3.2, d.T(ex + ".cypher"), highlight=["count(", "IN_PROVINCE", "OF_TYPE", "WHERE", "LIMIT"])
 
 
 def router(d: Deck) -> None:
@@ -161,17 +160,21 @@ def setup(d: Deck) -> None:
 
 def ablation(d: Deck) -> None:
     runs = d.V("ablation.json:runs") or []
+    names = {"dense": "Dense", "bm25": "BM25", "hybrid": "Hybrid"}
+    labels = [names.get(r.get("retrieval"), r.get("retrieval")) + (" + lọc" if r.get("prefilter") else "") for r in runs]
     best = max(runs, key=lambda r: r.get("recall_at_5") or 0) if runs else None
-    title = ("Ablation truy xuất: " + ("hybrid có lọc trước đạt Recall@5 cao nhất"
-                                        if best and best.get("retrieval") == "hybrid" and best.get("prefilter")
-                                        else "Recall@5 và MRR của từng cấu hình"))
+    lifted = runs and all((next((x["recall_at_5"] for x in runs if x["retrieval"] == r["retrieval"] and x["prefilter"]), 0)
+                           > r["recall_at_5"]) for r in runs if not r["prefilter"])
+    title = (f"Lọc trước tăng Recall@5 ở cả ba cách truy xuất; {labels[runs.index(best)]} cao nhất" if lifted and best
+             else "Ablation truy xuất: Recall@5 và MRR của từng cấu hình")
     s = d.slide("ev-ablation", SEC_E, title, notes=(
         "Ablation chạy thẳng trên chỉ mục đầy đủ, không qua mô hình sinh, nên không tốn lời gọi API. Ba cách truy xuất dense, "
-        "BM25 và hybrid, mỗi cách có và không có lọc trước, cùng chunk như khi lập chỉ mục. Rerank không có trong lượt đo vì "
-        f"model cross-encoder không có trong cache. Số câu có tập tin đúng: {d.N('ablation.json:runs[0].n_questions')}. "
-        "Bước nhảy lớn nhất thường đến từ bộ lọc, vì câu ràng buộc có điều kiện số mà embedding không đảm bảo. So sánh model "
-        "embedding nằm ở chặng 1. Slide sau: kết quả câu trả lời theo nhóm câu hỏi."))
-    s.chart(MX, 1.9, 8.2, 4.5, "column", "ablation.json:runs[*].name",
+        "BM25 và hybrid, mỗi cách có và không có lọc trước. Rerank không có trong lượt đo vì model cross-encoder không có "
+        f"trong cache. Số câu có tập tin đúng: {d.N('ablation.json:runs[0].n_questions')}. Bước nhảy lớn nhất đến từ bộ lọc, "
+        "vì câu tìm tin có điều kiện cứng mà embedding không đảm bảo. Trên dữ liệu này BM25 có lọc ngang hoặc hơn hybrid "
+        "có lọc, vì đề bài chứa tên dự án và con số khớp đúng từ. Đọc trung thực: hybrid không tự động thắng; cần đo. So "
+        "sánh model embedding nằm ở chặng 1. Slide sau: kết quả câu trả lời theo nhóm câu hỏi."))
+    s.chart(MX, 1.9, 8.2, 4.5, "column", labels or ["⟨?⟩"],
             [("Recall@5", "ablation.json:runs[*].recall_at_5", "teal"), ("MRR", "ablation.json:runs[*].mrr", "blue")],
             number_format="0.00", max_value=1)
     s.text(9.1, 1.95, 3.6, 4.3, ["Cùng chỉ mục e5-large đầy đủ", "Lọc trước = điều kiện cứng trong Qdrant",

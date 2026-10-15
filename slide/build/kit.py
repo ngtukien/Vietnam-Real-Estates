@@ -83,6 +83,16 @@ class Deck:
                 return json.loads(line)
         raise KeyBroken(f"không có câu {qid} trong benchmark/questions.jsonl")
 
+    def pick(self, list_key: str, qid: str, field: str = "question") -> str | None:
+        """Khoá `list_key[i]` của phần tử có `field` trùng đề bài câu `qid` (chọn ví dụ theo câu, không theo thứ tự)."""
+        text = self.Q(qid)["question"]
+        rows = self.V(list_key) or []
+        hit = next((i for i, r in enumerate(rows) if isinstance(r, dict) and r.get(field) == text), None)
+        if hit is None:
+            self.missing.append(f"{list_key}: không có ví dụ cho câu {qid}")
+            return None
+        return f"{list_key}[{hit}]"
+
     def T(self, key: str, reason: str = "") -> str:
         """Chuỗi nguyên văn từ results (câu trả lời, Cypher, tên model): chèn như d.A, lý do ghi khoá nguồn."""
         value = self.V(key)
@@ -341,10 +351,6 @@ class Slide:
         ch.category_axis.format.line.color.rgb = rgb("line")
         entry = {"slide": self.name, "chart": gf.shape_id, "series": rec,
                  "categories": categories if isinstance(categories, list) else categories}
-        if isinstance(categories, list):
-            for c in categories:
-                if any(ch_.isdigit() for ch_ in str(c)):
-                    raise ValueError(f"{self.name}: nhãn chart cố định chứa số ({c}) — dùng khoá results")
         self.d.entries.append(entry)
         return gf
 

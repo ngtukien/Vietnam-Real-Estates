@@ -14,10 +14,10 @@ def excerpt(d: Deck, key: str, limit: int = 420) -> str:
     value = d.V(key)
     if value is None:
         return d.A("⟨?⟩", f"thiếu {key}")
-    text = " ".join(str(value).split())
+    text = " ".join(str(value).replace("**", "").split())  # bỏ ký hiệu đậm markdown, giữ nguyên chữ
     if len(text) > limit:
         text = text[:limit].rsplit(" ", 1)[0] + " …"
-    return d.A(text, f"trích nguyên văn {key}")
+    return d.A(text, f"trích {key} (bỏ ký hiệu markdown)")
 
 
 def pick_pair(d: Deck, a: str, b: str) -> str | None:

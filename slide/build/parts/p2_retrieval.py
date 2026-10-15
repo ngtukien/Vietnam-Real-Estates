@@ -4,7 +4,6 @@ import json
 from kit import MX, SIZE, SYSTEM, W, Deck
 
 SEC = "Chặng 2 · Truy xuất và sinh"
-EX = "examples.json:rag[0]"
 
 
 def build(d: Deck) -> None:
@@ -45,7 +44,13 @@ def three_needs(d: Deck) -> None:
            size=SIZE["small"])
 
 
+def _ex(d: Deck) -> str:
+    """Ví dụ truy xuất của câu CS01 (đủ quận, số phòng, giá tối đa) trong examples.rag."""
+    return d.pick("examples.json:rag", "CS01") or "examples.json:rag[0]"
+
+
 def filters(d: Deck) -> None:
+    ex = _ex(d)
     s = d.slide("ret-filters", SEC, "Hiểu câu hỏi trước khi tìm: LLM trích điều kiện, code kiểm tra và đổi đơn vị",
                 notes=(
         "LLM đọc câu hỏi và trả về JSON theo schema cố định: tỉnh, quận, loại hình, số phòng, khoảng giá, diện tích, dự án, "
@@ -53,14 +58,14 @@ def filters(d: Deck) -> None:
         "code, có unit test, vì LLM đổi đơn vị dễ lệch một bậc. Địa danh được chuẩn hoá giống hệt dữ liệu sạch, nếu không "
         "bộ lọc sẽ không khớp. Khi bộ lọc cho kết quả rỗng, hệ thống nới dần từng điều kiện và báo cho mô hình biết điều kiện "
         "nào đã nới. Ví dụ trên slide là đầu ra thật trong lượt chạy eval. Slide sau: cách đo độ gần giữa câu hỏi và tin."))
-    question = d.V(EX + ".question")
-    flt = d.V(EX + ".filters")
+    question = d.V(ex + ".question")
+    flt = d.V(ex + ".filters")
     s.text(MX, 1.9, 5.6, 0.4, "Câu hỏi", size=SIZE["caption"], bold=True, color="teal")
-    s.text(MX, 2.3, 5.6, 1.3, "“" + d.A(question or "⟨?⟩", f"nguyên văn {EX}.question") + "”", size=20, color="ink")
+    s.text(MX, 2.3, 5.6, 1.3, "“" + d.A(question or "⟨?⟩", f"nguyên văn {ex}.question") + "”", size=20, color="ink")
     shown = {k: v for k, v in (flt or {}).items() if v not in (None, [], "")}
     s.text(MX, 3.75, 5.6, 0.4, "Bộ lọc sau khi code chuẩn hoá", size=SIZE["caption"], bold=True, color="teal")
     s.code(MX, 4.15, 5.6, 2.3, d.A(json.dumps(shown, ensure_ascii=False, indent=1) if flt else "⟨?⟩",
-                                   f"nguyên văn {EX}.filters"), size=SIZE["caption"])
+                                   f"nguyên văn {ex}.filters"), size=SIZE["caption"])
     rules = [("Giữ nguyên chữ", "LLM chép “5 tỷ” đúng như câu hỏi, không tự đổi số"),
              ("Đổi đơn vị bằng code", "“5 tỷ”, “1 tỷ 2”, “3.000.000.000” → triệu đồng, có unit test"),
              ("Chuẩn hoá địa danh", "“Q.7” → “Quận 7”, khớp giá trị trong Qdrant và Neo4j"),
@@ -74,29 +79,36 @@ def filters(d: Deck) -> None:
 
 
 def cosine(d: Deck) -> None:
+    ex = _ex(d)
     s = d.slide("ret-cosine", SEC, "Cosine đo góc giữa câu hỏi và từng chunk, không đo độ dài", notes=(
         "Cosine đo hướng nên không phụ thuộc độ dài: vector dài gấp đôi nhưng cùng hướng vẫn cho điểm bằng một, vector "
         "vuông góc cho không. Với vector đã chuẩn hoá L2 như của e5, cosine chính là tích vô hướng, nên Qdrant chỉ cần nhân. "
-        "Bên phải là ba tin dense đứng đầu cho một câu hỏi thật. Điểm các tin sát nhau, nên thứ hạng giữa chúng gần như "
-        "ngẫu nhiên, và tin đứng đầu có thể sai quận hay sai số phòng. Dense hiểu nghĩa nhưng không đảm bảo điều kiện cứng, "
-        "đó là lý do cần BM25 và bộ lọc. Slide sau: ghép dense với BM25."))
+        "Dense hiểu nghĩa nhưng không đảm bảo điều kiện cứng: điểm cosine các tin dồn sát nhau nên tin đứng đầu có thể "
+        "sai quận hay sai số phòng. Bên phải là ba tin Basic RAG đưa vào ngữ cảnh cho câu CS01 trong lượt chạy thật, sau "
+        "khi đã lọc trước và gộp với BM25; dòng chữ dưới bảng cho biết chúng có thoả điều kiện không. Slide sau: ghép dense với BM25."))
     s.text(MX, 1.95, 6.0, 0.4, "Công thức", size=SIZE["caption"], bold=True, color="teal")
     s.text(MX, 2.35, 6.0, 0.9, "cos(θ) = (q · d) / (‖q‖ ‖d‖)", size=32, bold=True, color="ink", font="Cambria Math")
     s.text(MX, 3.3, 6.0, 0.9, [d.A("Ví dụ: q = (3, 4), d₁ = (6, 8) → cos = 1; d₂ = (−4, 3) → cos = 0",
                                     "ví dụ minh hoạ tính tay")], size=SIZE["small"])
     s.text(MX, 4.2, 6.0, 1.8, ["Đo hướng, bỏ qua độ dài", "Vector chuẩn hoá L2: cosine = tích vô hướng",
                                "Chỉ so thứ hạng, không đọc điểm tuyệt đối"], size=20, bullets=True)
-    hits = d.V(EX + ".hits") or []
-    s.text(7.0, 1.95, 5.7, 0.4, "Ba tin dense đầu tiên · câu hỏi thật", size=SIZE["caption"], bold=True, color="teal")
-    rows = [["Tin", "Điểm", "Quận", "Giá"]]
+    hits = d.V(ex + ".hits") or []
+    s.text(7.0, 1.95, 5.7, 0.4, "Ba tin đầu tiên của Basic RAG · câu hỏi thật", size=SIZE["caption"], bold=True, color="teal")
+    rows = [["Tin", "Quận", "Giá"]]
     for i in range(3):
         if i < len(hits):
-            k = f"{EX}.hits[{i}]"
-            rows.append([f"…{d.N(k + '.listing_id', 'last6')}", d.N(k + ".score", "dec3"),
-                         d.T(k + ".district"), f"{d.N(k + '.price_vnd', 'bn2')} tỷ"])
+            k = f"{ex}.hits[{i}]"
+            rows.append([f"…{d.N(k + '.listing_id', 'last6')}", d.T(k + ".district"), f"{d.N(k + '.price_vnd', 'bn2')} tỷ"])
         else:
-            rows.append(["⟨?⟩"] * 4)
-    s.table(7.0, 2.4, 5.7, rows, col_w=[1.5, 1.1, 1.8, 1.3], size=SIZE["small"], row_h=0.55)
+            rows.append(["⟨?⟩"] * 3)
+    s.table(7.0, 2.4, 5.7, rows, col_w=[1.9, 2.1, 1.7], size=SIZE["small"], row_h=0.55)
+    flt = d.V(ex + ".filters") or {}
+    ok = bool(hits[:3]) and all(h.get("district") == flt.get("district") and h.get("price_vnd") is not None
+                                and (flt.get("max_price_mil") is None or h["price_vnd"] <= flt["max_price_mil"] * 1e6)
+                                for h in hits[:3])
+    s.text(7.0, 4.25, 5.7, 1.5, "Sau lọc trước và gộp RRF: " + ("cả ba tin đúng quận, không vượt mức giá. Dense "
+           "đứng một mình không bảo đảm được điều đó." if ok else "đối chiếu từng tin với điều kiện trong câu hỏi."),
+           size=SIZE["small"])
     s.caption(d.A("Điểm cosine của e5 dồn về khoảng hẹp, nên chỉ đọc thứ hạng.", "chú thích") + " Nguồn: "
               + d.A("examples.json", "tên file") + ".")
 
