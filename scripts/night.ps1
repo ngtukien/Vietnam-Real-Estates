@@ -4,9 +4,6 @@
 $ErrorActionPreference = 'Continue'
 . 'D:\Vietnam-Real-Estates\scripts\vre_env.ps1'
 $env:PYTHONUNBUFFERED = '1'
-# CR-04 (chờ p1 đổi mặc định trong vre.config): ít worker CPU hơn để giữ commit memory; GPU vẫn là nút cổ chai.
-$env:VRE_TOKENIZE_WORKERS = '2'
-$env:VRE_BM25_WORKERS = '4'
 
 $Root = 'D:\Vietnam-Real-Estates'
 $Compose = Join-Path $Root 'docker-compose.yaml'
