@@ -103,7 +103,7 @@ def search(dfit: xgb.DMatrix, dval: xgb.DMatrix, device: str, settings: Settings
     """Giữ cấu hình đầu tiên có best_score thấp nhất (nghiêm ngặt); `cdir=None` ⇒ không cache."""
     base = {"objective": "reg:squarederror", "eval_metric": "rmse", "tree_method": "hist", "device": device,
             "nthread": settings.xgb_nthread, "seed": settings.seed}
-    fingerprint = data_fingerprint(dfit, dval, device)
+    fingerprint = {**data_fingerprint(dfit, dval, device), "seed": settings.seed}  # seed đổi ⇒ không dùng lại
     best: tuple[float, xgb.Booster, dict[str, Any]] | None = None
     for i, cfg in enumerate(sample_configs()):
         key = cache_key(cfg, fingerprint)
