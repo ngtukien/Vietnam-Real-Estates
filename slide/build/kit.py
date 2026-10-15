@@ -295,7 +295,7 @@ class Slide:
     def chart(self, x, y, w, h, kind, categories, series, number_format="0", legend=True, labels=True,
               font_size=SIZE["caption"], max_value=None):
         """categories: khoá results (list) hoặc list nhãn cố định; series: [(tên, khoá, màu, scale=1)]."""
-        cats = categories if isinstance(categories, list) else self.d.V(categories) or []
+        cats = (categories if isinstance(categories, list) else self.d.V(categories)) or ["⟨?⟩"]
         data = CategoryChartData()
         data.categories = [str(c) for c in cats]
         rec = []

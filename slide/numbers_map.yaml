@@ -4,7 +4,7 @@
 whitelist:
   - {re: '(?<!\d)(?:19|20)\d\d(?!\d)', reason: "năm (trích dẫn, mốc thời gian)"}
   - {re: '\b\d{1,2}/(?:\d{1,2}/)?20\d\d\b', reason: "ngày/tháng"}
-  - {re: '(?i:hình|bảng|công thức|bước|chặng|phần|mức|thực hành) \(?\d+\)?', reason: "đánh số hình/bảng/công thức/bước/chặng"}
+  - {re: '(?i:hình|bảng|công thức|bước|chặng|phần|mức|thực hành|tầng) \(?\d+\)?', reason: "đánh số hình/bảng/công thức/bước/chặng"}
   - {re: '\[\d+\]', reason: "số thứ tự tài liệu tham khảo"}
   - {re: '(?:top|Top)-\d+', reason: "tên phép top-k"}
 include: [numbers_map.d/generated.yaml]
