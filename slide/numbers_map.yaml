@@ -7,4 +7,4 @@ whitelist:
   - {re: '(?i:hình|bảng|công thức|bước|chặng|phần|mức|thực hành|tầng) \(?\d+\)?', reason: "đánh số hình/bảng/công thức/bước/chặng"}
   - {re: '\[\d+\]', reason: "số thứ tự tài liệu tham khảo"}
   - {re: '(?:top|Top)-\d+', reason: "tên phép top-k"}
-include: [numbers_map.d/generated.yaml]
+include: [numbers_map.d/generated.yaml, numbers_map.d/html.yaml]
