@@ -57,10 +57,11 @@ def test_cypher_result_shape():
 
 def test_no_duplicate_scalar_helpers():
     """B3: một hàm `vre.common.scalar`, không định nghĩa `_value`/`_clean` riêng trong rag/graph/hybrid/qa."""
-    for pkg in ("rag", "graph", "hybrid", "qa", "llm"):
-        for path in (SRC / pkg).glob("*.py"):
-            text = path.read_text(encoding="utf-8")
-            assert not re.search(r"def (_value|_clean|scalar)\b", text), path
+    paths = [p for p in SRC.rglob("*.py") if p != SRC / "common.py"]  # cả cây src/vre (gồm data/eda.py)
+    assert len(paths) > 20  # quét thật, không phải danh sách rỗng
+    for path in paths:
+        text = path.read_text(encoding="utf-8")
+        assert not re.search(r"def (_value|_clean|scalar)\b", text), path
 
 
 def test_no_cosine_threshold_in_rag():

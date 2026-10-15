@@ -75,8 +75,12 @@ jobs:
     if: github.event.head_commit.author.name != 't1k-ci-sync[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # playwright.config.ts tự khởi động API giả (uvicorn, VRE_FAKE_BACKENDS=1, rate limit nới) từ VRE_API_DIR bằng VRE_PY
+    # và Vite dev server; không khởi động tay để env của API chỉ có một nguồn (config).
     env:
       VRE_FAKE_BACKENDS: "1"
+      VRE_PY: python
+      VRE_API_DIR: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -111,19 +115,13 @@ jobs:
       - name: Cài Playwright Chromium
         run: npx playwright install --with-deps chromium
         working-directory: web
-      - name: Khởi động API giả
-        run: |
-          nohup python -m uvicorn api.main:app --host 127.0.0.1 --port 8000 > api.log 2>&1 &
-          for _ in $(seq 1 60); do
-            curl -sf http://127.0.0.1:8000/api/health > /dev/null && exit 0
-            sleep 1
-          done
-          echo "API không sẵn sàng sau 60 giây"
-          cat api.log
-          exit 1
       - name: Playwright e2e
         run: npm run e2e
         working-directory: web
-      - name: Log API khi lỗi
+      - name: Báo cáo Playwright khi lỗi
         if: failure()
-        run: cat api.log || true
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: web/playwright-report/
+          retention-days: 7
