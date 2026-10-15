@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 
@@ -54,7 +54,7 @@ def cards(hits: pd.DataFrame, score_column: str = "score") -> list[dict[str, Any
     if hits is None or hits.empty:
         return []
     column = next((c for c in ("rerank", "rrf", score_column) if c in hits), None)
-    records: list[dict[str, Any]] = hits.to_dict("records")  # type: ignore[assignment]
+    records = cast(list[dict[str, Any]], hits.to_dict("records"))
     return [listing_card(rec, rec.get(column) if column else None) for rec in records]
 
 

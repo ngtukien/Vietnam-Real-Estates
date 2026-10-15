@@ -107,7 +107,7 @@ def already_done(settings: Settings) -> bool:
     kept = json.loads(report.read_text(encoding="utf-8"))["dedup"]["kept"]
     con = duck.connect(settings, views=False)
     try:
-        n = con.execute(f"SELECT count(*) FROM read_parquet('{duck.sql_path(settings.clean_path)}')").fetchone()[0]
+        n = duck.one_row(con.execute(f"SELECT count(*) FROM read_parquet('{duck.sql_path(settings.clean_path)}')"))[0]
     finally:
         con.close()
     return int(n) == int(kept)
