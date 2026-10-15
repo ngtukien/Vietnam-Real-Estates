@@ -61,7 +61,7 @@ class Settings(BaseSettings):
 
     qdrant_url: str = Field("http://127.0.0.1:6333", validation_alias=_env("QDRANT_URL"))
     qdrant_grpc_port: int = 6334
-    qdrant_upload_parallel: int = 8
+    qdrant_upload_parallel: int = 1  # tiến trình upload riêng, wait=True: 1 luồng gRPC đủ (CR-02)
     qdrant_upload_batch: int = 256
     qdrant_max_indexing_threads: int = 12
     qdrant_indexing_threshold: int = 20000

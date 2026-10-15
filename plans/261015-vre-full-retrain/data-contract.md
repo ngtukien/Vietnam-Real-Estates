@@ -461,7 +461,7 @@ Thư mục `data/geo/` bị gitignore (license nguồn yêu cầu ghi công; fil
 | `chunk_size`, `chunk_overlap`, `max_chunks_per_listing`, `header_max_tokens`, `part_size` | `400`, `100`, `64`, `96`, `50000` | |
 | `embed_max_length`, `embed_token_budget`, `embed_max_batch`, `embed_min_token_budget` | `512`, `32768`, `256`, `4096` | `32768` cố định từ số đo 2026-10-15 — không đo lại; `embed_min_token_budget` = sàn khi OOM ⇒ ½ ngân sách |
 | `tokenize_workers`, `tokenize_prefetch_parts`, `bm25_workers` | `6`, `3`, `10` | |
-| `qdrant_url`, `qdrant_grpc_port`, `qdrant_upload_parallel`, `qdrant_upload_batch`, `qdrant_max_indexing_threads`, `qdrant_indexing_threshold`, `qdrant_green_timeout_s` | `http://127.0.0.1:6333`, `6334`, `8`, `256`, `12`, `20000`, `10800` | |
+| `qdrant_url`, `qdrant_grpc_port`, `qdrant_upload_parallel`, `qdrant_upload_batch`, `qdrant_max_indexing_threads`, `qdrant_indexing_threshold`, `qdrant_green_timeout_s` | `http://127.0.0.1:6333`, `6334`, `1`, `256`, `12`, `20000`, `10800` | `qdrant_upload_parallel=1`: upload chạy trong tiến trình riêng với `wait=True`, 1 luồng gRPC đủ ~100–130 point/s; 8 luồng + `wait=False` làm quá tải gRPC khi HNSW đang xây (CR-02, dry-run 2026-10-15) |
 | `collection`, `collection_alias`, `dryrun_collection`, `dryrun_parts` | `vre_chunks_e5_large`, `vre_chunks`, `vre_dryrun`, `2` | |
 | `neo4j_uri`, `neo4j_user`, `neo4j_password` | env cũ | |
 | `xgb_nthread`, `xgb_device_tabular`, `xgb_device_full`, `rent_min_rows` | `12`, `cpu`, `cuda`, `20000` | tabular trên CPU để không tranh GPU với p2 |
