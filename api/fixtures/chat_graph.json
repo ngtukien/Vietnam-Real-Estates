@@ -1,0 +1,166 @@
+[
+ [
+  "meta",
+  {
+   "question": "",
+   "started_at": "2026-10-15T07:14:00Z"
+  }
+ ],
+ [
+  "cypher",
+  {
+   "cypher": "MATCH (l:Listing)-[:IN_WARD]->(:Ward)-[:IN_DISTRICT]->(d:District {key: 'Hồ Chí Minh|Quận 7'})\nMATCH (l)-[:OF_TYPE]->(:PropertyType {name: 'Căn hộ chung cư'})\nWHERE l.bedrooms = 2 AND l.price_vnd < 4e9 AND l.deal_type = 'sale'\nRETURN l.listing_id AS listing_id, l.title AS title, l.price_vnd AS price_vnd, l.area_m2 AS area_m2 ORDER BY l.price_vnd LIMIT 50",
+   "columns": [
+    "listing_id",
+    "title",
+    "price_vnd",
+    "area_m2"
+   ],
+   "rows": [
+    {
+     "listing_id": 531409273736,
+     "title": "Cần chuyển nhượng gấp q7 boulevard 74m2 2pn chỉ 2 tỷ 450 triệu",
+     "price_vnd": 2450000000.0,
+     "area_m2": 74.0
+    },
+    {
+     "listing_id": 1323152072889,
+     "title": "Cần bán căn hộ 2pn-1wc đã có sổ tại Janoma City Q.7, giá 3.05 tỷ, view cầu Phú Mỹ thoáng mát",
+     "price_vnd": 3050000000.0,
+     "area_m2": 56.0
+    }
+   ],
+   "error": null,
+   "attempts": 1
+  }
+ ],
+ [
+  "sources",
+  {
+   "sources": [
+    {
+     "listing_id": 531409273736,
+     "dup_cluster_id": 531409273736,
+     "title": "Cần chuyển nhượng gấp q7 boulevard 74m2 2pn chỉ 2 tỷ 450 triệu",
+     "property_type": "Căn hộ chung cư",
+     "deal_type": "sale",
+     "price_vnd": 2450000000.0,
+     "price_m2_mil": 33.108108108108105,
+     "area_m2": 74.0,
+     "bedrooms": 2,
+     "bathrooms": 2,
+     "address": {
+      "street": "Nguyễn Lương Bằng",
+      "ward": "Phú Mỹ",
+      "district": "Quận 7",
+      "province": "Hồ Chí Minh"
+     },
+     "project": "Q7 Boulevard",
+     "published_month": "2025-09",
+     "description_excerpt": "- Đã có sổ. - Nội thất đã hoàn thiện. - Tầng cao view cực đẹp. - Chủ đầu tư đầy uy tín. - Khuôn viên riêng biệt, tiện ích nội khu: Gym, hồ bơi, công viên rộng rãi, cửa hàng tiện lợi. Với nhiều tiện ích đa dạng: - Rạp chiếu phim. - Siêu thị công viên nôi khu. - Khu vui chơi cho trẻ em. - Trường anh Ngữ quốc tế, bệnh viện, siêu thị, chợ,... - Nhà mới, nội thất đầy đủ, giá tốt có thể đầu tư lâu dài,.",
+     "amenities": [
+      "ho_boi",
+      "noi_that"
+     ],
+     "score": null,
+     "cited": true
+    },
+    {
+     "listing_id": 1323152072889,
+     "dup_cluster_id": 1323152072889,
+     "title": "Cần bán căn hộ 2pn-1wc đã có sổ tại Janoma City Q.7, giá 3.05 tỷ, view cầu Phú Mỹ thoáng mát",
+     "property_type": "Căn hộ chung cư",
+     "deal_type": "sale",
+     "price_vnd": 3050000000.0,
+     "price_m2_mil": 54.464285714285715,
+     "area_m2": 56.0,
+     "bedrooms": 2,
+     "bathrooms": 1,
+     "address": {
+      "street": "Đào Trí",
+      "ward": "Phú Thuận",
+      "district": "Quận 7",
+      "province": "Hồ Chí Minh"
+     },
+     "project": "Jamona City",
+     "published_month": "2025-09",
+     "description_excerpt": "Thông tin căn hộ cần bán tại Jamona City (Đào Trí, Q.7) như sau: - Diện tích: 56m2, thiết kế 2pn-1wc, view hướng cầu Phú Mỹ thoáng mát - Giá bán: 3.05 tỷ, đã có sổ - Tiện ích nội khu và xung quanh đầy đủ, khu dân cư an ninh, sạch đẹp, gần Phú Mỹ Hưng, giao thông thuận tiện.",
+     "amenities": [],
+     "score": null,
+     "cited": true
+    }
+   ]
+  }
+ ],
+ [
+  "token",
+  {
+   "text": "Truy vấn đồ thị tìm thấy "
+  }
+ ],
+ [
+  "token",
+  {
+   "text": "căn rẻ nhất là Q7 Bouleva"
+  }
+ ],
+ [
+  "token",
+  {
+   "text": "rd 74 m² giá 2,45 tỷ [Tin"
+  }
+ ],
+ [
+  "token",
+  {
+   "text": "#531409273736], tiếp theo"
+  }
+ ],
+ [
+  "token",
+  {
+   "text": " Jamona City 56 m² giá 3,"
+  }
+ ],
+ [
+  "token",
+  {
+   "text": "05 tỷ [Tin#1323152072889]"
+  }
+ ],
+ [
+  "token",
+  {
+   "text": "."
+  }
+ ],
+ [
+  "answer",
+  {
+   "answer": "Truy vấn đồ thị tìm thấy căn rẻ nhất là Q7 Boulevard 74 m² giá 2,45 tỷ [Tin#531409273736], tiếp theo Jamona City 56 m² giá 3,05 tỷ [Tin#1323152072889].",
+   "cited": [
+    531409273736,
+    1323152072889
+   ],
+   "unsupported_citations": [],
+   "fallback": false,
+   "route": null
+  }
+ ],
+ [
+  "usage",
+  {
+   "latency_ms": 3410,
+   "input_tokens": 2650,
+   "output_tokens": 140,
+   "usd": 0.00048,
+   "cached": false
+  }
+ ],
+ [
+  "done",
+  {
+   "status": "ok"
+  }
+ ]
+]

@@ -1,0 +1,80 @@
+{
+ "scope": {
+  "province": "Hồ Chí Minh",
+  "district": null,
+  "property_type": null,
+  "deal_type": "sale"
+ },
+ "monthly": [
+  {
+   "month": "2025-06",
+   "n": 68566,
+   "median_price_m2_mil": 109.52
+  },
+  {
+   "month": "2025-07",
+   "n": 85538,
+   "median_price_m2_mil": 107.61
+  },
+  {
+   "month": "2025-08",
+   "n": 75420,
+   "median_price_m2_mil": 109.75
+  },
+  {
+   "month": "2025-09",
+   "n": 81102,
+   "median_price_m2_mil": 106.94
+  },
+  {
+   "month": "2025-10",
+   "n": 110490,
+   "median_price_m2_mil": 107.14
+  },
+  {
+   "month": "2025-11",
+   "n": 101794,
+   "median_price_m2_mil": 107.38
+  },
+  {
+   "month": "2025-12",
+   "n": 116447,
+   "median_price_m2_mil": 107.94
+  },
+  {
+   "month": "2026-01",
+   "n": 74164,
+   "median_price_m2_mil": 105.33
+  },
+  {
+   "month": "2026-02",
+   "n": 51147,
+   "median_price_m2_mil": 109.09
+  },
+  {
+   "month": "2026-03",
+   "n": 125399,
+   "median_price_m2_mil": 106.25
+  }
+ ],
+ "by_area": [
+  {
+   "key": "Hồ Chí Minh|Bình Thạnh",
+   "name": "Bình Thạnh",
+   "n": 64492,
+   "median_price_m2_mil": 153.33
+  },
+  {
+   "key": "Hồ Chí Minh|Gò Vấp",
+   "name": "Gò Vấp",
+   "n": 64188,
+   "median_price_m2_mil": 121.11
+  },
+  {
+   "key": "Hồ Chí Minh|Bình Chánh",
+   "name": "Bình Chánh",
+   "n": 20608,
+   "median_price_m2_mil": 46.25
+  }
+ ]
+}

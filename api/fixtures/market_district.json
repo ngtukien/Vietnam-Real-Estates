@@ -1,0 +1,74 @@
+{
+ "scope": {
+  "province": "Hồ Chí Minh",
+  "district": "Quận 7",
+  "property_type": null,
+  "deal_type": "sale"
+ },
+ "monthly": [
+  {
+   "month": "2025-06",
+   "n": 3428,
+   "median_price_m2_mil": 67.9
+  },
+  {
+   "month": "2025-07",
+   "n": 4276,
+   "median_price_m2_mil": 66.72
+  },
+  {
+   "month": "2025-08",
+   "n": 3771,
+   "median_price_m2_mil": 68.05
+  },
+  {
+   "month": "2025-09",
+   "n": 4055,
+   "median_price_m2_mil": 66.3
+  },
+  {
+   "month": "2025-10",
+   "n": 5524,
+   "median_price_m2_mil": 66.43
+  },
+  {
+   "month": "2025-11",
+   "n": 5089,
+   "median_price_m2_mil": 66.58
+  },
+  {
+   "month": "2025-12",
+   "n": 5822,
+   "median_price_m2_mil": 66.92
+  },
+  {
+   "month": "2026-01",
+   "n": 3708,
+   "median_price_m2_mil": 65.3
+  },
+  {
+   "month": "2026-02",
+   "n": 2557,
+   "median_price_m2_mil": 67.64
+  },
+  {
+   "month": "2026-03",
+   "n": 6269,
+   "median_price_m2_mil": 65.88
+  }
+ ],
+ "by_area": [
+  {
+   "key": "Hồ Chí Minh|Quận 7|Phú Mỹ",
+   "name": "Phú Mỹ",
+   "n": 8252,
+   "median_price_m2_mil": 61.88
+  },
+  {
+   "key": "Hồ Chí Minh|Quận 7|Phú Thuận",
+   "name": "Phú Thuận",
+   "n": 5120,
+   "median_price_m2_mil": 70.5
+  }
+ ]
+}

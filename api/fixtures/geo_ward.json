@@ -1,0 +1,15 @@
+{
+ "province": "Hồ Chí Minh",
+ "level": "ward",
+ "items": [
+  {
+   "key": "Hồ Chí Minh|Quận 7|Phú Mỹ",
+   "name": "Phú Mỹ",
+   "lat": null,
+   "lon": null,
+   "n_listings": 8252,
+   "median_price_m2_mil": 61.88
+  }
+ ],
+ "coverage": 0.0
+}

@@ -1,0 +1,83 @@
+[
+ [
+  "meta",
+  {
+   "question": "",
+   "started_at": "2026-10-15T07:14:00Z"
+  }
+ ],
+ [
+  "sources",
+  {
+   "sources": []
+  }
+ ],
+ [
+  "token",
+  {
+   "text": "Tôi không có dữ liệu "
+  }
+ ],
+ [
+  "token",
+  {
+   "text": "tin đăng cụ thể. Theo"
+  }
+ ],
+ [
+  "token",
+  {
+   "text": " mặt bằng chung, căn "
+  }
+ ],
+ [
+  "token",
+  {
+   "text": "hộ 2 phòng ngủ ở Quận"
+  }
+ ],
+ [
+  "token",
+  {
+   "text": " 7 dưới 4 tỷ thường n"
+  }
+ ],
+ [
+  "token",
+  {
+   "text": "ằm ở các dự án tầm tr"
+  }
+ ],
+ [
+  "token",
+  {
+   "text": "ung."
+  }
+ ],
+ [
+  "answer",
+  {
+   "answer": "Tôi không có dữ liệu tin đăng cụ thể. Theo mặt bằng chung, căn hộ 2 phòng ngủ ở Quận 7 dưới 4 tỷ thường nằm ở các dự án tầm trung.",
+   "cited": [],
+   "unsupported_citations": [],
+   "fallback": false,
+   "route": null
+  }
+ ],
+ [
+  "usage",
+  {
+   "latency_ms": 980,
+   "input_tokens": 410,
+   "output_tokens": 95,
+   "usd": 0.00012,
+   "cached": false
+  }
+ ],
+ [
+  "done",
+  {
+   "status": "ok"
+  }
+ ]
+]

@@ -1,0 +1,138 @@
+{
+ "nodes": [
+  {
+   "id": "Listing:531409273736",
+   "label": "Listing",
+   "name": "Cần chuyển nhượng gấp q7 boulevard 74m2 2pn chỉ 2 tỷ 450 triệu",
+   "props": {
+    "listing_id": 531409273736,
+    "title": "Cần chuyển nhượng gấp q7 boulevard 74m2 2pn chỉ 2 tỷ 450 triệu",
+    "price_vnd": 2450000000.0,
+    "area_m2": 74.0,
+    "bedrooms": 2,
+    "month": "2025-09",
+    "deal_type": "sale"
+   }
+  },
+  {
+   "id": "PropertyType:Căn hộ chung cư",
+   "label": "PropertyType",
+   "name": "Căn hộ chung cư",
+   "props": {
+    "name": "Căn hộ chung cư"
+   }
+  },
+  {
+   "id": "Ward:Hồ Chí Minh|Quận 7|Phú Mỹ",
+   "label": "Ward",
+   "name": "Phú Mỹ",
+   "props": {
+    "key": "Hồ Chí Minh|Quận 7|Phú Mỹ",
+    "name": "Phú Mỹ",
+    "n_listings": 8252,
+    "median_price_m2_mil": 61.875
+   }
+  },
+  {
+   "id": "District:Hồ Chí Minh|Quận 7",
+   "label": "District",
+   "name": "Quận 7",
+   "props": {
+    "key": "Hồ Chí Minh|Quận 7",
+    "name": "Quận 7"
+   }
+  },
+  {
+   "id": "Province:Hồ Chí Minh",
+   "label": "Province",
+   "name": "Hồ Chí Minh",
+   "props": {
+    "key": "Hồ Chí Minh",
+    "name": "Hồ Chí Minh"
+   }
+  },
+  {
+   "id": "Street:Hồ Chí Minh|Quận 7|Nguyễn Lương Bằng",
+   "label": "Street",
+   "name": "Nguyễn Lương Bằng",
+   "props": {
+    "key": "Hồ Chí Minh|Quận 7|Nguyễn Lương Bằng",
+    "name": "Nguyễn Lương Bằng",
+    "n_listings": 6013
+   }
+  },
+  {
+   "id": "Project:Hồ Chí Minh|q7 boulevard",
+   "label": "Project",
+   "name": "Q7 Boulevard",
+   "props": {
+    "key": "Hồ Chí Minh|q7 boulevard",
+    "name": "Q7 Boulevard",
+    "n_listings": 649,
+    "median_price_m2_mil": 47.14
+   }
+  },
+  {
+   "id": "Month:2025-09",
+   "label": "Month",
+   "name": "2025-09",
+   "props": {
+    "key": "2025-09",
+    "year": 2025,
+    "month": 9
+   }
+  },
+  {
+   "id": "Amenity:ho_boi",
+   "label": "Amenity",
+   "name": "Hồ bơi",
+   "props": {
+    "key": "ho_boi",
+    "name": "Hồ bơi"
+   }
+  }
+ ],
+ "edges": [
+  {
+   "source": "Listing:531409273736",
+   "target": "PropertyType:Căn hộ chung cư",
+   "type": "OF_TYPE"
+  },
+  {
+   "source": "Listing:531409273736",
+   "target": "Ward:Hồ Chí Minh|Quận 7|Phú Mỹ",
+   "type": "IN_WARD"
+  },
+  {
+   "source": "Ward:Hồ Chí Minh|Quận 7|Phú Mỹ",
+   "target": "District:Hồ Chí Minh|Quận 7",
+   "type": "IN_DISTRICT"
+  },
+  {
+   "source": "District:Hồ Chí Minh|Quận 7",
+   "target": "Province:Hồ Chí Minh",
+   "type": "IN_PROVINCE"
+  },
+  {
+   "source": "Listing:531409273736",
+   "target": "Street:Hồ Chí Minh|Quận 7|Nguyễn Lương Bằng",
+   "type": "ON_STREET"
+  },
+  {
+   "source": "Listing:531409273736",
+   "target": "Project:Hồ Chí Minh|q7 boulevard",
+   "type": "IN_PROJECT"
+  },
+  {
+   "source": "Listing:531409273736",
+   "target": "Month:2025-09",
+   "type": "POSTED_IN"
+  },
+  {
+   "source": "Listing:531409273736",
+   "target": "Amenity:ho_boi",
+   "type": "HAS_AMENITY"
+  }
+ ],
+ "truncated": false
+}
