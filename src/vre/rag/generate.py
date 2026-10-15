@@ -10,7 +10,7 @@ import pandas as pd
 
 from vre.llm.client import LLMResult, ask_llm
 from vre.rag.citations import normalize_citations
-from vre.rag.filters import FILTER_DROPPED
+from vre.rag.filters import FILTER_DROPPED, FILTER_RELAXED
 
 ANSWER_SYSTEM = """Bạn là trợ lý thị trường bất động sản Việt Nam. Chỉ trả lời từ NGỮ CẢNH được cung cấp.
 Mỗi nhận định phải kèm nguồn dạng [Tin#ID]; chép NGUYÊN VẸN dãy số ID trong ngữ cảnh. Nếu ngữ cảnh không đủ để trả lời hoặc để tính toán, nói rõ là
@@ -27,7 +27,27 @@ FILTER_DROPPED_PROMPT = ("LƯU Ý: không có tin nào thoả mọi điều ki�
                          "trong câu hỏi. Các tin dưới đây chỉ gần giống; nói rõ điều này và nêu điều kiện nào "
                          "không thoả trước khi giới thiệu tin.")
 
+# Nới một phần (tên dự án/đường không khớp, hoặc bỏ đẳng thức số): các điều kiện còn lại vẫn đúng.
+FILTER_RELAXED_PROMPT = ("LƯU Ý: không có tin khớp đúng mọi điều kiện; đã nới các điều kiện: {fields}. Các điều kiện "
+                         "khác vẫn được giữ. Nói rõ tin nào chỉ gần đúng với điều kiện đã nới.")
+
 _FAKE_TAG = re.compile(r"<\s*(/?)\s*tai_lieu\s*>", re.I)
+
+# Câu trả lời đồ thị từng chép nguyên khung ngữ cảnh (`<tai_lieu> KẾT QUẢ TRUY VẤN: …`, đơn vị `*_m2_mil`):
+# luật trong system prompt + `strip_context_echo` trên câu trả lời cuối.
+NO_ECHO_RULE = ("Viết câu trả lời bằng câu văn tiếng Việt cho người đọc; KHÔNG chép lại thẻ <tai_lieu>, tiêu đề "
+                "'KẾT QUẢ TRUY VẤN', câu Cypher, JSON thô hay tên cột kỹ thuật (price_vnd, *_m2_mil, area_m2) — đổi "
+                "sang đơn vị đọc được (tỷ / triệu đồng, triệu đồng/m², m²).")
+_ECHO_TAG = re.compile(r"[<\[]\s*/?\s*tai_lieu\s*[>\]]", re.I)
+_ECHO_HEADER = re.compile(r"^[ \t]*(?:KẾT QUẢ TRUY VẤN|Cypher)\b[^\n]*:[ \t]*$\n?", re.I | re.M)
+_ECHO_UNIT = re.compile(r"\s*\*_m2_mil\b")
+
+
+def strip_context_echo(text: str) -> str:
+    """Bỏ phần khung ngữ cảnh bị chép vào câu trả lời: thẻ <tai_lieu>/[tai_lieu], dòng tiêu đề 'KẾT QUẢ TRUY VẤN…:'
+    / 'Cypher:', đơn vị kỹ thuật '*_m2_mil' (→ ' triệu đồng/m²'). Nội dung số liệu giữ nguyên."""
+    out = _ECHO_UNIT.sub(" triệu đồng/m²", _ECHO_HEADER.sub("", _ECHO_TAG.sub("", text)))
+    return re.sub(r"\n{3,}", "\n\n", out).strip()
 
 
 def format_context(hits: pd.DataFrame) -> list[str]:
@@ -44,12 +64,16 @@ def wrap_documents(contexts: list[str]) -> str:
 
 def build_prompt(question: str, contexts: list[str], note: str | None = None) -> str:
     prompt = "NGỮ CẢNH:\n" + wrap_documents(contexts) + f"\n\nCÂU HỎI: {question}"
-    return f"{FILTER_DROPPED_PROMPT}\n\n{prompt}" if note == FILTER_DROPPED else prompt
+    if note == FILTER_DROPPED:
+        return f"{FILTER_DROPPED_PROMPT}\n\n{prompt}"
+    if note and note.startswith(FILTER_RELAXED + ":"):
+        return f"{FILTER_RELAXED_PROMPT.format(fields=note.split(':', 1)[1])}\n\n{prompt}"
+    return prompt
 
 
 def generate(question: str, contexts: list[str], note: str | None = None, system: str = ANSWER_SYSTEM) -> LLMResult:
     result = ask_llm(build_prompt(question, contexts, note), system=system)
-    return replace(result, text=normalize_citations(result.text))
+    return replace(result, text=normalize_citations(strip_context_echo(result.text)))
 
 
 def ask_llm_only(question: str) -> dict:
@@ -58,3 +82,4 @@ def ask_llm_only(question: str) -> dict:
     answer = ask_llm(f"CÂU HỎI: {question}", system=LLM_ONLY_SYSTEM)
     return dict(system="llm_only", question=question, answer=answer.text, sources=[], contexts=[],
                 latency=perf_counter() - start, input_tokens=answer.input_tokens, output_tokens=answer.output_tokens)
+

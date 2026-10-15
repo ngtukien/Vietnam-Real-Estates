@@ -21,7 +21,7 @@ from vre.qa.cards import cards, order_cards
 from vre.rag import qdrant_search
 from vre.rag.citations import check_citations, normalize_citations
 from vre.rag.filters import FILTER_DROPPED, QueryFilters
-from vre.rag.generate import ANSWER_SYSTEM, LLM_ONLY_SYSTEM, build_prompt, format_context, wrap_documents
+from vre.rag.generate import ANSWER_SYSTEM, LLM_ONLY_SYSTEM, build_prompt, format_context, strip_context_echo, wrap_documents
 from vre.rag.retrieve import retrieve, search_hybrid
 
 Event = tuple[str, dict[str, Any]]
@@ -195,7 +195,7 @@ def generate_events(run: Run, prepared: Prepared) -> Iterator[Event]:
     if stream.result is None:
         raise RuntimeError("LLM stream kết thúc không có kết quả")
     run.calls.append(stream.result)
-    run.answer = normalize_citations(stream.result.text)
+    run.answer = normalize_citations(strip_context_echo(stream.result.text))
     run.cited, run.unsupported = check_citations(run.answer, run.sources)
     yield "answer", {"answer": run.answer, "cited": run.cited, "unsupported_citations": run.unsupported,
                      "fallback": run.fallback, "route": run.route}

@@ -35,13 +35,13 @@ def _mean(values: Iterable[Any]) -> float | None:
     return _round(mean(clean)) if clean else None
 
 
-def _value(score: dict, metric: str) -> float:
+def _metric_value(score: dict, metric: str) -> float:
     return float(score["points"] == 2) if metric == "accuracy" else float(score["points"])
 
 
 def _cell(rows: list[dict]) -> dict:
     scored = [r for r in rows if r.get("points") is not None]
-    acc = [_value(r, "accuracy") for r in scored]
+    acc = [_metric_value(r, "accuracy") for r in scored]
     return {"n": len(scored), "accuracy": _mean(acc), "mean_points": _mean(r["points"] for r in scored),
             "ci95": bootstrap.mean_ci(acc), "n_unscored": len(rows) - len(scored)}
 
@@ -57,8 +57,8 @@ def _pairwise(scores: dict[tuple[str, str], dict], questions: dict[str, Question
                          and scores.get((i, a), {}).get("points") is not None
                          and scores.get((i, b), {}).get("points") is not None)
             for metric in PAIR_METRICS:
-                result = bootstrap.paired([_value(scores[(i, a)], metric) for i in ids],
-                                          [_value(scores[(i, b)], metric) for i in ids])
+                result = bootstrap.paired([_metric_value(scores[(i, a)], metric) for i in ids],
+                                          [_metric_value(scores[(i, b)], metric) for i in ids])
                 if result is not None:
                     out.append({"a": a, "b": b, "scope": scope, "metric": metric, **result})
     return out

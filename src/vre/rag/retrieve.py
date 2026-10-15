@@ -6,6 +6,7 @@ Truy vấn Qdrant ở `vre.rag.qdrant_search`; bộ lọc biên dịch từ `vre
 from __future__ import annotations
 
 import threading
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -13,7 +14,7 @@ import pandas as pd
 
 from vre.config import get_settings
 from vre.rag import qdrant_search as qs
-from vre.rag.filters import FILTER_DROPPED, QueryFilters, merge, parse_filters, to_qdrant
+from vre.rag.filters import FILTER_DROPPED, QueryFilters, merge, parse_filters, relaxations, relaxed_note, to_qdrant, unresolved
 
 
 def tokenize_vi(text: str) -> list[str]:
@@ -103,6 +104,26 @@ def hits_table(hits: pd.DataFrame, score: str = "score", width: int = 70) -> pd.
     })
 
 
+Search = Callable[[str, int, QueryFilters | None], pd.DataFrame]
+
+
+def search_relaxed(search: Search, question: str, k: int, filters: QueryFilters | None) -> tuple[pd.DataFrame, str | None]:
+    """`search` với bộ lọc; 0 kết quả ⇒ nới dần (`filters.relaxations`: tên dự án/đường → đẳng thức số) trước khi
+    bỏ hết. `note`: None (khớp đủ) | "filter_relaxed:<trường,…>" (đã nới / tên không khớp tên thật nào) |
+    FILTER_DROPPED (bỏ hết lọc)."""
+    if filters is None:
+        return search(question, k, None), None
+    hits = search(question, k, filters)
+    labels = unresolved(filters)
+    if hits.empty:
+        for loose, step_labels in relaxations(filters):
+            hits = search(question, k, loose)
+            if not hits.empty:
+                return hits, relaxed_note([*labels, *step_labels])
+        return search(question, k, None), FILTER_DROPPED
+    return hits, relaxed_note(labels)
+
+
 _reranker = None
 _reranker_lock = threading.Lock()
 
@@ -124,7 +145,7 @@ def rerank(question: str, hits: pd.DataFrame, top: int | None = None) -> pd.Data
 def retrieve(question: str, k: int | None = None, use_filters: bool = True, use_rerank: bool | None = None,
              manual: dict | QueryFilters | None = None) -> dict:
     """Bộ lọc LLM (gộp với bộ lọc chỉnh tay `manual`, trường tay ghi đè) -> hybrid search có pre-filter
-    (-> rerank nếu bật). Bộ lọc quá chặt (0 kết quả) ⇒ bỏ lọc, `note = FILTER_DROPPED`.
+    (-> rerank nếu bật). Bộ lọc quá chặt (0 kết quả) ⇒ nới dần (`search_relaxed`), bỏ hết ⇒ `note = FILTER_DROPPED`.
     Trả `hits`, `filters` (QueryFilters | None), `source` (llm|manual|merged), `note`, `calls` (LLMResult)."""
     s = get_settings()
     k = s.top_k if k is None else k
@@ -133,9 +154,7 @@ def retrieve(question: str, k: int | None = None, use_filters: bool = True, use_
     filters, source = merge(extracted, manual)
     active = None if filters.is_empty() else filters
     pool = max(s.rerank_candidates, k) if use_rerank else k
-    hits, note = search_hybrid(question, pool, active), None
-    if hits.empty and active is not None:
-        hits, note = search_hybrid(question, pool), FILTER_DROPPED
+    hits, note = search_relaxed(search_hybrid, question, pool, active)
     if use_rerank and not hits.empty:
         hits = rerank(question, hits, top=k)
     return dict(hits=hits, filters=filters if (use_filters or active is not None) else None, source=source,

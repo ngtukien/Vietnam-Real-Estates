@@ -136,15 +136,15 @@ def extract_filters(items: list[Item], log: Log) -> tuple[dict[str, Any], int]:
 # ---- truy xuất
 
 def search(question: str, retrieval: str, filters: Any, rerank: bool, settings: Settings) -> tuple[pd.DataFrame, bool]:
-    """Một truy vấn như `vre.rag.retrieve.retrieve` nhưng chọn được dense/bm25/hybrid. Bộ lọc cho 0 kết quả ⇒ bỏ lọc
-    (như hệ thống thật). Trả (hits, đã bỏ lọc?)."""
+    """Một truy vấn như `vre.rag.retrieve.retrieve` nhưng chọn được dense/bm25/hybrid. Bộ lọc cho 0 kết quả ⇒ nới dần
+    rồi mới bỏ hết (`retrieve.search_relaxed`, như hệ thống thật). Trả (hits, đã bỏ HẾT lọc?)."""
     from vre.rag import retrieve as rt
+    from vre.rag.filters import FILTER_DROPPED
 
     fn = {"dense": rt.search_dense, "bm25": rt.search_bm25, "hybrid": rt.search_hybrid}[retrieval]
     pool = max(settings.rerank_candidates, K_RETRIEVE) if rerank else K_RETRIEVE
-    hits, dropped = fn(question, pool, filters), False
-    if hits.empty and filters is not None:
-        hits, dropped = fn(question, pool, None), True
+    hits, note = rt.search_relaxed(fn, question, pool, filters)
+    dropped = note == FILTER_DROPPED
     if rerank and not hits.empty:
         hits = rt.rerank(question, hits, top=K_RETRIEVE)
     return hits, dropped

@@ -177,6 +177,12 @@ class Settings(BaseSettings):
     def llm_fallback_list(self) -> list[str]:
         return [m.strip() for m in (self.llm_fallback_models or "").split(",") if m.strip()]
 
+    def fallbacks_for(self, model: str) -> list[str]:
+        """Model dự phòng (429/5xx) cho `model`: bỏ chính nó và bỏ model "phía bên kia" — sinh câu trả lời không
+        bao giờ lui về `judge_model` (giám khảo sẽ chấm câu do chính nó viết), giám khảo không lui về `llm_model`."""
+        other = self.llm_model if model == self.judge_model else self.judge_model
+        return [m for m in self.llm_fallback_list if m not in (model, other)]
+
 
 def dotenv_enabled() -> bool:
     return os.environ.get("VRE_LOAD_DOTENV", "1") != "0"

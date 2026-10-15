@@ -55,6 +55,8 @@ CASES = [
     {"min_price_mil": "2 tỷ", "max_price_mil": "8 tỷ", "deal_type": "sale"},
     {"min_area_m2": 50, "max_area_m2": 120, "ward": "Dịch Vọng"},
     {"project": "Vinhomes Grand Park", "street": "Nguyễn Văn Linh"},
+    {"project": "khu đô thị vinhomes grand park", "street": "đường nguyễn văn linh"},  # phân giải tên → `in`
+    {"project": "Dự án không có", "district": "Thủ Đức"},  # tên không khớp ⇒ bỏ riêng điều kiện tên
     {"month_from": "2025-09", "month_to": "2025-12"},
     {"month_from": "2026-02"},
     {"month_to": "2024-12"},  # ngoài khoảng dữ liệu ⇒ 0 tin ở cả ba dạng

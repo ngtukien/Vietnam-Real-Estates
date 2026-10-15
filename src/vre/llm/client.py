@@ -144,7 +144,7 @@ def _create_with_fallback(model: str, request: dict[str, Any]) -> Any:
     """`chat.completions.create` thử lần lượt model chính rồi model dự phòng khi gặp 429/5xx (lỗi lúc tạo
     request; với stream, lỗi giữa chừng không được chuyển model vì đã phát token)."""
     import openai
-    models = list(dict.fromkeys([model, *get_settings().llm_fallback_list]))
+    models = list(dict.fromkeys([model, *get_settings().fallbacks_for(model)]))
     for i, name in enumerate(models):
         for attempt in range(3):
             try:

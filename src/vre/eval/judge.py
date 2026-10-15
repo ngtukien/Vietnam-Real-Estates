@@ -29,9 +29,10 @@ def check_judge_config(settings: Settings | None = None) -> dict:
         raise RuntimeError(f"JUDGE_MODEL trùng LLM_MODEL ({s.llm_model!r}): đặt JUDGE_MODEL khác, hoặc "
                            f"{ALLOW_SAME_JUDGE_ENV}=1 nếu chấp nhận giám khảo tự chấm (ghi vào eval_summary.llm)")
     info = {"provider": s.llm_provider, "generator": s.llm_model, "judge": s.judge_model,
-            "generator_fallbacks": s.llm_fallback_list, "same_judge_allowed": bool(same and allowed)}
-    if s.judge_model in s.llm_fallback_list:  # khi model chính bị 429, câu trả lời có thể do chính model giám khảo sinh
-        info["note"] = "judge model nằm trong generator_fallbacks"
+            "generator_fallbacks": s.fallbacks_for(s.llm_model), "configured_fallbacks": s.llm_fallback_list,
+            "same_judge_allowed": bool(same and allowed)}
+    if s.judge_model in s.llm_fallback_list:  # `fallbacks_for` đã bỏ: câu trả lời không bao giờ do giám khảo sinh
+        info["note"] = "judge model bị bỏ khỏi generator_fallbacks (429 trên model chính ⇒ chờ/thử lại, không đổi model)"
     return info
 
 
