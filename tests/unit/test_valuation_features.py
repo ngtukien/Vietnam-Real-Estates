@@ -158,15 +158,20 @@ def test_join_pca_missing_file_raises(settings):
         F.join_pca(pd.DataFrame({"listing_id": [1]}), F.pca_path(settings), settings.pca_dim)
 
 
-def test_run_tabular_then_full_preserves_entries_and_valuate(settings):
+def test_run_tabular_then_full_preserves_entries_and_valuate(settings, monkeypatch):
     from vre.valuation import predict, train
+    from vre.valuation import search_cache as SC
 
+    cleared, real_clear = [], SC.clear
+    monkeypatch.setattr(SC, "clear", lambda d: (cleared.append((d.name, len(list(d.glob("*.meta.json"))))), real_clear(d)))
     out = train.run(settings, "tabular")
+    assert cleared == [("tabular_sale", SC.N_CONFIGS), ("tabular_rent", 0)]  # cache đã có rồi mới được dọn
     v = out["variants"]
     assert v["full"] is None and v["tabular"]["mape"] is not None and v["baseline_ward_median"]["mape"] is not None
     assert v["tabular"]["model_path"] == "models/valuation/xgb_tabular_sale.json"
     assert out["rent_model"]["trained"] is False and "rent_min_rows" in out["rent_model"]["reason"]
     assert len(v["tabular"]["shap_top"]) > 0 and v["tabular"]["by_property_type"]
+    assert not (settings.data_root / "models" / "valuation" / "_search").exists()  # cache dò tham số đã dọn
     write_fake_pca(settings, F.load_frame(settings)["listing_id"].to_numpy())
     out_full = train.run(settings, "full")
     assert out_full["variants"]["tabular"] == v["tabular"] and out_full["variants"]["full"]["mape"] is not None

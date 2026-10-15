@@ -15,13 +15,8 @@ from vre.common import result_header, utc_now, write_json_atomic
 from vre.config import Settings
 from vre.valuation import explain
 from vre.valuation import features as F
+from vre.valuation import search_cache as SC
 
-N_CONFIGS = 8
-SEARCH_SEED = 42
-MAX_ROUNDS = 3000
-EARLY_STOPPING = 100
-SPACE = {"max_depth": [6, 8, 10, 12], "eta": [0.03, 0.05, 0.1], "subsample": [0.7, 0.8, 0.9, 1.0],
-         "colsample_bytree": [0.6, 0.8, 1.0], "min_child_weight": [1, 5, 10, 20], "lambda": [1.0, 3.0, 10.0]}
 BASELINE_LEVELS = ("ward_key", "district_key", "province", "property_type")
 INTERVAL_Q = (0.10, 0.90)
 
@@ -32,9 +27,8 @@ def paths(root: Path, variant: str, deal: str = "sale") -> tuple[Path, Path]:
     return model_dir / f"xgb_{variant}_{deal}.json", model_dir / f"encoders_{variant}{suffix}.json"
 
 
-def sample_configs(seed: int = SEARCH_SEED, n: int = N_CONFIGS) -> list[dict[str, Any]]:
-    rng = np.random.default_rng(seed)
-    return [{k: v[int(rng.integers(len(v)))] for k, v in SPACE.items()} for _ in range(n)]
+def search_dir(root: Path, variant: str, deal: str) -> Path:
+    return SC.cache_dir(paths(root, variant, deal)[0].parent, variant, deal)
 
 
 def baseline_maps(train: pd.DataFrame) -> dict[str, Any]:
@@ -84,24 +78,9 @@ def intervals(test: pd.DataFrame, yhat: np.ndarray) -> dict[str, list[float]]:
     return out
 
 
-def search(dfit: xgb.DMatrix, dval: xgb.DMatrix, device: str, settings: Settings) -> tuple[xgb.Booster, dict[str, Any]]:
-    base = {"objective": "reg:squarederror", "eval_metric": "rmse", "tree_method": "hist", "device": device,
-            "nthread": settings.xgb_nthread, "seed": settings.seed}
-    best: tuple[float, xgb.Booster, dict[str, Any]] | None = None
-    for i, cfg in enumerate(sample_configs()):
-        booster = xgb.train({**base, **cfg}, dfit, MAX_ROUNDS, evals=[(dval, "valid")],
-                            early_stopping_rounds=EARLY_STOPPING, verbose_eval=False)
-        print(f"price: cấu hình {i + 1}/{N_CONFIGS} {cfg} → rmse_valid={booster.best_score:.4f} @ {booster.best_iteration}")
-        if best is None or booster.best_score < best[0]:
-            best = (booster.best_score, booster, cfg)
-    assert best is not None
-    _, booster, cfg = best
-    used = json.loads(booster.save_config())["learner"]["generic_param"].get("device")
-    print(f"price: XGBoost tree_method=hist device={used} nthread={settings.xgb_nthread}")
-    return booster[: booster.best_iteration + 1], {**cfg, "best_iteration": booster.best_iteration, "device": used}
-
-
-def train_deal(df: pd.DataFrame, variant: F.Variant, settings: Settings, device: str) -> dict[str, Any]:
+def train_deal(df: pd.DataFrame, variant: F.Variant, settings: Settings, device: str,
+               cache: Path | None = None) -> dict[str, Any]:
+    """`cache` = thư mục `_search/<variant>_<deal>` để dò tham số chạy tiếp được sau khi bị dừng."""
     t0 = time.perf_counter()
     masks = F.split(df)
     train, test = df[masks["train"]], df[masks["test"]]
@@ -119,7 +98,7 @@ def train_deal(df: pd.DataFrame, variant: F.Variant, settings: Settings, device:
     dval = xgb.QuantileDMatrix(x_train[val], y[val], ref=dfit, enable_categorical=True)
     feature_names, x_val, valid = list(x_train.columns), x_train[val], train[val]
     del x_train
-    booster, params = search(dfit, dval, device, settings)
+    booster, params = SC.search(dfit, dval, device, settings, cache)
     yhat = np.exp(booster.predict(xgb.DMatrix(x_test, enable_categorical=True)))
     # Khoảng p10/p90 hiệu chỉnh trên tháng validation — test chỉ để báo cáo.
     yhat_valid = np.exp(booster.predict(xgb.DMatrix(x_val, enable_categorical=True)))
@@ -154,7 +133,8 @@ def rent_model(settings: Settings, variant: F.Variant, root: Path, n_rent: int, 
         return existing or {"trained": False, "n_rent": n_rent, "reason": "model thuê chỉ huấn luyện ở lượt tabular"}
     if n_rent < settings.rent_min_rows:
         return {"trained": False, "n_rent": n_rent, "reason": f"n_rent={n_rent} < rent_min_rows={settings.rent_min_rows}"}
-    res = train_deal(F.load_frame(settings, "rent", limit), variant, settings, settings.xgb_device_tabular)
+    res = train_deal(F.load_frame(settings, "rent", limit), variant, settings, settings.xgb_device_tabular,
+                     search_dir(root, variant, "rent"))
     save(res, *paths(root, variant, "rent"), root)
     return {"trained": True, "n_rent": n_rent, "reason": None}
 
@@ -186,7 +166,7 @@ def run(settings: Settings, variant: F.Variant, limit: int | None = None, output
         print(f"price: đã xong ({variant})")
         return existing
     device = settings.xgb_device_tabular if variant == "tabular" else settings.xgb_device_full
-    res = train_deal(F.load_frame(settings, "sale", limit), variant, settings, device)
+    res = train_deal(F.load_frame(settings, "sale", limit), variant, settings, device, search_dir(root, variant, "sale"))
     save(res, model_path, enc_path, root)
     rent = rent_model(settings, variant, root, count_rent(settings, limit), existing.get("rent_model"), limit)
     variants = {"tabular": None, "full": None, **(existing.get("variants") or {})}
@@ -195,4 +175,6 @@ def run(settings: Settings, variant: F.Variant, limit: int | None = None, output
     out = {**result_header(), "split": {"train_months": list(F.TRAIN_MONTHS), "test_months": list(F.TEST_MONTHS)},
            "rent_model": rent, "variants": variants}
     write_json_atomic(metrics_path, out)
+    for deal in ("sale", "rent"):  # cache dò tham số chỉ để chạy tiếp — xong thì bỏ
+        SC.clear(search_dir(root, variant, deal))
     return out
