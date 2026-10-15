@@ -29,7 +29,7 @@ class Encoder:
         self.torch, self.device = torch, device
         self.tokenizer = tokenize.load_tokenizer()
         self.special = tokenize.special_ids(self.tokenizer)
-        # Không `AutoModel.from_pretrained`: backend mmap COW của safetensors làm sập tiến trình khi commit thấp
+        # Không nạp qua transformers: backend mmap COW của safetensors làm sập tiến trình khi commit thấp
         # (plans/reports/p3-encoder-crash.md). Loader dùng chung đọc theo lát, thiếu bộ nhớ thì nổ MemoryError.
         self.model = build_model_fp16().to(device).eval()
         if device == "cuda":
@@ -102,7 +102,7 @@ class Encoder:
 
     def encode_texts(self, texts: list[str], kind: str = "passage") -> np.ndarray:
         """Embed văn bản thô (truy vấn, test parity): thêm tiền tố `passage: `/`query: `, cắt ở `max_length`."""
-        prefix = EMBED_MODELS[EMBED_MODEL_SLUG][3 if kind == "passage" else 4]
+        prefix = str(EMBED_MODELS[EMBED_MODEL_SLUG][3 if kind == "passage" else 4])
         enc = self.tokenizer([prefix + t for t in texts], truncation=True, max_length=self.max_length)["input_ids"]
         offsets = np.zeros(len(enc) + 1, dtype=np.int64)
         np.cumsum([len(e) for e in enc], out=offsets[1:])
