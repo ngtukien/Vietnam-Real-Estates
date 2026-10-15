@@ -1,6 +1,6 @@
 """Dò siêu tham số XGBoost có thể chạy tiếp: mỗi cấu hình xong được lưu atomic dưới `_search/`, lần chạy sau dùng lại.
 
-`_search/<variant>_<deal>/cfg_XX.json` (booster đã cắt tại best_iteration+1) + `cfg_XX.meta.json` (khóa cache, điểm).
+`_search/<variant>_<deal>/cfg_XX.ubj` (booster đã cắt tại best_iteration+1) + `cfg_XX.meta.json` (khóa cache, điểm).
 Meta ghi SAU booster nên là dấu "đã xong": bị giết giữa chừng chỉ mất cấu hình đang chạy. Khóa = hash của cấu hình,
 MAX_ROUNDS, EARLY_STOPPING, tên cột, số dòng fit/valid, tổng nhãn fit/valid (làm tròn 1e-6) và device; nthread không
 thuộc khóa. Lệch khóa ⇒ huấn luyện lại và ghi đè.
@@ -27,8 +27,9 @@ N_CONFIGS = 8
 SEARCH_SEED = 42
 MAX_ROUNDS = 3000
 EARLY_STOPPING = 100
-SPACE = {"max_depth": [6, 8, 10, 12], "eta": [0.03, 0.05, 0.1], "subsample": [0.7, 0.8, 0.9, 1.0],
-         "colsample_bytree": [0.6, 0.8, 1.0], "min_child_weight": [1, 5, 10, 20], "lambda": [1.0, 3.0, 10.0]}
+# max_depth ≤ 10, min_child_weight ≥ 5: depth 12 + mcw 1 cho model 750 MB (JSON), quá nặng cho API; lợi ~3% RMSE.
+SPACE = {"max_depth": [6, 8, 10], "eta": [0.03, 0.05, 0.1], "subsample": [0.7, 0.8, 0.9, 1.0],
+         "colsample_bytree": [0.6, 0.8, 1.0], "min_child_weight": [5, 10, 20], "lambda": [1.0, 3.0, 10.0]}
 SEARCH_DIRNAME = "_search"
 LABEL_SUM_DECIMALS = 6
 
@@ -56,7 +57,7 @@ def cache_key(cfg: dict[str, Any], fingerprint: dict[str, Any]) -> str:
 
 
 def _files(cdir: Path, i: int) -> tuple[Path, Path]:
-    return cdir / f"cfg_{i:02d}.json", cdir / f"cfg_{i:02d}.meta.json"
+    return cdir / f"cfg_{i:02d}.ubj", cdir / f"cfg_{i:02d}.meta.json"  # UBJ: nhỏ, lưu ít bộ nhớ hơn JSON
 
 
 def load(cdir: Path | None, i: int, key: str) -> dict[str, Any] | None:
@@ -83,7 +84,7 @@ def store(cdir: Path | None, i: int, key: str, booster: xgb.Booster, meta: dict[
     cdir.mkdir(parents=True, exist_ok=True)
     model_file, meta_file = _files(cdir, i)
     meta_file.unlink(missing_ok=True)  # khóa cũ không được trỏ vào booster mới đang ghi dở
-    tmp = model_file.with_name(model_file.stem + ".tmp.json")
+    tmp = model_file.with_name(model_file.stem + ".tmp.ubj")
     booster.save_model(tmp)
     os.replace(tmp, model_file)
     write_json_atomic(meta_file, {"key": key, **meta})
