@@ -16,13 +16,15 @@
  "limit": "MATCH (n:District) RETURN n.name\nLIMIT 50",
  "t2c": {
   "question": "Giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy là bao nhiêu?",
-  "cypher": "MATCH (m:MarketStat {scope: 'district', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale', area_key: 'Hà Nội|Cầu Giấy'})\nWHERE m.n >= 20\nRETURN round(m.median_price_m2_mil, 2) AS median_price_m2_mil\nLIMIT 50",
+  "cypher": "MATCH (m:MarketStat {scope: 'district', area_key: 'Hà Nội|Cầu Giấy', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'}) RETURN round(m.median_price_m2_mil, 2) AS median_price_m2_mil, m.n AS n\nLIMIT 50",
   "columns": [
-   "median_price_m2_mil"
+   "median_price_m2_mil",
+   "n"
   ],
   "rows": [
    {
-    "median_price_m2_mil": 91.26
+    "median_price_m2_mil": 91.26,
+    "n": 22783
    }
   ],
   "error": null,
@@ -31,6 +33,6 @@
  "_meta": {
   "cell": "P4-03",
   "mode": "live",
-  "generated_at": "2026-10-15T15:47:12Z"
+  "generated_at": "2026-10-15T19:13:30Z"
  }
 }

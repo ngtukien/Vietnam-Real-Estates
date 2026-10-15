@@ -1312,8 +1312,13 @@ def h_p4_09(c: Ctx) -> str:
     if d is None:
         return "Faithfulness và các chỉ số kiểu RAGAS (chưa chạy toy)"
     e = c.r("eval_summary.json")
-    real = (f"; thật (Basic RAG) = {D(e['ragas']['basic_rag']['faithfulness'], 2)}" if e and "basic_rag" in e["ragas"]
-            else "; số thật chờ eval")
+    faith = e["ragas"].get("basic_rag", {}).get("faithfulness") if e else None
+    if faith is not None:
+        real = f"; thật (Basic RAG) = {D(faith, 2)}"
+    elif e and e.get("scoring") == "rule_based":  # chấm theo luật: không có faithfulness (cần LLM)
+        real = "; eval chấm theo luật nên không có faithfulness thật"
+    else:
+        real = "; số thật chờ eval"
     return f"Faithfulness toy = {D(d['faithfulness'], 2)}{real}"
 
 

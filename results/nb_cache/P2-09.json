@@ -1,22 +1,18 @@
 {
  "id": "LK01",
  "question": "Mình thấy tin bán căn hộ 3 phòng ngủ 80m2 ở Sun Feliza Suites Cầu Giấy giá 8 tỷ, căn đó có mấy WC vậy?",
- "answer": "Tin #3092923782945354 cho biết căn hộ 3 phòng ngủ, diện tích 80 m² tại Sun Feliza Suites, Cầu Giấy có **2 WC**. [Tin#3092923782945354]",
+ "answer": "Căn hộ 3 phòng ngủ tại Sun Feliza Suites có 2 WC [Tin#3092923782945354].",
  "sources": [
-  243473261298791,
-  1335749052396688,
-  2014378519250198,
-  659597530562360,
   3092923782945354
  ],
  "cited": [
   3092923782945354
  ],
  "unsupported": [],
- "prompt_head": "NGỮ CẢNH:\n<tai_lieu>\n[Tin#243473261298791] Săn ngay căn 3PN 80m2 Sun Feliza Suites Cầu Giấy giá chỉ 12 tỷ full giá CK 17,5% quà tặng 450tr\nCăn hộ chung cư · Dịch Vọng Hậu, Cầu Giấy, Hà Nội · giá 12.00 tỷ · 80 m² · 3 phòng ngủ\nBán giá đặc biệt chỉ tôi có. CC tại Sun Feliza Suites, Xuân Thủy, Dịch Vọng Hậu, Cầu Giấy, Hà Nội, với diện tích 80m2, 3PN, 2WC, đang chờ pháp lý. Giá chỉ 12 tỷ VND, quá hời cho không gian sống lý tưởng này. Điểm nổi bật: CC này có vị trí cực đẹp, gần các tiện ích cần thiết, phù hợp cho những ai muốn sống tối ưu và tiện nghi. Pháp lý hiện đang chờ sổ, đảm bảo an toàn cho mọi giao dịch. Gần đó có nhiều tiện ích như bệnh viện 19 - 8 Bộ Công An, bệnh viện mắt quốc tế Việt - Nga, siêu thị điện máy Pico, WinMart+, công viên Cầu Giấy, và các trường học như trung tâm tiếng Nhật Kosei và trường đại học Ngoại Ngữ - ĐHQGHN. Liên hệ ngay để biết thêm chi tiết và xem nhà: Minh ",
+ "prompt_head": "NGỮ CẢNH:\n<tai_lieu>\n[Tin#3092923782945354] Bán CC 3PN, 2WC, 80m2 tại Sun Feliza Suites, 8 tỷ, Cầu Giấy, Hà Nội\nCăn hộ chung cư · Dịch Vọng Hậu, Cầu Giấy, Hà Nội · giá 8.00 tỷ · 80 m² · 3 phòng ngủ\nMở ra một không gian sống hiện đại tại Sun Feliza Suites, Cầu vượt Mai Dịch, Dịch Vọng Hậu, Cầu Giấy, Hà Nội. Căn hộ 3PN, 2WC rộng rãi với diện tích 80m2, hướng cửa chính Tây Nam và ban công Đông Bắc. Pháp lý đầy đủ, không nội thất, dễ dàng tự trang trí theo phong cách riêng. Căn hộ này phù hợp cho những ai yêu thích sự tiện nghi và thoải mái trong cuộc sống hàng ngày. Với mức giá 8 tỷ VND, đây là cơ hội không thể bỏ qua cho những ai đang tìm kiếm một không gian sống lý tưởng. Địa điểm tiện ích xung quanh: + Bệnh viện 19 - 8 Bộ Công An, Bệnh viện Đa khoa Y học cổ truyền Hà Nội, Bệnh viện Mắt Quốc tế Việt - Nga. + Công viên Cầu Giấy. + Trường Mầm non Mai Dịch, Trường Đại học Ngoại ngữ - ĐHQGHN,",
  "_meta": {
   "cell": "P2-09",
   "mode": "live",
-  "generated_at": "2026-10-15T15:47:01Z"
+  "generated_at": "2026-10-15T19:12:54Z"
  }
 }
