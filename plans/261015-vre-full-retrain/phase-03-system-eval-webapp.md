@@ -165,7 +165,7 @@ recharts + maplibre-gl + react-force-graph-2d; SSE POST bằng parser tự viế
 6. **Benchmark** — bảng 9 nhóm × 4 hệ có CI (error bar), ablation, đọc `/api/benchmark`.
 Lịch sử chat `localStorage` (khoá `vre_history_v1`, tối đa 50), dark mode, nhập API key ở hộp thoại cài đặt (sessionStorage, KHÔNG đọc từ URL;
 `?q=` chỉ điền sẵn ô nhập, không tự gửi — B8).
-`scripts/build_geo.py`: tải ranh giới hành chính geoBoundaries gbOpen VNM ADM1/ADM2 (CC BY 4.0, địa giới trước 2025 — kiểm vintage và kiểm URL
+`scripts/build_geo.py`: tải ranh giới hành chính geoBoundaries gbOpen VNM ADM1/ADM2 (ADM1 Public Domain 2008, ADM2 OCHA ROAP CC BY 3.0 IGO 2020 — data-contract §8; địa giới trước 2025 — kiểm vintage và kiểm URL
 bằng `curl -sI` trước khi tải; lưu `data/geo/raw/`, gitignored), đơn giản hoá (`npx mapshaper -simplify 5% keep-shapes`), khớp tên với
 `normalize_place` (bỏ dấu + tiền tố), xuất `web/public/geo/{provinces,districts}.json` (ghi công nguồn trong README + footer web) và
 `data/geo/centroids.json` cho API; in `coverage`.

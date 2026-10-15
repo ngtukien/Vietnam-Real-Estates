@@ -171,6 +171,97 @@ def eval_gt() -> None:
     _echo(run(settings))
 
 
+EVAL_CHECKS = ("groq_key_present", "qdrant_healthy", "neo4j_healthy", "clean_data_ready")
+report_app = typer.Typer(add_completion=False, no_args_is_help=True, help="Ví dụ + khối kết quả README từ results/.")
+app.add_typer(report_app, name="report")
+
+
+def _eval_logging() -> None:
+    import logging
+
+    logging.basicConfig(format="[%(name)s] %(levelname)s %(message)s", level=logging.WARNING)
+    logging.getLogger("vre.eval").setLevel(logging.INFO)
+
+
+def _systems(values: list[SystemChoice] | None) -> list[str] | None:
+    return [v.value for v in values] if values else None
+
+
+@eval_app.command("run")
+def eval_run(limit: int | None = typer.Option(None, "--limit", help="chỉ N câu (xen kẽ theo nhóm) — lượt thử"),
+             systems: list[SystemChoice] | None = typer.Option(None, "--systems", help="lặp lại để chọn nhiều")) -> None:
+    """Câu benchmark × hệ thống qua vre.qa.answer → results/eval/raw/answers.jsonl (resume theo id, system)."""
+    settings = get_settings()
+    require(settings, *EVAL_CHECKS)
+    _eval_logging()
+    from vre.eval.runner import run_answers
+
+    _echo(run_answers(settings, limit=limit, systems=_systems(systems)))
+
+
+@eval_app.command("score")
+def eval_score(ragas: bool = typer.Option(True, "--ragas/--no-ragas", help="faithfulness (basic_rag/graph/hybrid)")) -> None:
+    """Chấm answers.jsonl (judge 0–2, truy xuất theo cụm dup, định giá số học) → results/eval/raw/scores.jsonl."""
+    settings = get_settings()
+    require(settings, "groq_key_present", "clean_data_ready")
+    _eval_logging()
+    from vre.eval.runner import run_scores
+
+    _echo(run_scores(settings, ragas=ragas))
+
+
+@eval_app.command("report")
+def eval_report() -> None:
+    """eval_summary.json (CI bootstrap, so sánh cặp, router, chi phí) + error_analysis.json."""
+    settings = get_settings()
+    _eval_logging()
+    from vre.eval import errors, summary
+
+    doc = summary.run(settings)
+    analysis = errors.run(settings)
+    _echo({"eval_summary": {k: doc[k] for k in ("n_questions", "complete", "systems", "overall", "router", "notes")},
+           "error_counts": analysis["counts"], "n_error_examples": len(analysis["examples"])})
+
+
+@eval_app.command("all")
+def eval_all(limit: int | None = typer.Option(None, "--limit"),
+             systems: list[SystemChoice] | None = typer.Option(None, "--systems")) -> None:
+    """eval run → eval score → eval report."""
+    eval_run(limit=limit, systems=systems)
+    eval_score(ragas=True)
+    eval_report()
+
+
+@report_app.command("examples")
+def report_examples() -> None:
+    """results/examples.json từ lượt eval thật (data-contract §7.8)."""
+    settings = get_settings()
+    require(settings, *EVAL_CHECKS)
+    _eval_logging()
+    from vre.eval.report import examples
+
+    doc = examples(settings)
+    _echo({k: len(doc[k]) for k in ("rag", "graph", "valuation", "answers")} | {"notes": doc.get("notes")})
+
+
+@report_app.command("readme")
+def report_readme() -> None:
+    """Thay khối giữa <!-- results:start --> và <!-- results:end --> trong README bằng bảng sinh từ results/*.json."""
+    from vre.eval.report import readme
+
+    _echo(readme(get_settings()))
+
+
+@app.command()
+def ablation(limit: int | None = typer.Option(None, "--limit", help="chỉ N câu")) -> None:
+    """Ablation truy xuất e5-large → results/ablation.json (code của lane ablation: `vre.eval.ablation`)."""
+    settings = get_settings()
+    require(settings, "qdrant_healthy", "clean_data_ready")
+    from vre.eval.ablation import run
+
+    _echo(run(settings, limit=limit))
+
+
 @app.command()
 def signal(name: str, sender: Sender = typer.Option(..., "--from"),
            payload: str = typer.Option("{}", "--payload", help="JSON object")) -> None:

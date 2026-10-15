@@ -26,6 +26,7 @@ MISSING_COLS = ("title", "description", "province", "province_2025", "district",
                 "house_direction", "balcony_direction", "published_at")
 DUP_BUCKETS = (("1", 1, 1), ("2", 2, 2), ("3", 3, 3), ("4–5", 4, 5), ("6–10", 6, 10), (">10", 11, None))
 SALE = "deal_type = 'sale'"
+ROUND_DIGITS = 4  # số lẻ cho số thực trong eda_summary.json
 
 Con = Any  # duckdb.DuckDBPyConnection
 
@@ -33,12 +34,11 @@ Con = Any  # duckdb.DuckDBPyConnection
 def _rows(con: Con, sql: str, params: Sequence[Any] = ()) -> list[dict[str, Any]]:
     cur = con.execute(sql, list(params))
     names = [d[0] for d in cur.description]
-    return [{k: _clean(v) for k, v in zip(names, row, strict=True)} for row in cur.fetchall()]
-
-
-def _clean(value: Any) -> Any:
-    value = scalar(value)
-    return round(value, 4) if isinstance(value, float) else value
+    out = []
+    for row in cur.fetchall():
+        cells = [scalar(v) for v in row]
+        out.append({k: round(v, ROUND_DIGITS) if isinstance(v, float) else v for k, v in zip(names, cells, strict=True)})
+    return out
 
 
 def _pcts(values: Sequence[float] | np.ndarray) -> dict[str, float | None]:

@@ -62,8 +62,9 @@ flowchart LR
 - Dataset: [tinixai/vietnam-real-estates](https://huggingface.co/datasets/tinixai/vietnam-real-estates), giấy phép
   [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) (chỉ dùng phi thương mại, ghi công tác giả dataset).
   Kết quả và mô hình sinh từ dữ liệu này thừa hưởng điều kiện phi thương mại.
-- Ranh giới hành chính cho bản đồ: [geoBoundaries](https://www.geoboundaries.org/) gbOpen VNM ADM1/ADM2,
-  giấy phép [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (địa giới trước sắp xếp năm `2025`). Sinh lại bằng
+- Ranh giới hành chính cho bản đồ: [geoBoundaries](https://www.geoboundaries.org/) gbOpen VNM — ADM1 (tỉnh) giấy phép
+  Public Domain (2008), ADM2 (huyện) nguồn OCHA ROAP giấy phép
+  [CC BY 3.0 IGO](https://creativecommons.org/licenses/by/3.0/igo/) (2020); địa giới trước sắp xếp năm `2025`. Sinh lại bằng
   `python scripts/build_geo.py`; nguồn được ghi công ở chân trang web.
 - Giá trong dữ liệu là giá chào bán do người đăng tự nhập, không phải giá giao dịch.
 
