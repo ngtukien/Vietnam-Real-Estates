@@ -214,7 +214,7 @@ class Condition:
 
 
 _EQ_FIELDS = ("province", "district", "ward", "property_type", "deal_type", "bedrooms", "project", "street")
-_RANGES = (("min_price_mil", "price_vnd", "gte", 1e6), ("max_price_mil", "price_vnd", "lte", 1e6),
+_RANGES: tuple[tuple[str, str, Op, float], ...] = (("min_price_mil", "price_vnd", "gte", 1e6), ("max_price_mil", "price_vnd", "lte", 1e6),
            ("min_area_m2", "area_m2", "gte", 1.0), ("max_area_m2", "area_m2", "lte", 1.0))
 _SQL_COLUMN = {"published_month": "month"}
 

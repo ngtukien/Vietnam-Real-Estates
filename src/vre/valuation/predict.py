@@ -23,8 +23,8 @@ RESULT_KEYS = ("predicted_price_m2_mil", "predicted_price_vnd", "interval_price_
                "comparables_n", "verdict", "shap", "model")
 
 
-class ModelUnavailableError(FileNotFoundError):
-    """Model chưa được huấn luyện (API trả 503)."""
+class ModelUnavailableError(RuntimeError):
+    """Model chưa được huấn luyện (API trả 503, api-contract §7: RuntimeError)."""
 
 
 @lru_cache(maxsize=4)
@@ -80,13 +80,29 @@ def _verdict(asking: float | None, low: float, high: float) -> str | None:
     return "above_market" if asking > high else "fair"
 
 
-def valuate(input: dict[str, Any], settings: Settings | None = None, variant: F.Variant = "tabular") -> dict[str, Any]:
-    """Định giá một BĐS; `ValueError` = input sai (400), `ModelUnavailableError` = chưa có model (503)."""
+def resolve_variant(settings: Settings, deal: str) -> F.Variant:
+    """`full` nếu model + encoder của nó đã có, không thì `tabular` (api-contract §7)."""
+    model_path, enc_path = paths(settings.data_root, "full", deal)
+    return "full" if model_path.is_file() and enc_path.is_file() else "tabular"
+
+
+def valuate(payload: dict[str, Any], settings: Settings | None = None, variant: F.Variant | None = None) -> dict[str, Any]:
+    """Định giá một BĐS (api-contract §7): payload `ValuationInput` → `ValuationResult`.
+    `ValueError` = input sai (400); `RuntimeError` (`ModelUnavailableError`) = chưa có model (503).
+
+    Dạng hợp đồng `valuate(payload)`: ưu tiên `full`, lùi về `tabular` (ghi `model.variant`).
+    Dạng cũ `valuate(input, settings)` (settings truyền vào, không nêu variant) giữ mặc định lịch sử `tabular`
+    cho người gọi cũ; truyền `variant` để chọn rõ."""
+    if not isinstance(payload, dict):
+        raise ValueError("payload phải là object ValuationInput")
+    legacy_default = settings is not None and variant is None
     settings = settings or get_settings()
-    inp = dict(input)
+    inp = dict(payload)
     deal = inp.get("deal_type") or "sale"
     if deal not in ("sale", "rent"):
         raise ValueError(f"deal_type lạ {deal!r}")
+    if variant is None:
+        variant = "tabular" if legacy_default else resolve_variant(settings, deal)
     booster, enc, model_path = load_model(settings, variant, deal)
     validate(inp, enc)
     row = F.frame_from_input(inp, enc["max_month"])

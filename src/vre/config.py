@@ -186,7 +186,7 @@ def load_settings(**overrides: object) -> Settings:
     """Tạo Settings mới; `.env` dưới data_root chỉ đọc khi `VRE_LOAD_DOTENV != "0"`."""
     root = Path(os.environ.get("VRE_DATA_ROOT", str(DEFAULT_DATA_ROOT)))
     env_file = root / ".env" if dotenv_enabled() else None
-    return Settings(_env_file=env_file, _env_file_encoding="utf-8", **overrides)  # type: ignore[call-arg]
+    return Settings(_env_file=env_file, _env_file_encoding="utf-8", **overrides)  # type: ignore[call-arg, arg-type]
 
 
 @lru_cache(maxsize=1)

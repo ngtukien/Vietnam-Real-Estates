@@ -112,8 +112,10 @@ def listings_fingerprint(clean_path: Path) -> dict[str, Any]:
     con.execute(f"SET threads = {FINGERPRINT_THREADS}")
     con.execute(f"SET memory_limit = '{FINGERPRINT_MEMORY}'")
     try:
-        n, total = con.execute("SELECT count(*), kahan_sum(price_vnd) FROM read_parquet(?)",
-                               [str(clean_path)]).fetchone()
+        row = con.execute("SELECT count(*), kahan_sum(price_vnd) FROM read_parquet(?)", [str(clean_path)]).fetchone()
+        if row is None:
+            raise RuntimeError(f"không đọc được fingerprint của {clean_path}")
+        n, total = row
     finally:
         con.close()
     return {"n_listings": int(n), "price_vnd_sum": float(total or 0.0)}

@@ -39,6 +39,21 @@ class Variant(StrEnum):
     full = "full"
 
 
+class SystemChoice(StrEnum):
+    llm_only = "llm_only"
+    basic_rag = "basic_rag"
+    graph = "graph"
+    hybrid = "hybrid"
+
+
+ASK_CHECKS = {"llm_only": ("groq_key_present",), "basic_rag": ("groq_key_present", "qdrant_healthy"),
+              "graph": ("groq_key_present", "neo4j_healthy"),
+              "hybrid": ("groq_key_present", "qdrant_healthy", "neo4j_healthy")}
+GT_CHECKS = ("clean_data_ready",)
+eval_app = typer.Typer(add_completion=False, no_args_is_help=True, help="Benchmark: đáp án chuẩn, chạy, chấm.")
+app.add_typer(eval_app, name="eval")
+
+
 class Sender(StrEnum):
     p1 = "p1"
     p2 = "p2"
@@ -122,6 +137,30 @@ def smoke_search(query: str, collection: str | None = typer.Option(None, "--coll
     from vre.index.qdrant_store import smoke_search as search
 
     _echo(search(settings, query, collection=collection, limit=limit))
+
+
+@app.command()
+def ask(question: str, system: SystemChoice = typer.Option(SystemChoice.hybrid, "--system"),
+        top_k: int = typer.Option(5, "--top-k"), rerank: bool = typer.Option(False, "--rerank")) -> None:
+    """Hỏi một câu qua `vre.qa` (in từng sự kiện SSE dạng JSON, không in token)."""
+    settings = get_settings()
+    if settings.llm_provider == "groq":
+        require(settings, *ASK_CHECKS[system.value])
+    from vre.qa import stream_answer
+
+    for name, payload in stream_answer(system.value, question, top_k=top_k, use_rerank=rerank, stream_tokens=False):
+        typer.echo(f"event: {name}")
+        _echo(payload)
+
+
+@eval_app.command("gt")
+def eval_gt() -> None:
+    """Chạy SQL đáp án chuẩn → results/benchmark_gt.json (code của Lane A2: `vre.eval.ground_truth`)."""
+    settings = get_settings()
+    require(settings, *GT_CHECKS)
+    from vre.eval.ground_truth import run
+
+    _echo(run(settings))
 
 
 @app.command()
