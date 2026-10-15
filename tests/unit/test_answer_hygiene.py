@@ -29,7 +29,7 @@ def test_strip_context_echo(leaked, expected):
 
 
 def test_generate_sanitizes_answer():
-    with mock.patch.object(generate, "ask_llm", return_value=LLMResult("<tai_lieu>\nĐáp [tin#7]\n</tai_lieu>", None, 1, 1, True)):
+    with mock.patch.object(generate, "ask_llm", return_value=LLMResult("<tai_lieu>\nĐáp [Tin#7]\n</tai_lieu>", None, 1, 1, True)):
         assert generate.generate("q", ["x"]).text == "Đáp [Tin#7]"
 
 
