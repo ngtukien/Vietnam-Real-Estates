@@ -30,7 +30,7 @@ Ngoài phạm vi: Neo4j, ingest, EDA, định giá tabular (p1); benchmark/LLM (
 
 Toàn bộ máy rảnh và dành riêng cho dự án: Ryzen 9 7945HX 32 luồng, ~35GB RAM dùng được, RTX 4060 Laptop 8GB. **Không có bước cấu hình máy nào**
 — người dùng không chỉnh hay dọn dẹp gì. Vì p1 chạy cùng lúc, máy được chia theo coordination §8: **GPU chỉ p2 dùng**; p2 dùng
-`tokenize_workers=6`, `bm25_workers=10`, Qdrant `max_indexing_threads=12`; p1 dùng CPU còn lại (DuckDB/XGBoost 12 luồng) và Neo4j.
+`tokenize_workers=2`, `bm25_workers=4` (CR-04, giới hạn commit memory), Qdrant `max_indexing_threads=12`; p1 dùng CPU còn lại (DuckDB/XGBoost 12 luồng) và Neo4j.
 
 ## Điều kiện tiên quyết
 
@@ -75,7 +75,7 @@ Theo data-contract §2.3, §4, §5.
   header + "\n" + body[span]. Cắt ở `max_chunks_per_listing`. Token ghi tạm `index/tok/part_NNNN.npz` (mảng phẳng int32 + offsets), xoá sau khi part
   đã embed (tránh pickle dữ liệu lớn qua queue).
 - `embed.py`: `AutoModel.from_pretrained(..., dtype=float16, attn_implementation="sdpa")`, `inference_mode`, sort theo độ dài trong part,
-  lô theo ngân sách token `settings.embed_token_budget` (32768, cố định), tối đa `embed_max_batch` câu, pinned memory + `non_blocking`; mean pooling theo
+  lô theo ngân sách token `settings.embed_token_budget` (32768, cố định), tối đa `embed_max_batch` câu, copy đồng bộ (KHÔNG pin_memory — xem §Thay đổi sau dry-run), trần cache CUDA 4 GB; mean pooling theo
   attention mask; tiền tố `passage: ` / `query: `; L2-normalize; xuất fp16 theo thứ tự gốc. `torch.cuda.OutOfMemoryError` ⇒ `empty_cache`, giảm ngân sách ½,
   thử lại (đếm `oom_retries`); dưới `embed_min_token_budget` (4096) mà vẫn OOM ⇒ raise.
 - `bm25.py`: pool `spawn` `bm25_workers` tiến trình, pyvi, ra `token_ids/tfs/doc_len` (data-contract §4); trọng số theo §5 với `avgdl` từ state.
@@ -83,7 +83,7 @@ Theo data-contract §2.3, §4, §5.
   kiểm tên khoá cấu hình đúng cho v1.15), alias, payload index, `wait_green(timeout)`, `count_part(lo, hi)`, `smoke_search(settings, query, collection, limit)`
   (đúng chữ ký §9.3; dense + BM25, không LLM).
 - `qdrant_upload.py`: dựng point (payload từ lát `listings.parquet` của part, bỏ khoá null), `upload_points(..., parallel=qdrant_upload_parallel,
-  batch_size=qdrant_upload_batch, max_retries=5, wait=False)` qua gRPC, bọc `tenacity` (6 lần, backoff mũ 2–120s); Qdrant không trả lời
+  batch_size=qdrant_upload_batch, max_retries=5, wait=True)` qua gRPC trong một tiến trình upload riêng, bọc `tenacity` (6 lần, backoff mũ 2–120s); Qdrant không trả lời
   > 2 phút ⇒ một lần `docker compose -f D:\Vietnam-Real-Estates\docker-compose.yaml up -d --wait qdrant`, rồi tiếp tục retry.
 
 ### Bước 2 — Viết code lượt chạy dài (agent ~3h; chưa chạy)
@@ -146,10 +146,10 @@ toàn bộ part embed trong lượt này):
 | # | Bước | Tài nguyên | Thời gian dự kiến | Điều kiện xong |
 |---|---|---|---|---|
 | 0 | Kiểm tra fail-fast + nạp state + kiểm fingerprint + nạp model | CPU, GPU | 2–4 phút | mọi kiểm tra đạt |
-| 1 | Chunk + tokenize (`tokenize_workers=6`, tối đa 3 part đi trước GPU) | CPU | chồng với 3 | mọi part `chunked` |
-| 2 | BM25 pyvi (`bm25_workers=10`) → `bm25_avgdl` | CPU | 15–45 phút, chồng với 3 | mọi part `bm25`, `bm25_avgdl` ghi state |
+| 1 | Chunk + tokenize (`tokenize_workers=2`, tokenizer Rust không torch; tối đa 3 part token trong RAM đi trước GPU) | CPU | chồng với 3 | mọi part `chunked` |
+| 2 | BM25 pyvi (`bm25_workers=4`) → `bm25_avgdl` | CPU | ~2,5h, chồng với 3 (upload bắt kịp sau đó ở ~1.350 point/s) | mọi part `bm25`, `bm25_avgdl` ghi state |
 | 3 | Embed (GPU, fp16, `embed_token_budget=32768`) | GPU | **~7,7–7,9h** | mọi part `embedded` |
-| 4 | Upload Qdrant gRPC (`qdrant_upload_parallel=8`), `wait=False`, kiểm đếm theo part | Docker CPU | chồng với 3; đuôi ~5 phút | mọi part `uploaded` |
+| 4 | Upload Qdrant gRPC (`qdrant_upload_parallel=1`, tiến trình riêng), `wait=True`, kiểm đếm theo part | Docker CPU | chồng với 3; đuôi ~5 phút | mọi part `uploaded` |
 | 5 | Chờ HNSW (xây song song khi nạp) tới `green` (tuần tự) | Docker CPU | 10–20 phút đuôi | `status=green`, `indexed_vectors ≥ 0,99·points` |
 | 6 | Alias `vre_chunks` → `vre_chunks_e5_large`; `count = Σ n_chunks`; `smoke_search` 3 truy vấn; manifest | — | 2–5 phút | count khớp, mỗi truy vấn ≥ 5 hit |
 | 7 | PCA 32 chiều (CPU) | CPU | ~10–20 phút | `pca_done=true`, file §4 có đủ `n_listings` dòng |
@@ -181,6 +181,20 @@ Không bước nào gọi LLM hay mạng ngoài loopback Docker. Mã thoát: 0 =
 2. `AskUserQuestion` xin duyệt merge vào `main`; được duyệt ⇒ merge, cập nhật checkout chính, chạy `& $VRE_PY -m pytest -q` toàn bộ trên `main` = 0 fail.
 3. **Gửi `P2_DONE`** `{"branch":"feat/p2-index","sha":"<sha main sau merge>","valuation_full_mape":<số>}`.
 4. `git worktree remove D:\Vietnam-Real-Estates-p2`; `git branch -D feat/p2-index`. Dừng phiên — không làm Phase 3.
+
+## Thay đổi sau dry-run 2026-10-15 (bằng chứng: `D:\Vietnam-Real-Estates\logs\`, commit trên `feat/p2-index`)
+
+Máy sập 2 lần vì cạn **commit memory** (giới hạn ≈ 42,8 GB, Windows event "low virtual memory"), không phải RAM vật lý. Đã sửa:
+
+| Vấn đề đo được | Sửa |
+|---|---|
+| Qdrant/Neo4j trên bind mount NTFS: "Unrecognized filesystem", worker cập nhật shard chết (`channel closed`), Neo4j mất 118 node | p1: named volume `vre_qdrant_data`/`vre_neo4j_data` (đĩa Docker đã nằm trên D) |
+| Cache CUDA giữ khối mọi shape lô: reserved 7,5 GB / allocated 1,2 GB ⇒ tràn VRAM, WDDM tính vào commit (tiến trình chính 4,6 → 17 GB) | `set_per_process_memory_fraction` trần 4 GB; commit phẳng ~8 GB trên một part thật |
+| `pin_memory` mỗi lô: CachingHostAllocator giữ mọi khối | copy đồng bộ |
+| Worker tokenize import transformers ⇒ torch+sklearn+scipy 1,3 GB/worker | tokenizer Rust `tokenizers` (id/offsets trùng khớp); token đóng gói int32 theo lô |
+| Upload `wait=False` + 8 tiến trình làm quá tải gRPC; dựng point giữ GIL ⇒ GPU chỉ 26 chunk/s | 1 tiến trình upload riêng, `wait=True`; worker CPU priority below-normal; pool CPU tắt sau BM25 |
+| OpenBLAS 32 luồng/worker cạn commit; worker chết làm `Pool` treo | BLAS 1 luồng trong worker; `ProcessPoolExecutor` (worker chết ⇒ lỗi, không treo) |
+| — | Trước mỗi part: chờ khi commit trống < 4 GB (tối đa 30 phút) rồi dừng ở checkpoint |
 
 ## Verify (bằng lệnh, không dựa vào "có vẻ ổn")
 
