@@ -1,0 +1,160 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Token màu kiểu shadcn/ui. Độ tương phản chữ ≥ 4.5:1 trên nền tương ứng ở cả hai chế độ (WCAG AA). */
+:root {
+  --radius: 0.6rem;
+  --background: oklch(0.99 0 0);
+  --foreground: oklch(0.2 0.01 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.01 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2 0.01 250);
+  --primary: oklch(0.47 0.09 185);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.95 0.01 250);
+  --secondary-foreground: oklch(0.25 0.01 250);
+  --muted: oklch(0.955 0.005 250);
+  --muted-foreground: oklch(0.46 0.01 250);
+  --accent: oklch(0.94 0.02 185);
+  --accent-foreground: oklch(0.25 0.03 185);
+  --destructive: oklch(0.5 0.19 27);
+  --destructive-foreground: oklch(0.99 0 0);
+  --warning: oklch(0.45 0.11 70);
+  --success: oklch(0.45 0.12 150);
+  --border: oklch(0.89 0.005 250);
+  --input: oklch(0.82 0.005 250);
+  --ring: oklch(0.47 0.09 185);
+  --chart-1: oklch(0.5 0.1 185);
+  --chart-2: oklch(0.6 0.15 45);
+  --chart-3: oklch(0.5 0.15 280);
+  --chart-4: oklch(0.6 0.13 140);
+}
+
+.dark {
+  --background: oklch(0.17 0.01 250);
+  --foreground: oklch(0.95 0.005 250);
+  --card: oklch(0.21 0.01 250);
+  --card-foreground: oklch(0.95 0.005 250);
+  --popover: oklch(0.21 0.01 250);
+  --popover-foreground: oklch(0.95 0.005 250);
+  --primary: oklch(0.75 0.1 185);
+  --primary-foreground: oklch(0.18 0.02 185);
+  --secondary: oklch(0.28 0.01 250);
+  --secondary-foreground: oklch(0.95 0.005 250);
+  --muted: oklch(0.26 0.01 250);
+  --muted-foreground: oklch(0.76 0.01 250);
+  --accent: oklch(0.3 0.03 185);
+  --accent-foreground: oklch(0.95 0.01 185);
+  --destructive: oklch(0.7 0.17 25);
+  --destructive-foreground: oklch(0.15 0.02 25);
+  --warning: oklch(0.82 0.12 80);
+  --success: oklch(0.78 0.13 150);
+  --border: oklch(0.32 0.01 250);
+  --input: oklch(0.4 0.01 250);
+  --ring: oklch(0.75 0.1 185);
+  --chart-1: oklch(0.75 0.1 185);
+  --chart-2: oklch(0.78 0.13 60);
+  --chart-3: oklch(0.72 0.13 280);
+  --chart-4: oklch(0.78 0.13 140);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: "Be Vietnam Pro", "Segoe UI", "Noto Sans", system-ui, sans-serif;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+}
+
+/* Nội dung markdown của câu trả lời */
+.prose-answer {
+  line-height: 1.65;
+}
+.prose-answer p {
+  margin: 0.5rem 0;
+}
+.prose-answer ul,
+.prose-answer ol {
+  margin: 0.5rem 0;
+  padding-left: 1.4rem;
+}
+.prose-answer ul {
+  list-style: disc;
+}
+.prose-answer ol {
+  list-style: decimal;
+}
+.prose-answer table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+  font-size: 0.875rem;
+}
+.prose-answer th,
+.prose-answer td {
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+}
+.prose-answer th {
+  background: var(--muted);
+}
+.prose-answer a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-answer code {
+  font-size: 0.85em;
+  background: var(--muted);
+  padding: 0.05rem 0.3rem;
+  border-radius: 0.25rem;
+}
+.prose-answer strong {
+  font-weight: 600;
+}
