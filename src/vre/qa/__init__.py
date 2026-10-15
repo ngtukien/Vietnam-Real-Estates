@@ -102,7 +102,8 @@ _status_cache: tuple[float, dict] | None = None
 
 def _llm_configured() -> tuple[bool, str | None]:
     s = get_settings()
-    key = {"groq": s.groq_api_key, "openai": s.openai_api_key, "anthropic": s.anthropic_api_key}.get(s.llm_provider)
+    key = {"groq": s.groq_api_key, "openai": s.openai_api_key, "anthropic": s.anthropic_api_key,
+           "gemini": s.gemini_api_key}.get(s.llm_provider)
     return (True, None) if key else (False, f"thiếu khoá API cho LLM_PROVIDER={s.llm_provider}")
 
 

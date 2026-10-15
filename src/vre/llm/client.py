@@ -51,6 +51,7 @@ def _refuse_network(what: str) -> None:
     if offline():
         raise LLMCacheMiss(f"{what}: chưa có trong cache LLM và đang ở chế độ chỉ-cache ({OFFLINE_ENV}=1)")
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
 
 @dataclass
@@ -83,6 +84,11 @@ def _new_client():
         if not s.openai_api_key:
             raise RuntimeError("Thiếu xác thực OpenAI: đặt OPENAI_API_KEY trong .env.")
         return openai.OpenAI(api_key=s.openai_api_key, timeout=s.llm_timeout, max_retries=2)
+    if s.llm_provider == "gemini":
+        if not s.gemini_api_key:
+            raise RuntimeError("Thiếu xác thực Gemini: đặt GEMINI_API_KEY trong .env.")
+        # Gói miễn phí giới hạn RPM/RPD: SDK tự chờ theo Retry-After và thử lại khi gặp 429.
+        return openai.OpenAI(api_key=s.gemini_api_key, base_url=GEMINI_BASE_URL, timeout=s.llm_timeout, max_retries=4)
     if not s.groq_api_key:
         raise RuntimeError("Thiếu xác thực Groq: đặt GROQ_API_KEY trong .env.")
     # Groq giới hạn token/phút theo từng mô hình: SDK tự chờ và thử lại khi gặp 429.
@@ -162,8 +168,12 @@ def _ask_anthropic(model: str, prompt: str, system: str, schema: dict | None, ef
 
 
 def _openai_request(prompt: str, system: str, schema: dict | None, effort: str, max_tokens: int) -> dict[str, Any]:
-    messages = ([{"role": "developer", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
-    request: dict[str, Any] = dict(messages=messages, max_completion_tokens=max_tokens, reasoning_effort=effort)
+    if get_settings().llm_provider == "gemini":  # endpoint tương thích OpenAI của Gemini: vai "system", `max_tokens`
+        messages = ([{"role": "system", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
+        request: dict[str, Any] = dict(messages=messages, max_tokens=max_tokens, reasoning_effort=effort)
+    else:
+        messages = ([{"role": "developer", "content": system}] if system else []) + [{"role": "user", "content": prompt}]
+        request = dict(messages=messages, max_completion_tokens=max_tokens, reasoning_effort=effort)
     if schema:
         request["response_format"] = {"type": "json_schema",
                                       "json_schema": {"name": "output", "schema": schema, "strict": True}}

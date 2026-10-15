@@ -27,6 +27,8 @@ LLM_DEFAULTS: dict[str, tuple[str, str, str | None, float, float]] = {
     "groq": ("openai/gpt-oss-120b", "openai/gpt-oss-20b", "openai/gpt-oss-20b", 0.15, 0.60),
     "openai": ("gpt-5.4-mini", "", None, 4.00, 20.00),
     "anthropic": ("claude-opus-5-5", "", None, 4.00, 20.00),
+    # Gemini qua endpoint tương thích OpenAI, gói miễn phí (0 USD); không có giám khảo mặc định (eval chấm theo luật).
+    "gemini": ("gemini-flash-lite-latest", "gemini-2.5-flash-lite", None, 0.0, 0.0),
 }
 
 
@@ -104,6 +106,7 @@ class Settings(BaseSettings):
     groq_api_key: str = Field("", validation_alias=_env("GROQ_API_KEY"))
     openai_api_key: str = Field("", validation_alias=_env("OPENAI_API_KEY"))
     anthropic_api_key: str = Field("", validation_alias=_env("ANTHROPIC_API_KEY"))
+    gemini_api_key: str = Field("", validation_alias=_env("GEMINI_API_KEY"))
     rerank: bool = Field(False, validation_alias=_env("RERANK"))
     rerank_model: str = Field("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1", validation_alias=_env("RERANK_MODEL"))
     rerank_candidates: int = Field(20, validation_alias=_env("RERANK_CANDIDATES"))

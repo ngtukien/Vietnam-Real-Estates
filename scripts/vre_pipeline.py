@@ -61,6 +61,8 @@ app.add_typer(eval_app, name="eval")
 class Sender(StrEnum):
     p1 = "p1"
     p2 = "p2"
+    p3 = "p3"
+    p4 = "p4"
 
 
 def _echo(result: Any) -> None:
@@ -171,7 +173,12 @@ def eval_gt() -> None:
     _echo(run(settings))
 
 
-EVAL_CHECKS = ("groq_key_present", "qdrant_healthy", "neo4j_healthy", "clean_data_ready")
+EVAL_CHECKS = ("qdrant_healthy", "neo4j_healthy", "clean_data_ready")
+
+
+def _llm_checks(settings: Any) -> tuple[str, ...]:
+    """Kiểm khoá chỉ khi provider là groq (check có sẵn); provider khác: client báo lỗi rõ khi thiếu khoá."""
+    return ("groq_key_present",) if settings.llm_provider == "groq" else ()
 report_app = typer.Typer(add_completion=False, no_args_is_help=True, help="Ví dụ + khối kết quả README từ results/.")
 app.add_typer(report_app, name="report")
 
@@ -189,25 +196,30 @@ def _systems(values: list[SystemChoice] | None) -> list[str] | None:
 
 @eval_app.command("run")
 def eval_run(limit: int | None = typer.Option(None, "--limit", help="chỉ N câu (xen kẽ theo nhóm) — lượt thử"),
-             systems: list[SystemChoice] | None = typer.Option(None, "--systems", help="lặp lại để chọn nhiều")) -> None:
+             systems: list[SystemChoice] | None = typer.Option(None, "--systems", help="lặp lại để chọn nhiều"),
+             per_category: int | None = typer.Option(None, "--per-category", help="chỉ N câu đầu mỗi nhóm"),
+             workers: int = typer.Option(4, "--workers", min=1, max=8),
+             rule_based: bool = typer.Option(False, "--rule-based", help="sẽ chấm theo luật: không kiểm B2")) -> None:
     """Câu benchmark × hệ thống qua vre.qa.answer → results/eval/raw/answers.jsonl (resume theo id, system)."""
     settings = get_settings()
-    require(settings, *EVAL_CHECKS)
+    require(settings, *_llm_checks(settings), *EVAL_CHECKS)
     _eval_logging()
     from vre.eval.runner import run_answers
 
-    _echo(run_answers(settings, limit=limit, systems=_systems(systems)))
+    _echo(run_answers(settings, limit=limit, systems=_systems(systems), per_category=per_category, workers=workers,
+                      llm_judge=not rule_based))
 
 
 @eval_app.command("score")
-def eval_score(ragas: bool = typer.Option(True, "--ragas/--no-ragas", help="faithfulness (basic_rag/graph/hybrid)")) -> None:
-    """Chấm answers.jsonl (judge 0–2, truy xuất theo cụm dup, định giá số học) → results/eval/raw/scores.jsonl."""
+def eval_score(ragas: bool = typer.Option(True, "--ragas/--no-ragas", help="faithfulness (basic_rag/graph/hybrid)"),
+               offline: bool = typer.Option(False, "--offline", help="chấm theo luật, không gọi LLM")) -> None:
+    """Chấm answers.jsonl (judge 0–2 hoặc luật `--offline`, truy xuất theo cụm dup) → results/eval/raw/scores.jsonl."""
     settings = get_settings()
-    require(settings, "groq_key_present", "clean_data_ready")
+    require(settings, *(() if offline else _llm_checks(settings)), "clean_data_ready")
     _eval_logging()
     from vre.eval.runner import run_scores
 
-    _echo(run_scores(settings, ragas=ragas))
+    _echo(run_scores(settings, ragas=ragas, offline=offline))
 
 
 @eval_app.command("report")
@@ -227,8 +239,8 @@ def eval_report() -> None:
 def eval_all(limit: int | None = typer.Option(None, "--limit"),
              systems: list[SystemChoice] | None = typer.Option(None, "--systems")) -> None:
     """eval run → eval score → eval report."""
-    eval_run(limit=limit, systems=systems)
-    eval_score(ragas=True)
+    eval_run(limit=limit, systems=systems, per_category=None, workers=4, rule_based=False)
+    eval_score(ragas=True, offline=False)
     eval_report()
 
 
@@ -236,7 +248,7 @@ def eval_all(limit: int | None = typer.Option(None, "--limit"),
 def report_examples() -> None:
     """results/examples.json từ lượt eval thật (data-contract §7.8)."""
     settings = get_settings()
-    require(settings, *EVAL_CHECKS)
+    require(settings, *EVAL_CHECKS)  # không cần khoá LLM: ví dụ không gọi LLM
     _eval_logging()
     from vre.eval.report import examples
 
