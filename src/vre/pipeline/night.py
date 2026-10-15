@@ -10,12 +10,16 @@ import threading
 import time
 import traceback
 from concurrent.futures import as_completed
+from typing import TYPE_CHECKING, Any
 
 from vre.index import bm25 as bm25_mod
 from vre.index import qdrant_upload, tokenize
 from vre.pipeline import stages
 from vre.pipeline.report import Report, finish, require_resources
-from vre.pipeline.state import layout_for, log
+from vre.pipeline.state import Ledger, layout_for, log
+
+if TYPE_CHECKING:
+    from vre.index.embed import Encoder
 
 EXIT_OK, EXIT_NEEDS_HUMAN = 0, 20
 POLL_S = 5
@@ -26,11 +30,20 @@ class NightRun:
         self.settings, self.dry_run = settings, dry_run
         self.layout = layout_for(settings, dry_run)
         self.report = Report(self.layout, settings)
-        self.stop, self.failure = threading.Event(), None
+        self.stop = threading.Event()
+        self.failure: BaseException | None = None
         self.avgdl_ready = threading.Event()
-        self.ledger = self.encoder = self.qc = None
+        self.ledger: Ledger | None = None  # stages.prepare mở; report.finish chấp nhận None (lỗi trước khi mở)
+        self.encoder: Encoder | None = None
+        self.qc: Any = None  # QdrantClient, do stages.prepare tạo
         self.n_parts, self.step = 0, "checks"
         self.upload_counters = {"upload_retries": 0}
+
+    def require_ledger(self) -> Ledger:
+        """Ledger đã mở (stages.prepare chạy trước mọi stage); gọi sớm hơn là lỗi lập trình."""
+        if self.ledger is None:
+            raise RuntimeError("ledger chưa mở: stages.prepare phải chạy trước")
+        return self.ledger
 
     def fail(self, step: str, exc: BaseException, part: int | None = None) -> None:
         self.report.error(step, exc, part)
@@ -47,7 +60,7 @@ class NightRun:
 
     def cpu_stages(self, tok_pool, bm25_pool, chunked: dict) -> None:
         """Chunk mọi part (ghi đĩa, không giữ RAM), mỗi part chunk xong thì đẩy sang BM25; xong hết ⇒ `bm25_avgdl`."""
-        ledger, layout, parts, step = self.ledger, self.layout, range(self.n_parts), "chunk"
+        ledger, layout, parts, step = self.require_ledger(), self.layout, range(self.n_parts), "chunk"
         try:
             self.report.begin("chunk", self.n_parts)
             self.report.begin("bm25", self.n_parts)
@@ -86,8 +99,9 @@ class NightRun:
 
     def feed(self, chunked: dict, tokens: queue.Queue) -> None:
         try:
+            ledger = self.require_ledger()
             for part in range(self.n_parts):
-                if self.ledger.done(part, "embedded"):
+                if ledger.done(part, "embedded"):
                     continue
                 if not self._wait(chunked[part].is_set):
                     return
@@ -105,17 +119,18 @@ class NightRun:
     def upload(self, parts: queue.Queue, upload_pool) -> None:
         part = None
         try:
+            ledger = self.require_ledger()
             if not self._wait(self.avgdl_ready.is_set):
                 return
             self.report.begin("upload", self.n_parts)
-            avgdl = self.ledger.state["bm25_avgdl"]
+            avgdl = ledger.state["bm25_avgdl"]
             while (part := parts.get()) is not None and not self.stop.is_set():
-                if self.ledger.done(part, "uploaded"):
+                if ledger.done(part, "uploaded"):
                     continue
                 out = upload_pool.submit(qdrant_upload.upload_part_task, (self.settings, self.layout, part, avgdl)).result()
                 self.upload_counters["upload_retries"] += out["upload_retries"]
-                self.ledger.mark(part, "uploaded")
-                self.report.progress("upload", self.ledger.count("uploaded"))
+                ledger.mark(part, "uploaded")
+                self.report.progress("upload", ledger.count("uploaded"))
                 log(f"part {part:04d}: uploaded {out['n']} point")
             self.report.end("upload")
         except BaseException as exc:
@@ -123,6 +138,7 @@ class NightRun:
 
     def embed_all(self, tokens: queue.Queue, uploads: queue.Queue) -> None:
         self.step = "embed"
+        ledger = self.require_ledger()
         self.report.begin("embed", self.n_parts)
         while True:
             try:
@@ -137,15 +153,15 @@ class NightRun:
             require_resources(self.settings, part, log)
             t0 = time.monotonic()
             n = stages.embed_part(self.encoder, self.layout, part, toks)
-            if n != self.ledger.part(part)["n_chunks"]:
-                raise RuntimeError(f"part {part:04d}: embed {n} hàng ≠ n_chunks {self.ledger.part(part)['n_chunks']}")
+            if n != ledger.part(part)["n_chunks"]:
+                raise RuntimeError(f"part {part:04d}: embed {n} hàng ≠ n_chunks {ledger.part(part)['n_chunks']}")
             seconds = time.monotonic() - t0
             self.report.embed_chunks += n
             self.report.embed_seconds += seconds
-            self.ledger.mark(part, "embedded")
+            ledger.mark(part, "embedded")
             self.layout.tok(part).unlink(missing_ok=True)
             uploads.put(part)
-            self.report.progress("embed", self.ledger.count("embedded"))
+            self.report.progress("embed", ledger.count("embedded"))
             self.report.sample_peaks()
             log(f"part {part:04d}: embedded {n} chunk ({n / seconds:.0f} chunk/s)")
         self.report.end("embed")
@@ -166,7 +182,8 @@ def run(settings, resume: bool = True, dry_run: bool = False) -> int:
             status = "skipped"
             return EXIT_OK
         chunked = {p: threading.Event() for p in range(job.n_parts)}
-        tokens, uploads = queue.Queue(maxsize=settings.tokenize_prefetch_parts), queue.Queue()
+        tokens: queue.Queue[tuple[int, Any] | None] = queue.Queue(maxsize=settings.tokenize_prefetch_parts)
+        uploads: queue.Queue[int | None] = queue.Queue()
         for part in stages.resume_uploads(job.ledger, job.n_parts, log):
             uploads.put(part)
         threads = [threading.Thread(target=job.cpu_stages, args=(tok_pool, bm25_pool, chunked), daemon=True),
@@ -174,7 +191,8 @@ def run(settings, resume: bool = True, dry_run: bool = False) -> int:
                    threading.Thread(target=job.upload, args=(uploads, upload_pool), daemon=True)]
         for thread in threads:
             thread.start()
-        if not all(job.ledger.done(p, "embedded") for p in range(job.n_parts)):  # model ~6 GB commit: chỉ nạp khi cần
+        ledger = job.require_ledger()
+        if not all(ledger.done(p, "embedded") for p in range(job.n_parts)):  # model ~6 GB commit: chỉ nạp khi cần
             from vre.index.embed import get_encoder
             job.encoder = get_encoder(settings, "cuda")
         job.embed_all(tokens, uploads)
@@ -185,7 +203,7 @@ def run(settings, resume: bool = True, dry_run: bool = False) -> int:
             raise job.failure
         stages.finalize(job, log)
         status = "completed"
-        log(f"XONG: {job.layout.collection}, {job.ledger.n_chunks()} chunk")
+        log(f"XONG: {job.layout.collection}, {ledger.n_chunks()} chunk")
     except BaseException as exc:
         if job.failure is None:
             job.fail(job.step, exc)

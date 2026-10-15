@@ -19,10 +19,14 @@ from vre.llm.client import ask_llm
 ALLOW_SAME_JUDGE_ENV = "VRE_ALLOW_SAME_JUDGE"
 
 
-def check_judge_config(settings: Settings | None = None) -> dict:
+def check_judge_config(settings: Settings | None = None, judge_used: bool = True) -> dict:
     """Mô hình sinh/giám khảo cho `eval_summary.llm`. Raise RuntimeError khi `JUDGE_MODEL == LLM_MODEL` (giám khảo
-    tự chấm câu của chính nó — thiên lệch) trừ khi `VRE_ALLOW_SAME_JUDGE=1`; khi được phép thì ghi lại cờ."""
+    tự chấm câu của chính nó — thiên lệch) trừ khi `VRE_ALLOW_SAME_JUDGE=1`; khi được phép thì ghi lại cờ.
+    `judge_used=False` (chấm theo luật, không có giám khảo LLM) ⇒ không kiểm, `judge` ghi null."""
     s = settings or get_settings()
+    if not judge_used:
+        return {"provider": s.llm_provider, "generator": s.llm_model, "judge": None,
+                "generator_fallbacks": s.llm_fallback_list, "same_judge_allowed": False}
     same = s.judge_model == s.llm_model
     allowed = os.getenv(ALLOW_SAME_JUDGE_ENV, "") == "1"
     if same and not allowed:

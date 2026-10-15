@@ -13,7 +13,7 @@ import pandas as pd
 
 from vre.config import Settings
 from vre.data.amenities import amenity_table
-from vre.data.duck import connect, sql_path
+from vre.data.duck import connect, one_row, sql_path
 from vre.graph.communities import ward_communities, ward_profiles
 
 COMMUNITY_K, COMMUNITY_SEED, COMMUNITY_MIN_LISTINGS = 5, 42, 8
@@ -155,7 +155,7 @@ def export(settings: Settings, out_dir: Path | None = None, limit: int | None = 
         nodes = {label: copy(f"node_{label.lower()}", sql) for label, sql in NODES.items()}
         rels = [copy(f, f'SELECT {s} AS ":START_ID({sl})", {e} AS ":END_ID({el})", \'{t}\' AS ":TYPE" FROM {src}')
                 for f, t, sl, el, s, e, src in RELS]
-        n, total = con.execute("SELECT count(*), kahan_sum(price_vnd) FROM g").fetchone()
+        n, total = one_row(con.execute("SELECT count(*), kahan_sum(price_vnd) FROM g"))
     finally:
         con.close()
     return {"nodes": nodes, "relationships": rels, "n_listings": int(n), "price_vnd_sum": float(total or 0.0),

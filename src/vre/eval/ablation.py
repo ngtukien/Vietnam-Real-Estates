@@ -120,17 +120,25 @@ def load_items(settings: Settings, limit: int | None) -> list[Item]:
     return items[:limit] if limit else items
 
 
-def extract_filters(items: list[Item], log: Log) -> tuple[dict[str, Any], int]:
-    """Bộ lọc LLM mỗi câu (cache đĩa của `vre.llm`). Trả (id → QueryFilters | None nếu rỗng, số lời gọi LLM thật)."""
+def extract_filters(items: list[Item], log: Log) -> tuple[dict[str, Any], int, list[str]]:
+    """Bộ lọc LLM mỗi câu (cache đĩa của `vre.llm`). Trả (id → QueryFilters | None nếu rỗng, số lời gọi LLM thật,
+    id câu chưa có bộ lọc trong cache khi đang ở chế độ chỉ-cache `VRE_LLM_OFFLINE=1`)."""
+    from vre.llm.client import LLMCacheMiss, offline
     from vre.rag.filters import parse_filters
 
-    out, calls = {}, 0
+    out, calls, missing = {}, 0, []
     for it in items:
-        filters, result = parse_filters(it.question)
+        try:
+            filters, result = parse_filters(it.question)
+        except LLMCacheMiss:
+            missing.append(it.id)
+            continue
         calls += 0 if result.cached else 1
         out[it.id] = None if filters.is_empty() else filters
-    log(f"bộ lọc: {len(items)} câu, {calls} lời gọi LLM ngoài cache")
-    return out, calls
+    if offline() and calls:
+        raise RuntimeError(f"ablation offline nhưng có {calls} lời gọi LLM thật — không được phép")
+    log(f"bộ lọc: {len(items)} câu, {calls} lời gọi LLM ngoài cache, {len(missing)} câu chưa có trong cache")
+    return out, calls, missing
 
 
 # ---- truy xuất
@@ -206,8 +214,17 @@ def run(settings: Settings, limit: int | None = None, *, out: Path | None = None
     if not rerank_ok:
         doc["notes"].append(f"rerank runs omitted: RERANK_MODEL {settings.rerank_model} not in HF cache (never downloaded)")
     doc["notes"].append("chunk_size sweep (256/400/512 subcorpus) dropped by lead scope cut 2026-10-15")
-    filters, calls = extract_filters(items, log)
+    filters, calls, missing = extract_filters(items, log)
     doc["notes"].append(f"filter_llm_calls={calls} (questions not served from the LLM cache in this run)")
+    if missing:  # chế độ chỉ-cache: mọi run đo trên CÙNG tập câu có bộ lọc trong cache để so sánh công bằng
+        items = [it for it in items if it.id not in missing]
+        if not items:
+            raise RuntimeError("không câu nào có bộ lọc trong cache LLM (chế độ chỉ-cache)")
+        doc["notes"].append(f"offline: {len(missing)} question(s) without cached LLM filters excluded from every run: "
+                            f"{', '.join(missing)}; filters model = {settings.llm_model}")
+        corpus = index_corpus(settings, len({i for it in items for i in it.gt_ids}))
+        doc["corpus"] = corpus
+        previous = {k: v for k, v in previous.items() if v.get("n_questions") == len(items)}
     try:
         for retrieval, prefilter, rerank in plan_runs(rerank_ok):
             name = run_name(retrieval, prefilter, rerank)

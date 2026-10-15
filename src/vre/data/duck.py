@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import duckdb
 
@@ -14,6 +15,14 @@ VIEWS_SQL = Path(__file__).with_name("views.sql")
 def sql_path(path: Path) -> str:
     """Đường dẫn tuyệt đối dạng DuckDB chấp nhận (dấu /, escape nháy đơn)."""
     return path.resolve().as_posix().replace("'", "''")
+
+
+def one_row(cursor: duckdb.DuckDBPyConnection) -> tuple[Any, ...]:
+    """Dòng đầu của kết quả (aggregate luôn trả đúng một dòng); không có dòng nào ⇒ lỗi rõ thay vì `None[0]`."""
+    row = cursor.fetchone()
+    if row is None:
+        raise RuntimeError("truy vấn DuckDB không trả dòng nào")
+    return row
 
 
 def connect(settings: Settings, views: bool = True) -> duckdb.DuckDBPyConnection:

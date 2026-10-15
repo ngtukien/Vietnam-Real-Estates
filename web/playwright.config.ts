@@ -11,6 +11,7 @@ const python = process.env.VRE_PY ?? "python";
 
 export default defineConfig({
   testDir: "e2e",
+  testIgnore: "real.spec.ts", // backend thật: chạy riêng bằng `npm run e2e:real`
   timeout: 30_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,

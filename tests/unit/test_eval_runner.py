@@ -148,3 +148,24 @@ def test_score_one_faithfulness_only(monkeypatch):
     assert out["faithfulness"] == 0.5 and "answer_relevancy" not in out
     llm_only = runner.score_one(q, {"gt_value": "1"}, _ok("llm_only", "x"), {})
     assert llm_only["faithfulness"] is None
+
+
+def test_retry_errors_reruns_failed_rows(settings):
+    def broken(system, question, top_k=5):
+        return {**_ok(system, question), "answer": "", "error": "upstream_llm_error: NotFoundError"}
+
+    runner.run_answers(settings, limit=1, systems=["llm_only"], answer_fn=broken)
+    assert runner.run_answers(settings, limit=1, systems=["llm_only"], answer_fn=_ok)["written"] == 0  # mặc định: giữ
+    assert runner.run_answers(settings, limit=1, systems=["llm_only"], answer_fn=_ok, retry_errors=True)["written"] == 1
+    (row,) = runner.read_jsonl(runner.answers_path(settings)).values()
+    assert row["error"] is None
+
+
+def test_retry_after_from_gemini_body():
+    class RateLimitError(Exception):
+        response = SimpleNamespace(headers={})
+
+    error = RateLimitError("429 ... Please retry in 54.245789807s. ... 'retryDelay': '54s'")
+    assert runner.retry_after_seconds(error) == pytest.approx(54.245789807)
+    assert runner.retry_after_seconds(RateLimitError("'retryDelay': '8s'")) == 8.0
+    assert runner.retry_after_seconds(RateLimitError("no hint")) is None

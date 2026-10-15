@@ -93,19 +93,29 @@ def _cost(rows: list[dict], price_in: float, price_out: float) -> dict:
             "usd_per_question": _round(mean(usd), 6) if usd else None,
             "bad_citation_rate": _mean(float(bool(r.get("unsupported_citations"))) for r in rows),
             "error_rate": _mean(float(bool(r.get("error"))) for r in rows),
+            "fallback_rate": _mean(float(r.get("fallback") is True) for r in rows),
             "cached_rate": _mean(float(bool(r.get("cached"))) for r in rows)}
+
+
+def _scoring(scores: dict[tuple[str, str], dict]) -> str:
+    kinds = {r.get("scoring", "llm_judge") for r in scores.values()}
+    return kinds.pop() if len(kinds) == 1 else "mixed"
 
 
 def build(settings: Settings, answers: dict[tuple[str, str], dict], scores: dict[tuple[str, str], dict],
           questions: dict[str, Question], llm: dict, index: dict | None) -> dict:
     systems = [s for s in SYSTEM_ORDER if any(k[1] == s for k in answers)]
     answered = sorted({i for i, _ in answers if i in questions})
+    common = [i for i in answered if all(scores.get((i, s), {}).get("points") is not None for s in systems)]
     by_category: dict[str, dict] = {}
-    for category in ALLOCATION:
+    coverage: dict[str, dict] = {}
+    for category in ALLOCATION:  # mọi nhóm đều có mặt; nhóm chưa chạy ⇒ n=0 và chỉ số null (không phải 0.0)
         ids = [i for i in answered if questions[i].category == category]
-        if ids:
-            by_category[category] = {s: _cell([scores[(i, s)] for i in ids if (i, s) in scores]) for s in systems}
+        by_category[category] = {s: _cell([scores[(i, s)] for i in ids if (i, s) in scores]) for s in systems}
+        coverage[category] = {"n_benchmark": sum(q.category == category for q in questions.values()),
+                              "n_answered_any": len(ids), "n_answered_all_systems": sum(i in common for i in ids)}
     overall = {s: _cell([scores[(i, s)] for i in answered if (i, s) in scores]) for s in systems}
+    overall_common = {s: _cell([scores[(i, s)] for i in common]) for s in systems}
     retrieval, ragas, cost = {}, {}, {}
     for s in systems:
         ids_rows = [r for (i, sys), r in scores.items() if sys == s and r.get("recall_at_5") is not None]
@@ -119,16 +129,26 @@ def build(settings: Settings, answers: dict[tuple[str, str], dict], scores: dict
         cost[s] = _cost([a for (i, sys), a in answers.items() if sys == s],
                         settings.llm_price_input or 0.0, settings.llm_price_output or 0.0)
     total = len(questions)
+    scoring = _scoring(scores)
     notes = [RAGAS_NOTE,
              f"retrieval: nguồn = top_k={settings.top_k} tin mà hệ thống đưa vào ngữ cảnh; recall_at_10 vì thế ≤ "
-             "recall_at_5 khi có hơn 5 cụm đúng (truy xuất thuần ở ablation.json)"]
-    if len(answered) < total:
-        notes.append(f"chưa đủ: {len(answered)}/{total} câu đã chạy — số liệu chỉ là thử nghiệm")
-    return {**result_header(SCHEMA_VERSION), "index": index, "llm": llm, "systems": systems,
-            "n_questions": len(answered), "n_questions_total": total, "complete": len(answered) == total,
-            "by_category": by_category, "overall": overall, "retrieval": retrieval, "ragas": ragas, "cost": cost,
-            "pairwise": _pairwise(scores, {i: questions[i] for i in answered}, systems),
-            "router": _router(answers, questions), "notes": notes}
+             "recall_at_5 khi có hơn 5 cụm đúng (truy xuất thuần ở ablation.json)",
+             f"benchmark đầy đủ có {total} câu; bản tóm tắt này chấm {len(answered)} câu (benchmark_subset)",
+             "pairwise chỉ dùng câu cả hai hệ thống đều có điểm; overall_common chỉ dùng câu mọi hệ thống đều có điểm; "
+             "mọi CI có n kèm theo"]
+    doc: dict[str, Any] = {**result_header(SCHEMA_VERSION), "index": index, "llm": llm, "systems": systems,
+                           "scoring": scoring, "n_questions": len(answered), "n_questions_scored": len(common),
+                           "n_questions_total": total, "benchmark_subset": answered,
+                           "complete": bool(answered) and len(common) == len(answered),
+                           "coverage": coverage, "by_category": by_category, "overall": overall,
+                           "overall_common": overall_common, "retrieval": retrieval, "ragas": ragas, "cost": cost,
+                           "pairwise": _pairwise(scores, {i: questions[i] for i in answered}, systems),
+                           "router": _router(answers, questions), "notes": notes}
+    if scoring == "rule_based":
+        from vre.eval.rule_score import RULES
+
+        doc["scoring_rules"] = RULES
+    return doc
 
 
 def index_info(settings: Settings) -> dict | None:
@@ -149,7 +169,10 @@ def run(settings: Settings) -> dict:
     scores = read_jsonl(scores_path(settings))
     if not answers or not scores:
         raise FileNotFoundError("Chưa có answers.jsonl/scores.jsonl; chạy `eval run` rồi `eval score`")
-    doc = build(settings, answers, scores, {q.id: q for q in load_questions()}, check_judge_config(settings),
-                index_info(settings))
+    llm = check_judge_config(settings, judge_used=_scoring(scores) != "rule_based")
+    meta_path = answers_path(settings).with_name("run_meta.json")
+    if meta_path.is_file():  # model thật của lượt `eval run` (môi trường lúc report có thể khác)
+        llm = {**llm, **json.loads(meta_path.read_text(encoding="utf-8")).get("llm", {})}
+    doc = build(settings, answers, scores, {q.id: q for q in load_questions()}, llm, index_info(settings))
     write_json_atomic(settings.results_dir / "eval_summary.json", doc)
     return doc

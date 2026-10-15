@@ -50,7 +50,7 @@ flowchart LR
 - **Bảng sạch** (`data/clean/listings.parquet`): DuckDB đọc các shard thô, chuẩn hoá địa danh, sửa giá nhập theo nghìn đồng, ẩn số điện thoại
   và email, khử trùng chính xác + trùng tiền tố, gom tin gần trùng bằng SimHash (giữ lại, đánh dấu `dup_cluster_id`).
 - **Chỉ mục vector**: collection Qdrant `vre_chunks_e5_large` (alias `vre_chunks`), mỗi điểm có vector dense và vector sparse BM25
-  (tách từ `pyvi`), payload index cho lọc trước. Lý do chọn `multilingual-e5-large` ở notebook `02_rag` (đọc `results/embedding_benchmark.json`).
+  (tách từ `pyvi`), payload index cho lọc trước. Lý do chọn `multilingual-e5-large` ở notebook `01_rag_indexing` (đọc `results/embedding_benchmark.json`).
 - **Đồ thị tri thức**: `Listing` gắn với `Ward`/`District`/`Province`, `Street`, `Project`, `PropertyType`, `Month`, `Amenity`; `MarketStat`
   là thống kê giá tính sẵn theo vùng × loại × tháng; `Cluster` là cộng đồng Leiden của các phường. Text2Cypher chạy trong giao dịch chỉ đọc,
   có chặn regex, `LIMIT` và timeout.
@@ -106,7 +106,7 @@ kiểm điều kiện tiên quyết trước khi chạy (thiếu shard, thiếu 
 | `& $VRE_PY scripts/vre_pipeline.py status` | Tiến độ lượt chạy dài | |
 
 **Lượt chạy dài** (`night`): embed và upload toàn bộ chunk mất nhiều giờ (thời gian thật của lần chạy gần nhất ở
-`results/night_report.json` → `wall_hours`, hiển thị trong notebook `02_rag`). Bị ngắt (mất điện, tắt máy, lỗi bộ nhớ) thì chạy lại
+`results/night_report.json` → `wall_hours`, hiển thị trong notebook `01_rag_indexing`). Bị ngắt (mất điện, tắt máy, lỗi bộ nhớ) thì chạy lại
 **đúng lệnh cũ**: pipeline đọc trạng thái từng phần và tiếp tục từ phần chưa xong. Chạy thử nhỏ trước bằng `--dry-run`.
 
 ## Đánh giá
@@ -149,31 +149,132 @@ Container API mount read-only cache Hugging Face, `results/`, `models/`, `data/c
 
 ## Notebook
 
-Năm notebook trong `notebooks/` chỉ **đọc** `results/*.json` và `results/eda/*.png` (không tính lại, không gọi mạng); mọi con số được in
-từ JSON. File kết quả chưa có thì notebook hiện ô "chưa có" kèm lệnh sinh. Thư mục kết quả lấy từ `VRE_DATA_ROOT`, mặc định là gốc repo.
+Sáu notebook trong `notebooks/`, sinh từ một nguồn duy nhất `notebooks/build_notebooks.py` (không sửa tay file `.ipynb`).
+Mỗi bước có mã `Px-yy`: một ô markdown `### Px-yy · <kết luận>` và một ô code mở đầu `# Px-yy · ẨN|CACHE|LIVE`. Mọi con số
+trong heading được điền từ `results/*.json` hoặc cache cell, không gõ tay; thiếu dữ liệu thì ô ghi rõ "chưa có".
 
 | Notebook | Nội dung |
 | --- | --- |
-| `01_eda.ipynb` | Nạp/làm sạch (`ingest_report`), thống kê mô tả và các hình EDA (`eda_summary`) |
-| `02_rag.ipynb` | So sánh embedding và lý do chọn `multilingual-e5-large`, cấu hình cố định, lượt dựng chỉ mục (`night_report`), ablation, ví dụ truy hồi |
-| `03_knowledge_graph.ipynb` | Lược đồ đồ thị (Mermaid), quy mô node/cạnh, cộng đồng Leiden (`graph_report`), ví dụ Text2Cypher |
-| `04_graphrag_eval.ipynb` | Độ chính xác theo nhóm × hệ thống kèm CI, so sánh cặp, router, chi phí, phân tích lỗi |
-| `05_valuation.ipynb` | `tabular` vs `full` vs baseline trung vị phường, theo loại và tỉnh, SHAP (`valuation_metrics`) |
+| `00_setup.ipynb` | Dùng chung, các notebook khác gọi bằng `%run ./00_setup.ipynb`: đường dẫn, seed, cấu hình `vre.config`, hàm đọc kết quả/cache, chặn LLM thật |
+| `01_rag_indexing.ipynb` | EDA, làm sạch và khử trùng, chunk theo token, embedding `multilingual-e5-large`, dense + BM25 trong Qdrant |
+| `02_retrieval_generation.ipynb` | Trích bộ lọc, dense/BM25/hybrid (RRF), lọc trước trên payload, rerank, sinh câu trả lời có trích dẫn `[Tin#ID]` |
+| `03_knowledge_graph.ipynb` | Schema Neo4j, entity resolution, nạp hàng loạt, Cypher tra cứu/tổng hợp/đa chặng, cộng đồng Leiden |
+| `04_graphrag_eval.ipynb` | Text2Cypher và router, Recall@k/MRR/nDCG, chỉ số kiểu RAGAS, so bốn hệ thống có CI bootstrap |
+| `05_valuation.ipynb` | XGBoost `tabular` và `full` (thêm PCA embedding) so với baseline trung vị phường; tool `valuate()` |
 
-Sinh lại nguồn và chạy lại (lưu kèm output): `& $VRE_PY notebooks/build_notebooks.py` (hoặc chỉ một số: `... build_notebooks.py 02 04`).
+Ba kiểu cell:
+
+- **ẨN**: thiết lập, không ra kết quả (đường dẫn, cấu hình, hàm dùng chung, kiểm tra dịch vụ nào có trên máy).
+- **CACHE**: đọc `results/*.json` hoặc cache cell `results/nb_cache/<id>.json`; chưa có cache và đủ điều kiện thì tính một lần từ
+  dữ liệu rồi ghi.
+- **LIVE**: demo nhẹ chạy thật khi dịch vụ/model có mặt (Qdrant, Neo4j, cache Hugging Face, dữ liệu sạch) và ghi lại cache cell;
+  thiếu điều kiện hoặc lỗi thì đọc cache cell, nên notebook luôn chạy được.
+
+Cache cell nằm ở `results/nb_cache/` dưới gốc code và được commit; `results/*.json` đọc từ `VRE_DATA_ROOT` (mặc định gốc repo).
+
+| Biến | Tác dụng |
+| --- | --- |
+| `VRE_NB_OFFLINE=1` | Mọi cell LIVE/CACHE chỉ đọc cache, không cần Docker, GPU hay khoá LLM (cách CI chạy) |
+| `VRE_NB_REBUILD=1` | Bỏ qua cache của cell CACHE và tính lại (khi đủ điều kiện) |
+| `VRE_NB_STRICT=1` | Cell LIVE lỗi thì dừng với lỗi, không lặng lẽ lùi về cache (test notebook bật cùng `VRE_NB_OFFLINE`) |
+
+Notebook **không bao giờ gọi LLM thật**: mọi lời gọi chạy trong `llm_cache_only()`, chỉ đọc cache đĩa LLM (`results/cache/llm`);
+câu chưa có trong cache thì cell báo và bỏ qua phần đó. Không tốn token, không cần khoá API.
+
+Sinh lại nguồn, chạy và lưu output (từ gốc repo, sau `. scriptsre_env.ps1`):
+
+```powershell
+& $VRE_PY notebooks/build_notebooks.py          # cả 6 notebook
+& $VRE_PY notebooks/build_notebooks.py 02 04    # chỉ notebook có tiền tố 02, 04
+```
 
 ## Kết quả
 
 Khối dưới đây do `scripts/vre_pipeline.py report readme` sinh từ `results/*.json`; không sửa tay.
 
 <!-- results:start -->
+### Benchmark (36/100 câu, sinh `gemini-flash-lite-latest`, chấm theo luật, không giám khảo LLM, `79fe53b`)
+
+| Nhóm | llm_only | basic_rag | graph | hybrid |
+|---|---|---|---|---|
+| lookup | 0.0% [0–0%] | 100.0% [100–100%] | 100.0% [100–100%] | 100.0% [100–100%] |
+| constraint | 0.0% [0–0%] | 0.0% [0–0%] | 100.0% [100–100%] | 0.0% [0–0%] |
+| aggregate | 25.0% [0–75%] | 0.0% [0–0%] | 100.0% [100–100%] | 100.0% [100–100%] |
+| multihop | 0.0% [0–0%] | 0.0% [0–0%] | 75.0% [25–100%] | 75.0% [25–100%] |
+| temporal | 0.0% [0–0%] | 25.0% [0–75%] | 100.0% [100–100%] | 100.0% [100–100%] |
+| comparison | 50.0% [0–100%] | 0.0% [0–0%] | 100.0% [100–100%] | 75.0% [25–100%] |
+| project_street | 0.0% [0–0%] | 0.0% [0–0%] | 100.0% [100–100%] | 100.0% [100–100%] |
+| valuation | 0.0% [0–0%] | 0.0% [0–0%] | 0.0% [0–0%] | 0.0% [0–0%] |
+| unanswerable | 25.0% [0–75%] | 75.0% [25–100%] | 75.0% [25–100%] | 75.0% [25–100%] |
+| **Tổng** | 11.1% [3–22%] | 22.2% [8–36%] | 83.3% [69–94%] | 69.4% [53–83%] |
+
+Độ chính xác (2/2 điểm), CI 95% bootstrap 10.000 mẫu theo câu hỏi, seed 42.
+
+| So sánh | Phạm vi | Chênh lệch | CI 95% | p | n |
+|---|---|---|---|---|---|
+| hybrid − basic_rag | overall | +47.2 điểm % | [+30.6, +63.9] | 0.000 | 36 |
+| hybrid − basic_rag | aggregate | +100.0 điểm % | [+100.0, +100.0] | 0.000 | 4 |
+| hybrid − basic_rag | multihop | +75.0 điểm % | [+25.0, +100.0] | 0.003 | 4 |
+| basic_rag − llm_only | overall | +11.1 điểm % | [-8.3, +30.6] | 0.154 | 36 |
+| basic_rag − llm_only | aggregate | -25.0 điểm % | [-75.0, +0.0] | 0.320 | 4 |
+| basic_rag − llm_only | multihop | +0.0 điểm % | [+0.0, +0.0] | 1.000 | 4 |
+| hybrid − graph | overall | -13.9 điểm % | [-25.0, -2.8] | 0.004 | 36 |
+| hybrid − graph | aggregate | +0.0 điểm % | [+0.0, +0.0] | 1.000 | 4 |
+| hybrid − graph | multihop | +0.0 điểm % | [+0.0, +0.0] | 1.000 | 4 |
+
+| Hệ thống | Độ trễ p50 (ms) | p95 (ms) | Token vào/ra TB | USD/câu | Trích dẫn sai | Fallback |
+|---|---|---|---|---|---|---|
+| llm_only | 4029 | 11841 | 82/158 | 0.00000 | 0.0% | 0.0% |
+| basic_rag | 10468 | 37000 | 1942/260 | 0.00000 | 0.0% | 0.0% |
+| graph | 8855 | 23016 | 3843/308 | 0.00000 | 0.0% | 0.0% |
+| hybrid | 8989 | 21686 | 4063/398 | 0.00000 | 0.0% | 5.6% |
+
+Router (hybrid): 91.7% trên 36 câu; 93.8% khi bỏ nhóm unanswerable.
+
+Luật chấm (không LLM):
+
+- ids: capped cluster Recall@5 over the system's sources; 2 if >= 0.8, 1 if > 0, else 0
+- value (numeric GT): any number in the answer within value_tolerance (default 5%) of gt_value => 2; within max(20%, 2x tolerance) => 1; else 0 (lenient any-number match)
+- value (numeric GT < 0, e.g. '% lower'): an answer number matches by absolute value only if the answer also says thấp hơn/giảm/rẻ hơn/kém
+- value (text GT not in the question): diacritic-folded, lower-cased answer contains gt_value => 2, else 0
+- value (text GT that the question itself names, i.e. comparisons): gt_value must appear within 60 characters before the first 'cao/đắt/lớn/nhiều hơn' in the answer => 2, else 0
+- valuation: first amount or range ('a đến b tỷ' => midpoint) with unit 'tỷ'/'triệu' (converted to tỷ) within value_tolerance => 2, within 2x => 1
+- value (month GT 'YYYY-MM'): any month in the answer written as 'MM/YYYY', 'M/YYYY', 'tháng M/YYYY', 'tháng M năm YYYY' or 'YYYY-MM' equal to gt_value => 2, else 0
+- value (comparison category): the winner rule applies even when the question abbreviates the options (e.g. 'q3')
+- non-refusal questions (value, valuation): an answer containing a refusal phrase => 0, checked before any match
+- refusal: answer contains a refusal phrase (no data / insufficient information / out of range) => 2, else 0
+- empty answer => 0; faithfulness = null (needs an LLM)
+
+> ragas: answer_relevancy và context_precision bỏ để tiết kiệm lời gọi LLM (chỉ đo faithfulness)
+> retrieval: nguồn = top_k=5 tin mà hệ thống đưa vào ngữ cảnh; recall_at_10 vì thế ≤ recall_at_5 khi có hơn 5 cụm đúng (truy xuất thuần ở ablation.json)
+> benchmark đầy đủ có 100 câu; bản tóm tắt này chấm 36 câu (benchmark_subset)
+> pairwise chỉ dùng câu cả hai hệ thống đều có điểm; overall_common chỉ dùng câu mọi hệ thống đều có điểm; mọi CI có n kèm theo
+
+### Định giá (tập kiểm tra)
+
+| Biến thể | MAE (tr/m²) | MAPE | R² |
+|---|---|---|---|
+| tabular | 32.62 | 24.0% | 0.73 |
+| full | 24.05 | 19.1% | 0.84 |
+| baseline_ward_median | 50.61 | 46.0% | 0.48 |
+
+### Ablation truy xuất (e5-large)
+
+| Run | Recall@5 | MRR | nDCG@10 | n |
+|---|---|---|---|---|
+| full_dense | 0.29 | 0.28 | 0.28 | 27 |
+| full_dense_prefilter | 0.50 | 0.60 | 0.51 | 27 |
+| full_bm25 | 0.27 | 0.30 | 0.26 | 27 |
+| full_bm25_prefilter | 0.58 | 0.68 | 0.60 | 27 |
+| full_hybrid | 0.36 | 0.30 | 0.30 | 27 |
+| full_hybrid_prefilter | 0.53 | 0.65 | 0.55 | 27 |
 <!-- results:end -->
 
 ## Kiểm thử và CI
 
 ```powershell
 & $VRE_PY -m pytest -q -m "not integration and not gpu and not notebooks"   # unit, không mạng/GPU/Docker
-& $VRE_PY -m pytest -q -m notebooks tests/test_notebooks.py                   # chạy cả năm notebook bằng nbclient
+& $VRE_PY -m pytest -q -m notebooks tests/test_notebooks.py                   # chạy cả sáu notebook bằng nbclient
 & $VRE_PY -m pytest -q -m integration                                         # cần Qdrant + Neo4j đang chạy
 & $VRE_PY -m ruff check src tests scripts
 ```
@@ -201,7 +302,7 @@ data/ index/ models/ docker-data/   Sinh ra khi chạy pipeline, không đưa v�
 ## Hạn chế
 
 - Giá chào bán do người dùng tự nhập: có nhiễu, có tin đăng lại có sửa chữ mà SimHash không gom được; không phản ánh giá giao dịch.
-- Dữ liệu tập trung mạnh ở Hà Nội và Hồ Chí Minh (tỷ trọng in ở notebook `01_eda`); kết luận cho tỉnh ít tin kém tin cậy hơn.
+- Dữ liệu tập trung mạnh ở Hà Nội và Hồ Chí Minh (tỷ trọng in ở notebook `01_rag_indexing`); kết luận cho tỉnh ít tin kém tin cậy hơn.
 - Địa danh theo địa giới trước sắp xếp năm `2025`; bản đồ và đồ thị chưa phản ánh đơn vị hành chính mới.
 - Số tin thuê quá ít để huấn luyện mô hình định giá thuê (lý do ghi ở `results/valuation_metrics.json` → `rent_model`).
 - Bộ lọc, Cypher, router và câu trả lời phụ thuộc LLM; cần khoá Groq khi chạy lần đầu, lần sau đọc cache. LLM có thể chép sai id trong

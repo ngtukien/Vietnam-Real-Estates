@@ -23,3 +23,5 @@ results/handoff/
 
 # Phase 4: bản sao lưu deck (không commit)
 slide/_backup/
+# Key Gemini do người dùng cung cấp — không bao giờ commit
+gemini-api-key.txt

@@ -190,24 +190,8 @@ def available(name):
     return _AVAILABLE[name]
 
 
-class LLMCacheMiss(RuntimeError):
-    """Notebook không gọi LLM thật: câu chưa có trong cache đĩa LLM."""
-
-
-@contextmanager
-def llm_cache_only():
-    """Trong khối này `ask_llm` chỉ trả kết quả đã có trong cache đĩa; thiếu ⇒ LLMCacheMiss (không có lời gọi mạng)."""
-    from vre.llm import client as llm_client
-
-    def refuse(*args, **kwargs):
-        raise LLMCacheMiss("câu này chưa có trong cache LLM")
-
-    saved = llm_client._ask_openai, llm_client._ask_anthropic
-    llm_client._ask_openai = llm_client._ask_anthropic = refuse
-    try:
-        yield
-    finally:
-        llm_client._ask_openai, llm_client._ask_anthropic = saved
+# Một cài đặt duy nhất cho chế độ chỉ-cache: `vre.llm.client` (cũng là `VRE_LLM_OFFLINE=1` của pipeline/eval).
+from vre.llm.client import LLMCacheMiss, cache_only as llm_cache_only  # noqa: E402,F401
 
 
 def _plain(value):
@@ -751,7 +735,9 @@ def compute():
     try:
         filters, _ = parse_filters(FILTER_QUESTION)
         out["filters"] = filters.model_dump(exclude_none=True)
-    except LLMCacheMiss:
+    except Exception as miss:  # bắt theo tên: kernel có thể giữ hai bản lớp LLMCacheMiss
+        if type(miss).__name__ != "LLMCacheMiss":
+            raise
         pass
     return out
 
@@ -1328,8 +1314,13 @@ def h_p4_09(c: Ctx) -> str:
     if d is None:
         return "Faithfulness và các chỉ số kiểu RAGAS (chưa chạy toy)"
     e = c.r("eval_summary.json")
-    real = (f"; thật (Basic RAG) = {D(e['ragas']['basic_rag']['faithfulness'], 2)}" if e and "basic_rag" in e["ragas"]
-            else "; số thật chờ eval")
+    faith = e["ragas"].get("basic_rag", {}).get("faithfulness") if e else None
+    if faith is not None:
+        real = f"; thật (Basic RAG) = {D(faith, 2)}"
+    elif e and e.get("scoring") == "rule_based":  # chấm theo luật: không có faithfulness (cần LLM)
+        real = "; eval chấm theo luật nên không có faithfulness thật"
+    else:
+        real = "; số thật chờ eval"
     return f"Faithfulness toy = {D(d['faithfulness'], 2)}{real}"
 
 
@@ -1436,7 +1427,9 @@ def compute():
         try:
             res = cypher_result(text2cypher(graph_q.question))
             out["t2c"] = {"question": graph_q.question, **res}
-        except LLMCacheMiss:
+        except Exception as miss:  # bắt theo tên: kernel có thể giữ hai bản lớp LLMCacheMiss
+            if type(miss).__name__ != "LLMCacheMiss":
+                raise
             pass
     return out
 
@@ -1490,7 +1483,9 @@ def compute():
     for q in QUESTIONS:
         try:
             rows.append([q.id, q.route_gold, router(q.question)["route"]])
-        except LLMCacheMiss:
+        except Exception as miss:  # bắt theo tên: kernel có thể giữ hai bản lớp LLMCacheMiss
+            if type(miss).__name__ != "LLMCacheMiss":
+                raise
             continue
     return {"n": len(rows), "correct": sum(g == p for _, g, p in rows), "rows": rows}
 
@@ -1569,7 +1564,8 @@ Cách đọc: thanh lỗi chồng nhau nghĩa là chưa đủ bằng chứng h�
 if summary is None:
     missing("`results/eval_summary.json`", "python scripts/vre_pipeline.py eval")
 else:
-    rows = [{"category": c, "system": s, **{k: v[k] for k in ("n", "accuracy", "mean_points")}, "lo": v["ci95"][0], "hi": v["ci95"][1]}
+    rows = [{"category": c, "system": s, **{k: v[k] for k in ("n", "accuracy", "mean_points")}, "lo": (v["ci95"] or [None, None])[0],
+             "hi": (v["ci95"] or [None, None])[1]}
             for c, by in summary["by_category"].items() for s, v in by.items()]
     cat = pd.DataFrame(rows)
     acc = cat.pivot(index="category", columns="system", values="accuracy")
