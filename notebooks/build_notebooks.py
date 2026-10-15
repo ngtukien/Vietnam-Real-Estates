@@ -190,24 +190,8 @@ def available(name):
     return _AVAILABLE[name]
 
 
-class LLMCacheMiss(RuntimeError):
-    """Notebook không gọi LLM thật: câu chưa có trong cache đĩa LLM."""
-
-
-@contextmanager
-def llm_cache_only():
-    """Trong khối này `ask_llm` chỉ trả kết quả đã có trong cache đĩa; thiếu ⇒ LLMCacheMiss (không có lời gọi mạng)."""
-    from vre.llm import client as llm_client
-
-    def refuse(*args, **kwargs):
-        raise LLMCacheMiss("câu này chưa có trong cache LLM")
-
-    saved = llm_client._ask_openai, llm_client._ask_anthropic
-    llm_client._ask_openai = llm_client._ask_anthropic = refuse
-    try:
-        yield
-    finally:
-        llm_client._ask_openai, llm_client._ask_anthropic = saved
+# Một cài đặt duy nhất cho chế độ chỉ-cache: `vre.llm.client` (cũng là `VRE_LLM_OFFLINE=1` của pipeline/eval).
+from vre.llm.client import LLMCacheMiss, cache_only as llm_cache_only  # noqa: E402,F401
 
 
 def _plain(value):

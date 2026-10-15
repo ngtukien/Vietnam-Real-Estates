@@ -11,6 +11,8 @@ import json
 import os
 import threading
 from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from types import SimpleNamespace
 from typing import Any
@@ -22,6 +24,32 @@ from vre.llm import cache
 
 _client = None
 _client_lock = threading.Lock()  # chatbot gọi từ nhiều luồng: chỉ tạo một client
+OFFLINE_ENV = "VRE_LLM_OFFLINE"
+_cache_only: ContextVar[bool] = ContextVar("vre_llm_cache_only", default=False)
+
+
+class LLMCacheMiss(RuntimeError):
+    """Chế độ chỉ-cache (`VRE_LLM_OFFLINE=1` hoặc khối `cache_only()`): câu chưa có trong cache đĩa LLM — không gọi mạng."""
+
+
+def offline() -> bool:
+    """True khi mọi lời gọi LLM phải trả từ cache đĩa (biến môi trường `VRE_LLM_OFFLINE=1`, hoặc trong `cache_only()`)."""
+    return os.getenv(OFFLINE_ENV, "") == "1" or _cache_only.get()
+
+
+@contextmanager
+def cache_only() -> Iterator[None]:
+    """Trong khối này (theo ngữ cảnh luồng) LLM chỉ trả từ cache đĩa; thiếu ⇒ `LLMCacheMiss`. Dùng cho notebook/eval offline."""
+    token = _cache_only.set(True)
+    try:
+        yield
+    finally:
+        _cache_only.reset(token)
+
+
+def _refuse_network(what: str) -> None:
+    if offline():
+        raise LLMCacheMiss(f"{what}: chưa có trong cache LLM và đang ở chế độ chỉ-cache ({OFFLINE_ENV}=1)")
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 
 
@@ -36,6 +64,7 @@ class LLMResult:
 
 def client():
     global _client
+    _refuse_network("tạo client LLM")  # chốt cuối: không đường nào tới mạng khi offline
     with _client_lock:
         if _client is None:
             _client = _new_client()
@@ -97,6 +126,7 @@ def ask_llm(prompt: str, system: str = "", output: type[BaseModel] | dict | None
         saved = cache.read(key)
         if saved is not None:
             return LLMResult(**{**saved, "cached": True})
+    _refuse_network(f"ask_llm(model={model})")
 
     ask = _ask_anthropic if s.llm_provider == "anthropic" else _ask_openai
     text, input_tokens, output_tokens, truncated = ask(model, prompt, system, schema, effort, max_tokens)
@@ -192,6 +222,7 @@ class LLMStream:
             if self.result.text:
                 yield self.result.text
             return
+        _refuse_network(f"stream_llm(model={self._model})")
         if get_settings().llm_provider == "anthropic":  # chưa stream với Claude: một mảnh duy nhất
             result = ask_llm(self._prompt, self._system, None, self._effort, self._max_tokens, self._use_cache, self._model)
             self.result = result
