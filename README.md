@@ -149,18 +149,44 @@ Container API mount read-only cache Hugging Face, `results/`, `models/`, `data/c
 
 ## Notebook
 
-Năm notebook trong `notebooks/` chỉ **đọc** `results/*.json` và `results/eda/*.png` (không tính lại, không gọi mạng); mọi con số được in
-từ JSON. File kết quả chưa có thì notebook hiện ô "chưa có" kèm lệnh sinh. Thư mục kết quả lấy từ `VRE_DATA_ROOT`, mặc định là gốc repo.
+Sáu notebook trong `notebooks/`, sinh từ một nguồn duy nhất `notebooks/build_notebooks.py` (không sửa tay file `.ipynb`).
+Mỗi bước có mã `Px-yy`: một ô markdown `### Px-yy · <kết luận>` và một ô code mở đầu `# Px-yy · ẨN|CACHE|LIVE`. Mọi con số
+trong heading được điền từ `results/*.json` hoặc cache cell, không gõ tay; thiếu dữ liệu thì ô ghi rõ "chưa có".
 
 | Notebook | Nội dung |
 | --- | --- |
-| `01_eda.ipynb` | Nạp/làm sạch (`ingest_report`), thống kê mô tả và các hình EDA (`eda_summary`) |
-| `02_rag.ipynb` | So sánh embedding và lý do chọn `multilingual-e5-large`, cấu hình cố định, lượt dựng chỉ mục (`night_report`), ablation, ví dụ truy hồi |
-| `03_knowledge_graph.ipynb` | Lược đồ đồ thị (Mermaid), quy mô node/cạnh, cộng đồng Leiden (`graph_report`), ví dụ Text2Cypher |
-| `04_graphrag_eval.ipynb` | Độ chính xác theo nhóm × hệ thống kèm CI, so sánh cặp, router, chi phí, phân tích lỗi |
-| `05_valuation.ipynb` | `tabular` vs `full` vs baseline trung vị phường, theo loại và tỉnh, SHAP (`valuation_metrics`) |
+| `00_setup.ipynb` | Dùng chung, các notebook khác gọi bằng `%run ./00_setup.ipynb`: đường dẫn, seed, cấu hình `vre.config`, hàm đọc kết quả/cache, chặn LLM thật |
+| `01_rag_indexing.ipynb` | EDA, làm sạch và khử trùng, chunk theo token, embedding `multilingual-e5-large`, dense + BM25 trong Qdrant |
+| `02_retrieval_generation.ipynb` | Trích bộ lọc, dense/BM25/hybrid (RRF), lọc trước trên payload, rerank, sinh câu trả lời có trích dẫn `[Tin#ID]` |
+| `03_knowledge_graph.ipynb` | Schema Neo4j, entity resolution, nạp hàng loạt, Cypher tra cứu/tổng hợp/đa chặng, cộng đồng Leiden |
+| `04_graphrag_eval.ipynb` | Text2Cypher và router, Recall@k/MRR/nDCG, chỉ số kiểu RAGAS, so bốn hệ thống có CI bootstrap |
+| `05_valuation.ipynb` | XGBoost `tabular` và `full` (thêm PCA embedding) so với baseline trung vị phường; tool `valuate()` |
 
-Sinh lại nguồn và chạy lại (lưu kèm output): `& $VRE_PY notebooks/build_notebooks.py` (hoặc chỉ một số: `... build_notebooks.py 02 04`).
+Ba kiểu cell:
+
+- **ẨN**: thiết lập, không ra kết quả (đường dẫn, cấu hình, hàm dùng chung, kiểm tra dịch vụ nào có trên máy).
+- **CACHE**: đọc `results/*.json` hoặc cache cell `results/nb_cache/<id>.json`; chưa có cache và đủ điều kiện thì tính một lần từ
+  dữ liệu rồi ghi.
+- **LIVE**: demo nhẹ chạy thật khi dịch vụ/model có mặt (Qdrant, Neo4j, cache Hugging Face, dữ liệu sạch) và ghi lại cache cell;
+  thiếu điều kiện hoặc lỗi thì đọc cache cell, nên notebook luôn chạy được.
+
+Cache cell nằm ở `results/nb_cache/` dưới gốc code và được commit; `results/*.json` đọc từ `VRE_DATA_ROOT` (mặc định gốc repo).
+
+| Biến | Tác dụng |
+| --- | --- |
+| `VRE_NB_OFFLINE=1` | Mọi cell LIVE/CACHE chỉ đọc cache, không cần Docker, GPU hay khoá LLM (cách CI chạy) |
+| `VRE_NB_REBUILD=1` | Bỏ qua cache của cell CACHE và tính lại (khi đủ điều kiện) |
+| `VRE_NB_STRICT=1` | Cell LIVE lỗi thì dừng với lỗi, không lặng lẽ lùi về cache (test notebook bật cùng `VRE_NB_OFFLINE`) |
+
+Notebook **không bao giờ gọi LLM thật**: mọi lời gọi chạy trong `llm_cache_only()`, chỉ đọc cache đĩa LLM (`results/cache/llm`);
+câu chưa có trong cache thì cell báo và bỏ qua phần đó. Không tốn token, không cần khoá API.
+
+Sinh lại nguồn, chạy và lưu output (từ gốc repo, sau `. scriptsre_env.ps1`):
+
+```powershell
+& $VRE_PY notebooks/build_notebooks.py          # cả 6 notebook
+& $VRE_PY notebooks/build_notebooks.py 02 04    # chỉ notebook có tiền tố 02, 04
+```
 
 ## Kết quả
 
