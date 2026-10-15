@@ -199,7 +199,8 @@ def eval_run(limit: int | None = typer.Option(None, "--limit", help="chỉ N câ
              systems: list[SystemChoice] | None = typer.Option(None, "--systems", help="lặp lại để chọn nhiều"),
              per_category: int | None = typer.Option(None, "--per-category", help="chỉ N câu đầu mỗi nhóm"),
              workers: int = typer.Option(4, "--workers", min=1, max=8),
-             rule_based: bool = typer.Option(False, "--rule-based", help="sẽ chấm theo luật: không kiểm B2")) -> None:
+             rule_based: bool = typer.Option(False, "--rule-based", help="sẽ chấm theo luật: không kiểm B2"),
+             retry_errors: bool = typer.Option(False, "--retry-errors", help="chạy lại cả dòng lỗi (không chỉ 429)")) -> None:
     """Câu benchmark × hệ thống qua vre.qa.answer → results/eval/raw/answers.jsonl (resume theo id, system)."""
     settings = get_settings()
     require(settings, *_llm_checks(settings), *EVAL_CHECKS)
@@ -207,7 +208,7 @@ def eval_run(limit: int | None = typer.Option(None, "--limit", help="chỉ N câ
     from vre.eval.runner import run_answers
 
     _echo(run_answers(settings, limit=limit, systems=_systems(systems), per_category=per_category, workers=workers,
-                      llm_judge=not rule_based))
+                      llm_judge=not rule_based, retry_errors=retry_errors))
 
 
 @eval_app.command("score")
@@ -239,7 +240,7 @@ def eval_report() -> None:
 def eval_all(limit: int | None = typer.Option(None, "--limit"),
              systems: list[SystemChoice] | None = typer.Option(None, "--systems")) -> None:
     """eval run → eval score → eval report."""
-    eval_run(limit=limit, systems=systems, per_category=None, workers=4, rule_based=False)
+    eval_run(limit=limit, systems=systems, per_category=None, workers=4, rule_based=False, retry_errors=False)
     eval_score(ragas=True, offline=False)
     eval_report()
 

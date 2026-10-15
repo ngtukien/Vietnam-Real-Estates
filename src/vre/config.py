@@ -28,7 +28,8 @@ LLM_DEFAULTS: dict[str, tuple[str, str, str | None, float, float]] = {
     "openai": ("gpt-5.4-mini", "", None, 4.00, 20.00),
     "anthropic": ("claude-opus-5-5", "", None, 4.00, 20.00),
     # Gemini qua endpoint tương thích OpenAI, gói miễn phí (0 USD); không có giám khảo mặc định (eval chấm theo luật).
-    "gemini": ("gemini-flash-lite-latest", "gemini-2.5-flash-lite", None, 0.0, 0.0),
+    # Không có model dự phòng: `gemini-2.5-flash-lite` trả 404 "no longer available to new users" (đo 2026-10-16).
+    "gemini": ("gemini-flash-lite-latest", "", None, 0.0, 0.0),
 }
 
 

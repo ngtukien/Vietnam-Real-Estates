@@ -232,9 +232,10 @@ def _cache_entries() -> int:
 def run_answers(settings: Settings, *, limit: int | None = None, systems: Iterable[str] | None = None,
                 workers: int = WORKERS, answer_fn: Callable[..., dict] | None = None,
                 sleep: Callable[[float], None] = time.sleep, per_category: int | None = None,
-                llm_judge: bool = True) -> dict:
+                llm_judge: bool = True, retry_errors: bool = False) -> dict:
     """`eval run`: hỏi mọi (câu, hệ thống) chưa có trong answers.jsonl, ghi từng dòng. Trả thống kê lượt chạy.
-    `per_category`: chỉ N câu đầu mỗi nhóm. `llm_judge=False` (chấm theo luật) ⇒ B2 không áp dụng vì không có giám khảo."""
+    `per_category`: chỉ N câu đầu mỗi nhóm. `llm_judge=False` (chấm theo luật) ⇒ B2 không áp dụng vì không có giám khảo.
+    `retry_errors=True`: chạy lại cả dòng lỗi khác 429 (vd lỗi provider đã sửa cấu hình)."""
     llm = J.check_judge_config(settings, judge_used=llm_judge)  # B2: từ chối trước khi tốn lời gọi nào
     chosen = tuple(systems or SYSTEMS)
     unknown = set(chosen) - set(SYSTEMS)
@@ -246,7 +247,8 @@ def run_answers(settings: Settings, *, limit: int | None = None, systems: Iterab
     candidates = subset_per_category(load_questions(), per_category) if per_category else load_questions()
     questions = select_questions(candidates, limit)
     path = answers_path(settings)
-    done = {k for k, r in read_jsonl(path).items() if not is_rate_limited(r.get("error"))}
+    done = {k for k, r in read_jsonl(path).items()
+            if not is_rate_limited(r.get("error")) and not (retry_errors and r.get("error"))}
     tasks = [(q, s) for q in questions for s in chosen if (q.id, s) not in done]
     cache_before = _cache_entries()
     started = perf_counter()
