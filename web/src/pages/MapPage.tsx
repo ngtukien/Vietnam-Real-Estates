@@ -1,6 +1,7 @@
 import "maplibre-gl/dist/maplibre-gl.css";
 import type * as GeoJSON from "geojson";
 import * as maplibregl from "maplibre-gl";
+import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import type { ExpressionSpecification, GeoJSONSource, StyleSpecification } from "maplibre-gl";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { errorMessage } from "@/api/client";
@@ -11,6 +12,9 @@ import { formatInt, formatPercent, formatPriceM2 } from "@/lib/format";
 
 type Feature = GeoJSON.Feature<GeoJSON.Geometry, { key: string | null; name: string; province?: string | null }>;
 type Collection = GeoJSON.FeatureCollection<GeoJSON.Geometry, Feature["properties"]>;
+
+// Worker của MapLibre là file riêng: chỉ rõ URL để Vite đóng gói/phục vụ nó (dev lẫn build).
+maplibregl.setWorkerUrl(workerUrl);
 
 const geoCache = new Map<string, Promise<Collection>>();
 function loadGeo(name: "provinces" | "districts"): Promise<Collection> {

@@ -71,7 +71,7 @@ export default function BenchmarkPage() {
         <CardContent>
           <div className="h-96" aria-hidden data-testid="benchmark-chart">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ left: 0, right: 8 }}>
+              <BarChart accessibilityLayer={false} data={chartData} margin={{ left: 0, right: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="category" tick={AXIS} interval={0} angle={-20} textAnchor="end" height={60} />
                 <YAxis tick={AXIS} domain={[0, 1]} tickFormatter={(v: number) => formatPercent(v, 0)} />

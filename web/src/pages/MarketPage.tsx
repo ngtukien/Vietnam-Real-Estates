@@ -42,7 +42,8 @@ export default function MarketPage() {
   const [district, setDistrict] = useState<string | null>(null);
   const [propertyType, setPropertyType] = useState<PropertyType | null>(null);
   const { data: options } = useFilterOptions();
-  const effectiveProvince = province ?? options?.provinces[0] ?? null;
+  const defaultProvince = options?.provinces.includes("Hồ Chí Minh") ? "Hồ Chí Minh" : (options?.provinces[0] ?? null);
+  const effectiveProvince = province ?? defaultProvince;
   const { data, isLoading, error } = useMarket(effectiveProvince, district, propertyType);
   const districts = effectiveProvince ? (options?.districts[effectiveProvince] ?? []) : [];
   const byArea = [...(data?.by_area ?? [])]
@@ -114,7 +115,7 @@ export default function MarketPage() {
             <CardContent>
               <div className="h-[420px]" aria-hidden data-testid="chart-by-area">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={byArea} layout="vertical" margin={{ left: 8, right: 16 }}>
+                  <BarChart accessibilityLayer={false} data={byArea} layout="vertical" margin={{ left: 8, right: 16 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                     <XAxis type="number" tick={AXIS} tickFormatter={(v: number) => formatDecimal(v, 0)} />
                     <YAxis type="category" dataKey="name" width={120} tick={AXIS} interval={0} />
@@ -141,7 +142,7 @@ export default function MarketPage() {
             <CardContent>
               <div className="h-[420px]" aria-hidden data-testid="chart-monthly">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={monthly} margin={{ left: 8, right: 16 }}>
+                  <LineChart accessibilityLayer={false} data={monthly} margin={{ left: 8, right: 16 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="label" tick={AXIS} />
                     <YAxis tick={AXIS} tickFormatter={(v: number) => formatDecimal(v, 0)} />

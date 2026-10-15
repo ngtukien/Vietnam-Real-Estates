@@ -137,7 +137,7 @@ export function DataTable({
   className?: string;
 }) {
   return (
-    <div className={cn("overflow-x-auto rounded-md border", className)}>
+    <div className={cn("overflow-x-auto rounded-md border", className)} role="region" aria-label={caption ?? "Bảng"} tabIndex={0}>
       <table className="w-full border-collapse text-sm">
         {caption ? <caption className="sr-only">{caption}</caption> : null}
         <thead className="bg-muted">

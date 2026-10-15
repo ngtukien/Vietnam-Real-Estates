@@ -43,7 +43,7 @@ export function ValuationResultView({ result, compact = false }: { result: Valua
           <h3 className="text-sm font-medium">Đóng góp SHAP vào log(giá/m²)</h3>
           <div className="h-64" aria-hidden>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={shap} layout="vertical" margin={{ left: 24, right: 16 }}>
+              <BarChart accessibilityLayer={false} data={shap} layout="vertical" margin={{ left: 24, right: 16 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                 <XAxis type="number" tickFormatter={(v: number) => formatDecimal(v, 2)} />
                 <YAxis type="category" dataKey="feature" width={130} tick={{ fontSize: 12 }} />
