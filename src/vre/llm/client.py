@@ -143,8 +143,10 @@ def _new_client(api_key: str | None = None):
         key = api_key or next(iter(s.gemini_key_list), "")
         if not key:
             raise RuntimeError("Thiếu xác thực Gemini: đặt GEMINI_API_KEYS (phẩy) hoặc GEMINI_API_KEY trong .env.")
-        # Gói miễn phí giới hạn RPM/RPD: SDK tự chờ theo Retry-After và thử lại khi gặp 429.
-        return openai.OpenAI(api_key=key, base_url=GEMINI_BASE_URL, timeout=s.llm_timeout, max_retries=4)
+        # Gói miễn phí: 5 RPM và 20 request/NGÀY mỗi project (đo 2026-10-16), và lần gọi lỗi (429/503) cũng bị trừ
+        # hạn mức ngày. SDK không thử lại (nó chờ ~0,5–4 s, quá ngắn cho 429 theo phút): 429 do backoff của nơi gọi
+        # xử lý theo retryDelay trong body; 503 thành dòng lỗi, chạy lại bằng `eval run --retry-errors`.
+        return openai.OpenAI(api_key=key, base_url=GEMINI_BASE_URL, timeout=s.llm_timeout, max_retries=0)
     if not s.groq_api_key:
         raise RuntimeError("Thiếu xác thực Groq: đặt GROQ_API_KEY trong .env.")
     # Groq giới hạn token/phút theo từng mô hình: SDK tự chờ và thử lại khi gặp 429.
