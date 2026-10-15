@@ -207,3 +207,17 @@ def valuate(payload: dict) -> dict:
     """payload theo ValuationInput (§3) → dict theo ValuationResult (§3). Raise ValueError (→ 400) khi input sai,
     RuntimeError (→ 503) khi chưa có model. Ưu tiên model `full`, lùi về `tabular` nếu `full` chưa có (ghi `model.variant`)."""
 ```
+
+## 8. Tên schema OpenAPI (thêm 2026-10-15, để web code song song trước khi có `api/openapi.json`)
+
+Tên class Pydantic trong `api/schemas.py` = tên `components.schemas` trong OpenAPI = tên type web dùng qua
+`components["schemas"]["<Tên>"]` (openapi-typescript). Mọi model dưới đây PHẢI có mặt trong `api/openapi.json`
+(model payload SSE không gắn vào route nào ⇒ đăng ký thêm vào components khi sinh OpenAPI).
+
+| Nhóm | Tên schema |
+|---|---|
+| Kiểu chung §2 | `QueryFilters`, `Address`, `ListingCard`, `ListingDetail`, `CypherResult`, `ShapItem`, `ErrorBody`, `ErrorEnvelope` (`ErrorEnvelope.error: ErrorBody`) |
+| Request | `ChatRequest`, `CompareRequest`, `ValuationInput` |
+| Response REST §3 | `HealthResponse`, `InfoResponse` (+ `SystemInfo`, `IndexInfo`, `DataPeriod`, `Limits`), `FilterOptions`, `ValuationResult` (+ `PriceInterval`, `ModelInfo`), `StatsOverview` (+ `TypeStat`, `ProvinceStat`), `MarketStats` (+ `MarketScope`, `MonthStat`, `AreaStat`), `GeoAreas` (+ `GeoItem`), `Subgraph` (+ `GraphNode`, `GraphEdge`), `BenchmarkResponse` (object tự do) |
+| Payload SSE §4 (đã gồm `request_id`, `system`) | `EventMeta`, `EventRoute`, `EventFilters`, `EventCypher` (= `CypherResult` + 2 khoá), `EventValuation` (= `ValuationResult` + 2 khoá), `EventSources`, `EventToken`, `EventAnswer`, `EventUsage`, `EventError`, `EventDone`, `EventCompareDone` (không có `system`) |
+| Enum | `SystemId`, `Route`, `PropertyType`, `DealType`, `ErrorCode`, `NodeLabel`, `RelType`, `GeoLevel`, `BenchmarkCategory` |
