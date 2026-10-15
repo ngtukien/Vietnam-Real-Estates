@@ -210,7 +210,7 @@ Tiền tố model: `"passage: "` cho tài liệu/chunk, `"query: "` cho truy v�
 | `vre_dryrun` | dry-run 2 part trước lượt chạy dài (bắt lỗi code, không phải đo), xoá ngay sau khi đạt | Phase 2 |
 | `vre_ablation_e5_large_c{chunk_size}` | ablation chunk size trên subcorpus ~200k | Phase 3 |
 
-Dữ liệu Qdrant nằm ở bind mount `D:\Vietnam-Real-Estates\docker-data\qdrant` → `/qdrant/storage` (gitignored; không dùng named volume). Ở Phase 1–2 chỉ p2 dùng Qdrant.
+Dữ liệu Qdrant nằm ở named volume `vre_qdrant_data` → `/qdrant/storage` (ext4 trong ổ đĩa WSL của Docker Desktop ở `D:\DockerDesktopWSL`; đổi 2026-10-15 vì store mmap trên bind mount NTFS vừa chậm vừa mất nhất quán). Ở Phase 1–2 chỉ p2 dùng Qdrant.
 
 Cấu hình collection chính:
 - vector `dense`: `size` = 1024; `distance=Cosine`; `on_disk=true`.
@@ -248,8 +248,8 @@ Manifest chỉ mục: `index/manifest_{collection}.json` = `{schema_version, col
 
 ## 6. Neo4j (image `neo4j:5.26-community`, DB `neo4j`, nạp bằng `neo4j-admin database import full`)
 
-Dữ liệu ở bind mount `D:\Vietnam-Real-Estates\docker-data\neo4j\data` → `/data` (log: `docker-data\neo4j\logs` → `/logs`); `neo4j-admin`
-chạy qua `docker compose run` nên ghi vào cùng bind mount. Heap 4G, pagecache 4G (chia máy với lượt chạy dài của p2, coordination §8).
+Dữ liệu ở named volume `vre_neo4j_data` → `/data` (ext4 trên D, xem §5; log: bind mount `docker-data\neo4j\logs` → `/logs`); `neo4j-admin`
+chạy qua `docker compose run` nên ghi vào cùng volume. Heap 4G, pagecache 4G (chia máy với lượt chạy dài của p2, coordination §8).
 
 ### 6.1 Node
 
