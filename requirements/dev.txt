@@ -7,3 +7,4 @@ nbformat>=5.10,<6
 nbclient>=0.10,<1
 ipykernel>=6.29
 xgboost>=3.0  # tests/unit/test_valuation_search_cache.py import xgboost; CI chỉ cài file này (bug B9)
+python-pptx>=1.0,<2  # Phase 4: scripts/slide_numbers.py, slide/build/

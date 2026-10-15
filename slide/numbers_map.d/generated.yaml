@@ -1,0 +1,3888 @@
+# SINH TỰ ĐỘNG bởi slide/build/build_deck.py — không sửa tay
+entries:
+- slide: intro-cover
+  in: notes
+  shape: 0
+  full: true
+  text: 'Giới thiệu nhóm và đề tài. Mua nhà là quyết định lớn, còn thông tin lại nằm rải rác trong hàng triệu tin đăng. Bản này chạy trên toàn bộ dataset: {} dòng thô, còn {} tin sau khi bỏ trùng, cắt thành
+    {} chunk trong Qdrant và một đồ thị Neo4j. Chuyển sang slide sau: lộ trình của bài.'
+  keys:
+  - ingest_report.json:raw_rows
+  - ingest_report.json:dedup.kept
+  - night_report.json:counters.chunks
+  fmt:
+  - int
+  - int
+  - int
+- slide: intro-cover
+  in: body
+  shape: 4
+  text: Nhóm 7 · RAG và Knowledge Graph
+  allow: tên nhóm
+- slide: intro-cover
+  in: body
+  shape: 7
+  full: true
+  text: '{} triệu'
+  keys:
+  - ingest_report.json:raw_rows
+  fmt:
+  - mil1
+- slide: intro-cover
+  in: body
+  shape: 9
+  full: true
+  text: '{} triệu'
+  keys:
+  - ingest_report.json:dedup.kept
+  fmt:
+  - mil2
+- slide: intro-cover
+  in: body
+  shape: 11
+  full: true
+  text: '{} triệu'
+  keys:
+  - night_report.json:counters.chunks
+  fmt:
+  - mil2
+- slide: intro-cover
+  in: body
+  shape: 13
+  text: 'Dữ liệu: tinixai/vietnam-real-estates (Hugging Face, CC BY-NC 4.0)'
+  allow: tên giấy phép
+- slide: intro-questions
+  in: notes
+  shape: 0
+  full: true
+  text: Bộ benchmark có {} câu chia chín nhóm, từ tra cứu một tin tới tổng hợp trên toàn bộ dữ liệu. Ba câu trên slide là ba mức khó. Câu tra cứu chỉ cần tìm đúng một tin, mã đầy đủ là {}. Câu ràng buộc
+    có nhiều điều kiện cứng cùng lúc, có {} tin thoả, nên embedding không đủ mà phải lọc. Câu tổng hợp phải gom {} tin căn hộ của một quận để tính trung vị, không tin đơn lẻ nào chứa đáp án. Đáp án chuẩn
+    của mọi câu tính bằng SQL trên bảng sạch, không nhờ LLM. Không có một công cụ nào hợp cho cả ba; phần còn lại của bài đi lần lượt từng mức.
+  keys:
+  - benchmark_gt.json:items|len
+  - benchmark_gt.json:items[id=LK01].gt_ids[0]
+  - benchmark_gt.json:items[id=CS01].gt_ids|len
+  - benchmark_gt.json:items[id=AG04].gt_rows[0].n
+  fmt:
+  - int
+  - str
+  - int
+  - int
+- slide: intro-questions
+  in: body
+  shape: 8
+  text: Mình thấy tin bán căn hộ 3 phòng ngủ 80m2 ở Sun Feliza Suites Cầu Giấy giá 8 tỷ, căn đó có mấy WC vậy?
+  allow: đề bài benchmark LK01
+- slide: intro-questions
+  in: body
+  shape: 9
+  full: true
+  text: Đáp án chuẩn  đúng 1 tin · Tin#…{}
+  keys:
+  - benchmark_gt.json:items[id=LK01].gt_ids[0]
+  fmt:
+  - last6
+- slide: intro-questions
+  in: body
+  shape: 9
+  text: đúng 1 tin
+  allow: đề bài tra cứu một tin
+- slide: intro-questions
+  in: body
+  shape: 15
+  text: Tìm căn hộ 2 phòng ngủ ở Quận 7 giá dưới 3 tỷ, chung cư có hồ bơi.
+  allow: đề bài benchmark CS01
+- slide: intro-questions
+  in: body
+  shape: 16
+  full: true
+  text: Đáp án chuẩn  {} tin thoả mọi điều kiện
+  keys:
+  - benchmark_gt.json:items[id=CS01].gt_ids|len
+  fmt:
+  - int
+- slide: intro-questions
+  in: body
+  shape: 22
+  text: Quận nào ở Hà Nội có giá/m² căn hộ trung vị cao nhất (chỉ tính quận có từ 20 tin)?
+  allow: đề bài benchmark AG04
+- slide: intro-questions
+  in: body
+  shape: 23
+  full: true
+  text: Đáp án chuẩn  Tây Hồ · {} triệu/m², trên {} tin
+  keys:
+  - benchmark_gt.json:items[id=AG04].gt_rows[0].median_price_m2_mil
+  - benchmark_gt.json:items[id=AG04].gt_rows[0].n
+  fmt:
+  - dec1
+  - int
+- slide: intro-questions
+  in: body
+  shape: 26
+  full: true
+  text: Ba câu lấy từ benchmark {} câu; đáp án chuẩn tính bằng SQL trên {} tin sạch.
+  keys:
+  - benchmark_gt.json:items|len
+  - benchmark_gt.json:data_fingerprint.n_listings
+  fmt:
+  - int
+  - int
+- slide: intro-llm-vs-rag
+  in: body
+  shape: 5
+  text: Mình thấy tin bán căn hộ 3 phòng ngủ 80m2 ở Sun Feliza Suites Cầu Giấy giá 8 tỷ, căn đó có mấy WC vậy?
+  allow: đề bài benchmark LK01
+- slide: intro-llm-vs-rag
+  in: body
+  shape: 9
+  text: Dựa trên thiết kế tiêu chuẩn của các dự án căn hộ cao cấp tại Hà Nội (với diện tích khoảng 80m2 cho 3 phòng ngủ), các căn hộ này thường được bố trí 2 nhà vệ sinh (1 WC chung và 1 WC nằm trong phòng
+    ngủ master) để đảm bảo công năng sử dụng. Tuy nhiên, thiết kế chi tiết có thể thay đổi tùy theo mặt bằng thực tế của chủ đầu tư tại dự án Sun Feliza Suites Cầu Giấy. Để chính xác …
+  allow: trích examples.json:answers[id=LK01,system=llm_only].answer (bỏ ký hiệu markdown)
+- slide: intro-llm-vs-rag
+  in: body
+  shape: 13
+  text: Căn hộ 3 phòng ngủ tại Sun Feliza Suites có 2 WC [Tin#3092923782945354].
+  allow: trích examples.json:answers[id=LK01,system=basic_rag].answer (bỏ ký hiệu markdown)
+- slide: rag-two-phases
+  in: notes
+  shape: 0
+  full: true
+  text: 'Pha lập chỉ mục chạy ngoại tuyến. Nhóm đọc {} dòng thô, làm sạch và bỏ trùng còn {} tin, cắt thành {} chunk, nhúng bằng multilingual-e5-large ra vector {} chiều, rồi lưu vào Qdrant cùng vector
+    thưa BM25. Pha này chỉ chạy lại khi dữ liệu đổi. Pha truy vấn chạy cho mỗi câu hỏi: tìm bằng cả vector dày và BM25 rồi gộp hai danh sách bằng RRF, ghép ngữ cảnh vào prompt, LLM trả lời kèm mã tin. Mọi
+    phần sau của bài là cải tiến một hộp trong hai hàng này. Chuyển sang slide sau: trước khi xây, nhìn kỹ dữ liệu.'
+  keys:
+  - ingest_report.json:raw_rows
+  - ingest_report.json:dedup.kept
+  - night_report.json:counters.chunks
+  - embedding_benchmark.json:[model=intfloat/multilingual-e5-large].dim
+  fmt:
+  - int
+  - int
+  - int
+  - int
+- slide: rag-two-phases
+  in: body
+  shape: 8
+  full: true
+  text: '{} dòng'
+  keys:
+  - ingest_report.json:raw_rows
+  fmt:
+  - int
+- slide: rag-two-phases
+  in: body
+  shape: 12
+  full: true
+  text: còn {} tin
+  keys:
+  - ingest_report.json:dedup.kept
+  fmt:
+  - int
+- slide: rag-two-phases
+  in: body
+  shape: 16
+  full: true
+  text: '{} chunk'
+  keys:
+  - night_report.json:counters.chunks
+  fmt:
+  - int
+- slide: rag-two-phases
+  in: body
+  shape: 20
+  full: true
+  text: e5-large, {} chiều
+  keys:
+  - embedding_benchmark.json:[model=intfloat/multilingual-e5-large].dim
+  fmt:
+  - int
+- slide: data-overview
+  in: body
+  shape: 4
+  full: true
+  text: '{} triệu dòng thô, còn {} triệu tin sau khi bỏ dòng trống và tin trùng'
+  keys:
+  - ingest_report.json:raw_rows
+  - ingest_report.json:dedup.kept
+  fmt:
+  - mil1
+  - mil2
+- slide: data-overview
+  in: notes
+  shape: 0
+  full: true
+  text: 'Dataset có {} dòng. Bỏ {} dòng không có chữ, rồi bỏ {} dòng trùng chính xác và {} dòng trùng phần đầu nội dung, tức tin đăng lại gần như nguyên văn. Còn {} tin, nghĩa là {} phần trăm dòng thô bị
+    loại trước khi tốn giờ GPU để embed. Tin đăng từ tháng 2025-06 đến 2026-03, phủ {} tỉnh thành theo địa giới cũ, nhưng Hà Nội và TP.HCM chiếm {} phần trăm. Giá ở đây là giá rao, không phải giá giao dịch.
+    Chuyển sang slide sau: giá theo loại hình.'
+  keys:
+  - ingest_report.json:raw_rows
+  - ingest_report.json:dropped.no_text
+  - ingest_report.json:dedup.exact_dup
+  - ingest_report.json:dedup.prefix_dup
+  - ingest_report.json:dedup.kept
+  - =({ingest_report.json:raw_rows}-{ingest_report.json:dedup.kept})/{ingest_report.json:raw_rows}
+  - graph_report.json:nodes.Province
+  - eda_summary.json:hn_hcm_share
+  fmt:
+  - int
+  - int
+  - int
+  - int
+  - int
+  - pct1
+  - int
+  - pct1
+- slide: data-overview
+  in: notes
+  shape: 0
+  text: 2025-06
+  allow: nguyên văn eda_summary.json:period.min_month
+- slide: data-overview
+  in: notes
+  shape: 0
+  text: 2026-03
+  allow: nguyên văn eda_summary.json:period.max_month
+- slide: data-overview
+  in: body
+  shape: 7
+  full: true
+  text: '{}'
+  keys:
+  - ingest_report.json:raw_rows
+  fmt:
+  - int
+- slide: data-overview
+  in: body
+  shape: 10
+  full: true
+  text: '{}'
+  keys:
+  - ={ingest_report.json:raw_rows}-{ingest_report.json:dropped.no_text}
+  fmt:
+  - int
+- slide: data-overview
+  in: body
+  shape: 13
+  full: true
+  text: '{}'
+  keys:
+  - ={ingest_report.json:raw_rows}-{ingest_report.json:dropped.no_text}-{ingest_report.json:dedup.exact_dup}
+  fmt:
+  - int
+- slide: data-overview
+  in: body
+  shape: 16
+  full: true
+  text: '{}'
+  keys:
+  - ingest_report.json:dedup.kept
+  fmt:
+  - int
+- slide: data-overview
+  in: body
+  shape: 18
+  full: true
+  text: '{}%'
+  keys:
+  - =({ingest_report.json:raw_rows}-{ingest_report.json:dedup.kept})/{ingest_report.json:raw_rows}
+  fmt:
+  - pct1
+- slide: data-overview
+  in: body
+  shape: 21
+  text: 2025-06
+  allow: nguyên văn eda_summary.json:period.min_month
+- slide: data-overview
+  in: body
+  shape: 21
+  text: 2026-03
+  allow: nguyên văn eda_summary.json:period.max_month
+- slide: data-overview
+  in: body
+  shape: 24
+  full: true
+  text: '{}%'
+  keys:
+  - eda_summary.json:hn_hcm_share
+  fmt:
+  - pct1
+- slide: data-overview
+  in: body
+  shape: 25
+  full: true
+  text: tin ở Hà Nội và TP.HCM, trên {} tỉnh thành (địa giới cũ)
+  keys:
+  - graph_report.json:nodes.Province
+  fmt:
+  - int
+- slide: eda-price
+  in: body
+  shape: 4
+  full: true
+  text: 'Nhà đắt nhất theo m², đất rẻ nhất: trung vị chênh {} lần'
+  keys:
+  - ={eda_summary.json:by_property_type[property_type=Nhà].median_price_m2_mil}/{eda_summary.json:by_property_type[property_type=Đất].median_price_m2_mil}
+  fmt:
+  - dec1
+- slide: eda-price
+  in: notes
+  shape: 0
+  full: true
+  text: 'Cột là trung vị giá rao trên mỗi mét vuông của tin bán, tính bằng triệu đồng. Nhà ở mức {} triệu, căn hộ chung cư {} triệu, đất {} triệu. Dùng trung vị chứ không dùng trung bình vì giá lệch phải
+    rất mạnh: vài tin rao hàng trăm tỷ kéo trung bình lên xa. Nhà chiếm nhiều tin nhất với {} tin. Với trợ lý, câu hỏi giá phải lọc đúng loại hình trước, nếu không con số trộn nhà với đất sẽ vô nghĩa. Chuyển
+    sang slide sau: tin tập trung ở đâu.'
+  keys:
+  - eda_summary.json:by_property_type[property_type=Nhà].median_price_m2_mil
+  - eda_summary.json:by_property_type[property_type=Căn hộ chung cư].median_price_m2_mil
+  - eda_summary.json:by_property_type[property_type=Đất].median_price_m2_mil
+  - eda_summary.json:by_property_type[property_type=Nhà].n
+  fmt:
+  - dec1
+  - dec1
+  - dec1
+  - int
+- slide: eda-price
+  chart: 5
+  series:
+  - name: Giá/m² trung vị (triệu đồng)
+    key: eda_summary.json:by_property_type[*].median_price_m2_mil
+  categories: eda_summary.json:by_property_type[*].property_type
+- slide: eda-price
+  in: body
+  shape: 6
+  full: true
+  text: 'Nhà  {} triệu/m²
+
+    Căn hộ  {} triệu/m²
+
+    Đất  {} triệu/m²'
+  keys:
+  - eda_summary.json:by_property_type[property_type=Nhà].median_price_m2_mil
+  - eda_summary.json:by_property_type[property_type=Căn hộ chung cư].median_price_m2_mil
+  - eda_summary.json:by_property_type[property_type=Đất].median_price_m2_mil
+  fmt:
+  - dec1
+  - dec1
+  - dec1
+- slide: eda-geo
+  in: body
+  shape: 4
+  full: true
+  text: 'Hà Nội và TP.HCM chiếm {}% số tin: dữ liệu rất lệch về hai đô thị lớn'
+  keys:
+  - eda_summary.json:hn_hcm_share
+  fmt:
+  - pct1
+- slide: eda-geo
+  in: notes
+  shape: 0
+  full: true
+  text: 'TP.HCM dẫn đầu với {} tin, Hà Nội {} tin, rồi tụt hẳn xuống Đà Nẵng với {} tin. Bên phải là mười quận huyện nhiều tin nhất ở mỗi thành phố. Hệ quả cho trợ lý: ở hai thành phố lớn câu trả lời có
+    nhiều bằng chứng, còn ở tỉnh nhỏ một quận có khi chỉ vài chục tin, nên thống kê giá ở đó kém tin cậy và hệ thống nên nói rõ số tin làm căn cứ. Tên tỉnh theo địa giới trước đợt sáp nhập năm 2025. Chuyển
+    sang slide sau: số tin theo thời gian.'
+  keys:
+  - eda_summary.json:top_provinces[0].n
+  - eda_summary.json:top_provinces[1].n
+  - eda_summary.json:top_provinces[2].n
+  fmt:
+  - int
+  - int
+  - int
+- slide: eda-geo
+  chart: 5
+  series:
+  - name: Nghìn tin
+    key: eda_summary.json:top_provinces[*].n
+    scale: 0.001
+  categories: eda_summary.json:top_provinces[*].province
+- slide: eda-trend
+  in: notes
+  shape: 0
+  full: true
+  text: 'Bên trái là số tin mỗi tháng. Tháng 2026-03 nhiều nhất với {} tin, tháng 2026-02 ít nhất với {} tin; tháng ít tin rơi vào dịp Tết, nhưng nhóm chưa kiểm chứng nguyên nhân. Bên phải là trung vị giá
+    trên mét vuông: chỉ chạy từ {} đến {} triệu. Mười tháng là quá ngắn để nói về xu hướng thị trường, và cơ cấu loại hình mỗi tháng cũng khác nhau. Với trợ lý, điểm đáng giữ là mỗi tin có tháng đăng, nên
+    trả lời được câu hỏi theo thời gian. Chuyển sang slide sau: chất lượng dữ liệu.'
+  keys:
+  - eda_summary.json:monthly[month=2026-03].n
+  - eda_summary.json:monthly[month=2026-02].n
+  - eda_summary.json:monthly[month=2025-07].median_price_m2_mil
+  - eda_summary.json:monthly[month=2025-10].median_price_m2_mil
+  fmt:
+  - int
+  - int
+  - dec1
+  - dec1
+- slide: eda-trend
+  in: notes
+  shape: 0
+  text: 2026-03
+  allow: nguyên văn eda_summary.json:monthly[month=2026-03].month
+- slide: eda-trend
+  in: notes
+  shape: 0
+  text: 2026-02
+  allow: nguyên văn eda_summary.json:monthly[month=2026-02].month
+- slide: eda-trend
+  chart: 5
+  series:
+  - name: Nghìn tin
+    key: eda_summary.json:monthly[*].n
+    scale: 0.001
+  categories: eda_summary.json:monthly[*].month
+- slide: eda-trend
+  chart: 6
+  series:
+  - name: Giá/m² trung vị (triệu đồng)
+    key: eda_summary.json:monthly[*].median_price_m2_mil
+  categories: eda_summary.json:monthly[*].month
+- slide: eda-quality
+  in: notes
+  shape: 0
+  full: true
+  text: 'Bảng trái là tỷ lệ ô trống. {} phần trăm tin không ghi dự án, {} phần trăm không ghi số phòng ngủ, {} phần trăm không có phường. Nếu lọc cứng theo số phòng ngủ thì gần một nửa số tin biến mất khỏi
+    kết quả, dù mô tả có thể ghi rõ. Bên phải: {} tin bị gắn cờ outlier giá và {} tin outlier diện tích, được loại khỏi thống kê giá; {} tin ghi giá sai đơn vị đã được sửa. Chuyển sang slide sau: vì sao
+    điều này dẫn tới hai loại tri thức.'
+  keys:
+  - ingest_report.json:missing_pct.project
+  - ingest_report.json:missing_pct.bedrooms
+  - ingest_report.json:missing_pct.ward
+  - ingest_report.json:price.outliers
+  - ingest_report.json:area_outliers
+  - ingest_report.json:price.fixed_thousand
+  fmt:
+  - dec1
+  - dec1
+  - dec1
+  - int
+  - int
+  - int
+- slide: eda-quality
+  in: body
+  shape: 11
+  full: true
+  text: '{}'
+  keys:
+  - ingest_report.json:missing_pct.project
+  fmt:
+  - dec1
+- slide: eda-quality
+  in: body
+  shape: 14
+  full: true
+  text: '{}'
+  keys:
+  - ingest_report.json:missing_pct.bedrooms
+  fmt:
+  - dec1
+- slide: eda-quality
+  in: body
+  shape: 17
+  full: true
+  text: '{}'
+  keys:
+  - ingest_report.json:missing_pct.street
+  fmt:
+  - dec1
+- slide: eda-quality
+  in: body
+  shape: 20
+  full: true
+  text: '{}'
+  keys:
+  - ingest_report.json:missing_pct.ward
+  fmt:
+  - dec1
+- slide: eda-quality
+  in: body
+  shape: 23
+  full: true
+  text: '{}'
+  keys:
+  - eda_summary.json:missing_pct.price_vnd
+  fmt:
+  - dec1
+- slide: eda-quality
+  in: body
+  shape: 25
+  full: true
+  text: '{}'
+  keys:
+  - ingest_report.json:price.outliers
+  fmt:
+  - int
+- slide: eda-quality
+  in: body
+  shape: 28
+  full: true
+  text: '{}'
+  keys:
+  - ingest_report.json:area_outliers
+  fmt:
+  - int
+- slide: eda-quality
+  in: body
+  shape: 31
+  full: true
+  text: '{}'
+  keys:
+  - ingest_report.json:price.null_or_unparsable
+  fmt:
+  - int
+- slide: eda-quality
+  in: body
+  shape: 34
+  full: true
+  text: '{}'
+  keys:
+  - ingest_report.json:price.fixed_thousand
+  fmt:
+  - int
+- slide: rag-two-kinds
+  in: notes
+  shape: 0
+  full: true
+  text: 'Phần phi cấu trúc là tiêu đề và mô tả viết tự do, nơi có những ý như thang máy, ô tô đỗ cửa, có thương lượng; muốn tìm chúng phải tìm theo nghĩa, đó là việc của embedding và RAG. Phần có cấu trúc
+    là các cột loại hình, phường, giá, diện tích; câu hỏi như quận nào có giá trên mét vuông thấp nhất phải đếm và tính trên cột, không đọc ra từ vài đoạn văn. Hai nguồn bù cho nhau: cột thiếu thì mô tả
+    vẫn còn, ví dụ {} phần trăm tin không ghi số phòng ngủ ở cột. Vì vậy nhóm làm cả hai và dùng router để chọn. Chuyển sang slide sau: cắt văn bản thành chunk.'
+  keys:
+  - ingest_report.json:missing_pct.bedrooms
+  fmt:
+  - dec1
+- slide: rag-chunking
+  in: notes
+  shape: 0
+  full: true
+  text: 'Chunk quá lớn thì nhiễu và vượt giới hạn mô hình, quá nhỏ thì mất ngữ cảnh. Nhóm cắt theo bản ghi: mỗi tin một chunk, tin dài thì trượt cửa sổ 400 token, chồng 100 token. Header gồm tiêu đề, loại
+    hình, địa chỉ, giá, diện tích được lặp ở mọi chunk, nên chunk thứ hai của một tin vẫn mang giá và địa chỉ để lọc và trích dẫn. Vì header chiếm chỗ, cỡ cửa sổ cho phần mô tả là S trừ độ dài header. Tin
+    trung vị chỉ có {} token nên phần lớn là một chunk; trung bình mỗi tin ra {} chunk. Công thức cho số chunk đúng bằng đếm thực của code, và không tin nào bị cắt cụt ({} tin). Chuyển sang slide sau: embedding.'
+  keys:
+  - eda_summary.json:tokens_per_listing.p50
+  - ={night_report.json:counters.chunks}/{ingest_report.json:dedup.kept}
+  - night_report.json:counters.chunks_truncated_listings
+  fmt:
+  - int
+  - dec2
+  - int
+- slide: rag-chunking
+  in: notes
+  shape: 0
+  text: 400 token, chồng 100 token
+  allow: tham số trong src/vre/config.py
+- slide: rag-chunking
+  in: body
+  shape: 8
+  text: n = 1 khi L ≤ S
+  allow: công thức
+- slide: rag-chunking
+  in: body
+  shape: 9
+  text: 'Ví dụ: L = 2000, S = 400, O = 100 → n = ⌈1900 / 300⌉ = 7'
+  allow: ví dụ minh hoạ công thức
+- slide: rag-chunking
+  in: body
+  shape: 15
+  text: 400 token
+  allow: tham số trong src/vre/config.py
+- slide: rag-chunking
+  in: body
+  shape: 18
+  text: 100 token
+  allow: tham số trong src/vre/config.py
+- slide: rag-chunking
+  in: body
+  shape: 21
+  text: tối đa 96 token
+  allow: tham số trong src/vre/config.py
+- slide: rag-chunking
+  in: body
+  shape: 23
+  full: true
+  text: '{} · {} · {}'
+  keys:
+  - eda_summary.json:tokens_per_listing.p50
+  - eda_summary.json:tokens_per_listing.p90
+  - eda_summary.json:tokens_per_listing.p99
+  fmt:
+  - int
+  - int
+  - int
+- slide: rag-chunking
+  in: body
+  shape: 26
+  full: true
+  text: '{}'
+  keys:
+  - ={night_report.json:counters.chunks}/{ingest_report.json:dedup.kept}
+  fmt:
+  - dec2
+- slide: rag-chunking
+  in: body
+  shape: 27
+  full: true
+  text: 'chunk trung bình mỗi tin: {} chunk từ {} tin'
+  keys:
+  - night_report.json:counters.chunks
+  - ingest_report.json:dedup.kept
+  fmt:
+  - int
+  - int
+- slide: emb-theory
+  in: notes
+  shape: 0
+  text: m = 16, ef_construct = 100
+  allow: tham số HNSW trong src/vre/index/qdrant_store.py
+- slide: emb-choice
+  in: notes
+  shape: 0
+  full: true
+  text: 'Nhóm đo bốn model trên cùng {} chunk và {} truy vấn, cùng GPU. e5-large đứng đầu cả ba chỉ số: Recall@10 {} phần trăm so với {} của bge-m3, MRR@10 {}. Cái giá là tốc độ: {} văn bản mỗi giây, chậm
+    hơn e5-base khoảng {} lần. Vì chỉ mục chỉ dựng một lần còn truy vấn chạy mãi, nhóm chọn chất lượng. Lưu ý giới hạn: bộ đo là mẫu nhỏ, truy vấn sinh tự động, nên khoảng cách vài điểm giữa các model chỉ
+    mang tính tham khảo. Chuyển sang slide sau: thực hành 1.'
+  keys:
+  - embedding_benchmark.json:[model=intfloat/multilingual-e5-large].corpus
+  - embedding_benchmark.json:[model=intfloat/multilingual-e5-large].queries
+  - embedding_benchmark.json:[model=intfloat/multilingual-e5-large].recall_at_10
+  - embedding_benchmark.json:[model=BAAI/bge-m3].recall_at_10
+  - embedding_benchmark.json:[model=intfloat/multilingual-e5-large].mrr_at_10
+  - embedding_benchmark.json:[model=intfloat/multilingual-e5-large].docs_per_s
+  - ={embedding_benchmark.json:[model=intfloat/multilingual-e5-base].docs_per_s}/{embedding_benchmark.json:[model=intfloat/multilingual-e5-large].docs_per_s}
+  fmt:
+  - int
+  - int
+  - pct1
+  - pct1
+  - dec3
+  - dec1
+  - dec1
+- slide: emb-choice
+  chart: 5
+  series:
+  - name: Recall@1
+    key: embedding_benchmark.json:[*].recall_at_1
+    scale: 100
+  - name: Recall@10
+    key: embedding_benchmark.json:[*].recall_at_10
+    scale: 100
+  - name: MRR@10
+    key: embedding_benchmark.json:[*].mrr_at_10
+    scale: 100
+  categories: embedding_benchmark.json:[*].model
+- slide: emb-choice
+  in: body
+  shape: 13
+  full: true
+  text: '{}'
+  keys:
+  - embedding_benchmark.json:[0].docs_per_s
+  fmt:
+  - dec1
+- slide: emb-choice
+  in: body
+  shape: 14
+  full: true
+  text: '{}'
+  keys:
+  - embedding_benchmark.json:[0].dim
+  fmt:
+  - int
+- slide: emb-choice
+  in: body
+  shape: 17
+  full: true
+  text: '{}'
+  keys:
+  - embedding_benchmark.json:[1].docs_per_s
+  fmt:
+  - dec1
+- slide: emb-choice
+  in: body
+  shape: 18
+  full: true
+  text: '{}'
+  keys:
+  - embedding_benchmark.json:[1].dim
+  fmt:
+  - int
+- slide: emb-choice
+  in: body
+  shape: 21
+  full: true
+  text: '{}'
+  keys:
+  - embedding_benchmark.json:[2].docs_per_s
+  fmt:
+  - dec1
+- slide: emb-choice
+  in: body
+  shape: 22
+  full: true
+  text: '{}'
+  keys:
+  - embedding_benchmark.json:[2].dim
+  fmt:
+  - int
+- slide: emb-choice
+  in: body
+  shape: 25
+  full: true
+  text: '{}'
+  keys:
+  - embedding_benchmark.json:[3].docs_per_s
+  fmt:
+  - dec1
+- slide: emb-choice
+  in: body
+  shape: 26
+  full: true
+  text: '{}'
+  keys:
+  - embedding_benchmark.json:[3].dim
+  fmt:
+  - int
+- slide: emb-choice
+  in: body
+  shape: 28
+  full: true
+  text: 'Chỉ số × 100. Bộ đo: {} chunk, {} truy vấn sinh tự động; hàng tô màu là model được chốt.'
+  keys:
+  - embedding_benchmark.json:[model=intfloat/multilingual-e5-large].corpus
+  - embedding_benchmark.json:[model=intfloat/multilingual-e5-large].queries
+  fmt:
+  - int
+  - int
+- slide: emb-choice
+  in: body
+  shape: 28
+  text: Chỉ số × 100
+  allow: đơn vị hiển thị chart
+- slide: rag-practice-1
+  in: body
+  shape: 4
+  full: true
+  text: 'Thực hành 1: {} tin thành {} point trong Qdrant'
+  keys:
+  - ingest_report.json:dedup.kept
+  - night_report.json:qdrant.points
+  fmt:
+  - int
+  - int
+- slide: rag-practice-1
+  in: notes
+  shape: 0
+  full: true
+  text: 'Pipeline gồm năm bước. Ingest bằng DuckDB đọc {} dòng, làm sạch, ẩn số điện thoại, bỏ trùng còn {} tin. Chunk theo quy tắc vừa nói, tính vector thưa BM25, rồi embed bằng e5-large trên GPU với thông
+    lượng trung bình {} chunk mỗi giây. Kết quả chia thành {} part và nạp vào Qdrant. Kiểm tra nhất quán: số point trong Qdrant bằng đúng số chunk đã cắt, {}, collection ở trạng thái green, và ba truy vấn
+    thử đều trả về kết quả. Chuyển sang slide sau: chạy ở quy mô này đòi hỏi những gì.'
+  keys:
+  - ingest_report.json:raw_rows
+  - ingest_report.json:dedup.kept
+  - night_report.json:embed.chunks_per_s_avg
+  - night_report.json:counters.parts_total
+  - night_report.json:counters.points_in_qdrant
+  fmt:
+  - int
+  - int
+  - dec1
+  - int
+  - int
+- slide: rag-practice-1
+  in: body
+  shape: 7
+  full: true
+  text: 'DuckDB: {} dòng → {} tin'
+  keys:
+  - ingest_report.json:raw_rows
+  - ingest_report.json:dedup.kept
+  fmt:
+  - int
+  - int
+- slide: rag-practice-1
+  in: body
+  shape: 15
+  full: true
+  text: e5-large trên GPU, {} chunk/s
+  keys:
+  - night_report.json:embed.chunks_per_s_avg
+  fmt:
+  - dec1
+- slide: rag-practice-1
+  in: body
+  shape: 19
+  full: true
+  text: '{} part vào Qdrant'
+  keys:
+  - night_report.json:counters.parts_uploaded
+  fmt:
+  - int
+- slide: rag-practice-1
+  in: body
+  shape: 25
+  full: true
+  text: '{}'
+  keys:
+  - night_report.json:qdrant.points
+  fmt:
+  - int
+- slide: rag-practice-1
+  in: body
+  shape: 28
+  full: true
+  text: '{}'
+  keys:
+  - night_report.json:qdrant.indexed_vectors
+  fmt:
+  - int
+- slide: rag-practice-1
+  in: body
+  shape: 34
+  full: true
+  text: '{}/{}'
+  keys:
+  - night_report.json:counters.parts_uploaded
+  - night_report.json:counters.parts_total
+  fmt:
+  - int
+  - int
+- slide: rag-practice-1
+  in: body
+  shape: 36
+  text: vre_chunks_e5_large
+  allow: nguyên văn night_report.json:collection
+- slide: rag-practice-1
+  in: body
+  shape: 36
+  text: intfloat/multilingual-e5-large
+  allow: nguyên văn embedding_benchmark.json:[model=intfloat/multilingual-e5-large].model
+- slide: scale-3-5m
+  in: body
+  shape: 4
+  full: true
+  text: 'Scale lên {} triệu tin: dựng chỉ mục trong {} giờ trên một laptop'
+  keys:
+  - ingest_report.json:raw_rows
+  - night_report.json:wall_hours
+  fmt:
+  - mil1
+  - dec1
+- slide: scale-3-5m
+  in: notes
+  shape: 0
+  full: true
+  text: 'Toàn bộ lượt dựng chỉ mục kéo dài {} giờ từ lúc bắt đầu đến lúc xong, trên RTX 4060 Laptop 8GB. Phần nặng nhất là embed: với thông lượng trung bình {} chunk mỗi giây thì riêng bước này cần khoảng
+    {} giờ; đây là ước tính, không phải số đo trực tiếp. Lượt chạy bị dừng tay một lần vì thiếu bộ nhớ commit, rồi resume từ checkpoint theo part nên không phải làm lại. Vì lượt cuối là lượt resume, log
+    của nó không có thời gian thật cho chunk, BM25 và embed, và đỉnh RAM, VRAM không được ghi lại; nhóm không báo các số đó. Bỏ trùng trước khi embed là tiết kiệm lớn nhất. Chuyển sang slide sau: kiến trúc
+    toàn hệ.'
+  keys:
+  - night_report.json:wall_hours
+  - night_report.json:embed.chunks_per_s_avg
+  - ={night_report.json:counters.chunks}/{night_report.json:embed.chunks_per_s_avg}
+  fmt:
+  - dec1
+  - dec1
+  - h1
+- slide: scale-3-5m
+  in: notes
+  shape: 0
+  text: RTX 4060 Laptop 8GB
+  allow: phần cứng
+- slide: scale-3-5m
+  in: body
+  shape: 10
+  full: true
+  text: '{} giây'
+  keys:
+  - ingest_report.json:seconds
+  fmt:
+  - dec1
+- slide: scale-3-5m
+  in: body
+  shape: 13
+  full: true
+  text: ≈ {} giờ
+  keys:
+  - ={night_report.json:counters.chunks}/{night_report.json:embed.chunks_per_s_avg}
+  fmt:
+  - h1
+- slide: scale-3-5m
+  in: body
+  shape: 16
+  full: true
+  text: '{} phút'
+  keys:
+  - night_report.json:steps[name=upload].seconds
+  fmt:
+  - min0
+- slide: scale-3-5m
+  in: body
+  shape: 19
+  full: true
+  text: '{} phút'
+  keys:
+  - night_report.json:steps[name=hnsw].seconds
+  fmt:
+  - min0
+- slide: scale-3-5m
+  in: body
+  shape: 22
+  full: true
+  text: '{} phút'
+  keys:
+  - night_report.json:steps[name=pca].seconds
+  fmt:
+  - min0
+- slide: scale-3-5m
+  in: body
+  shape: 25
+  full: true
+  text: '{} giây'
+  keys:
+  - graph_report.json:import_seconds
+  fmt:
+  - dec1
+- slide: scale-3-5m
+  in: body
+  shape: 28
+  full: true
+  text: '{} giờ'
+  keys:
+  - night_report.json:wall_hours
+  fmt:
+  - dec1
+- slide: scale-3-5m
+  in: body
+  shape: 30
+  full: true
+  text: '•  Bỏ trùng trước khi embed: bớt {}% dòng
+
+    •  Checkpoint theo {} part; đã resume {} lần
+
+    •  Dry-run hai part trước lượt dài để bắt lỗi code
+
+    •  Hai phiên song song: đồ thị và chỉ mục vector
+
+    •  neo4j-admin import: nạp đồ thị ngoại tuyến
+
+    •  HNSW dựng song song khi upload; vector int8 trong RAM'
+  keys:
+  - =({ingest_report.json:raw_rows}-{ingest_report.json:dedup.kept})/{ingest_report.json:raw_rows}
+  - night_report.json:counters.parts_total
+  - night_report.json:resumed_runs
+  fmt:
+  - pct1
+  - int
+  - int
+- slide: scale-3-5m
+  in: body
+  shape: 32
+  text: RTX 4060 Laptop 8GB
+  allow: phần cứng
+- slide: arch-overview
+  in: notes
+  shape: 0
+  full: true
+  text: 'Hàng trên là pha nạp. File Parquet của dataset đi qua DuckDB để làm sạch và bỏ trùng. Từ bảng sạch có hai nhánh: nhánh văn bản được cắt chunk và nhúng bằng e5-large rồi vào Qdrant; nhánh cột được
+    nạp vào Neo4j bằng neo4j-admin import, thành đồ thị với {} node tin đăng. Hàng dưới là pha hỏi. Người dùng gõ câu hỏi trên web, API chuyển xuống router; router quyết định lấy ngữ cảnh từ Qdrant, từ
+    đồ thị hay cả hai, rồi LLM viết câu trả lời có mã tin và trả ngược về web. Ba chặng sau của bài lần lượt đi sâu vào truy xuất, đồ thị và router. Chuyển sang chặng 2: truy xuất và sinh câu trả lời.'
+  keys:
+  - graph_report.json:nodes.Listing
+  fmt:
+  - int
+- slide: arch-overview
+  in: body
+  shape: 7
+  full: true
+  text: '{} dòng thô, {} shard'
+  keys:
+  - ingest_report.json:raw_rows
+  - ingest_report.json:shards
+  fmt:
+  - int
+  - int
+- slide: arch-overview
+  in: body
+  shape: 10
+  full: true
+  text: làm sạch, bỏ trùng → {} tin
+  keys:
+  - ingest_report.json:dedup.kept
+  fmt:
+  - int
+- slide: arch-overview
+  in: body
+  shape: 13
+  full: true
+  text: '{} chiều, GPU'
+  keys:
+  - embedding_benchmark.json:[model=intfloat/multilingual-e5-large].dim
+  fmt:
+  - int
+- slide: arch-overview
+  in: body
+  shape: 16
+  full: true
+  text: '{} chunk · dense + BM25'
+  keys:
+  - night_report.json:qdrant.points
+  fmt:
+  - int
+- slide: arch-overview
+  in: body
+  shape: 19
+  full: true
+  text: '{} tin + địa danh, dự án'
+  keys:
+  - graph_report.json:nodes.Listing
+  fmt:
+  - int
+- slide: ret-three-needs
+  in: body
+  shape: 5
+  text: Tìm căn hộ 2 phòng ngủ ở Quận 7 giá dưới 3 tỷ, chung cư có hồ bơi.
+  allow: đề bài benchmark CS01
+- slide: ret-filters
+  in: body
+  shape: 6
+  text: Tìm căn hộ 2 phòng ngủ ở Quận 7 giá dưới 3 tỷ, chung cư có hồ bơi.
+  allow: nguyên văn examples.json:rag[4].question
+- slide: ret-filters
+  in: body
+  shape: 9
+  text: "{\n \"province\": \"Hồ Chí Minh\",\n \"district\": \"Quận 7\",\n \"property_type\": \"Căn hộ chung cư\",\n \"deal_type\": \"sale\",\n \"bedrooms\": 2,\n \"max_price_mil\": 3000.0\n}"
+  allow: nguyên văn examples.json:rag[4].filters
+- slide: ret-filters
+  in: body
+  shape: 12
+  text: LLM chép “5 tỷ” đúng như câu hỏi, không tự đổi số
+  allow: ví dụ minh hoạ cách đổi đơn vị
+- slide: ret-filters
+  in: body
+  shape: 15
+  text: “5 tỷ”, “1 tỷ 2”, “3.000.000.000” → triệu đồng, có unit test
+  allow: ví dụ minh hoạ cách đổi đơn vị
+- slide: ret-filters
+  in: body
+  shape: 18
+  text: “Q.7” → “Quận 7”, khớp giá trị trong Qdrant và Neo4j
+  allow: ví dụ minh hoạ cách đổi đơn vị
+- slide: ret-cosine
+  in: body
+  shape: 7
+  text: 'Ví dụ: q = (3, 4), d₁ = (6, 8) → cos = 1; d₂ = (−4, 3) → cos = 0'
+  allow: ví dụ minh hoạ tính tay
+- slide: ret-cosine
+  in: body
+  shape: 10
+  cell:
+  - 1
+  - 0
+  full: true
+  text: …{}
+  keys:
+  - examples.json:rag[4].hits[0].listing_id
+  fmt:
+  - last6
+- slide: ret-cosine
+  in: body
+  shape: 10
+  cell:
+  - 1
+  - 1
+  text: Quận 7
+  allow: nguyên văn examples.json:rag[4].hits[0].district
+- slide: ret-cosine
+  in: body
+  shape: 10
+  cell:
+  - 1
+  - 2
+  full: true
+  text: '{} tỷ'
+  keys:
+  - examples.json:rag[4].hits[0].price_vnd
+  fmt:
+  - bn2
+- slide: ret-cosine
+  in: body
+  shape: 10
+  cell:
+  - 2
+  - 0
+  full: true
+  text: …{}
+  keys:
+  - examples.json:rag[4].hits[1].listing_id
+  fmt:
+  - last6
+- slide: ret-cosine
+  in: body
+  shape: 10
+  cell:
+  - 2
+  - 1
+  text: Quận 7
+  allow: nguyên văn examples.json:rag[4].hits[1].district
+- slide: ret-cosine
+  in: body
+  shape: 10
+  cell:
+  - 2
+  - 2
+  full: true
+  text: '{} tỷ'
+  keys:
+  - examples.json:rag[4].hits[1].price_vnd
+  fmt:
+  - bn2
+- slide: ret-cosine
+  in: body
+  shape: 10
+  cell:
+  - 3
+  - 0
+  full: true
+  text: …{}
+  keys:
+  - examples.json:rag[4].hits[2].listing_id
+  fmt:
+  - last6
+- slide: ret-cosine
+  in: body
+  shape: 10
+  cell:
+  - 3
+  - 1
+  text: Quận 7
+  allow: nguyên văn examples.json:rag[4].hits[2].district
+- slide: ret-cosine
+  in: body
+  shape: 10
+  cell:
+  - 3
+  - 2
+  full: true
+  text: '{} tỷ'
+  keys:
+  - examples.json:rag[4].hits[2].price_vnd
+  fmt:
+  - bn2
+- slide: ret-cosine
+  in: body
+  shape: 12
+  text: Điểm cosine của e5 dồn về khoảng hẹp, nên chỉ đọc thứ hạng.
+  allow: chú thích
+- slide: ret-hybrid
+  in: body
+  shape: 17
+  text: Ví dụ RRF với k = 60
+  allow: hằng số RRF (vre.config.rrf_k)
+- slide: ret-hybrid
+  in: body
+  shape: 18
+  cell:
+  - 1
+  - 1
+  text: '1'
+  allow: ví dụ hạng
+- slide: ret-hybrid
+  in: body
+  shape: 18
+  cell:
+  - 1
+  - 2
+  text: '3'
+  allow: ví dụ hạng
+- slide: ret-hybrid
+  in: body
+  shape: 18
+  cell:
+  - 1
+  - 3
+  text: 0,03227
+  allow: tính từ ví dụ hạng, k = 60
+- slide: ret-hybrid
+  in: body
+  shape: 18
+  cell:
+  - 2
+  - 1
+  text: '2'
+  allow: ví dụ hạng
+- slide: ret-hybrid
+  in: body
+  shape: 18
+  cell:
+  - 2
+  - 2
+  text: '1'
+  allow: ví dụ hạng
+- slide: ret-hybrid
+  in: body
+  shape: 18
+  cell:
+  - 2
+  - 3
+  text: 0,03252
+  allow: tính từ ví dụ hạng, k = 60
+- slide: ret-hybrid
+  in: body
+  shape: 18
+  cell:
+  - 3
+  - 1
+  text: '3'
+  allow: ví dụ hạng
+- slide: ret-hybrid
+  in: body
+  shape: 18
+  cell:
+  - 3
+  - 2
+  text: '2'
+  allow: ví dụ hạng
+- slide: ret-hybrid
+  in: body
+  shape: 18
+  cell:
+  - 3
+  - 3
+  text: 0,03200
+  allow: tính từ ví dụ hạng, k = 60
+- slide: ret-hybrid
+  in: body
+  shape: 19
+  text: RRF(d) = Σ 1 / (k + hạng)
+  allow: công thức RRF
+- slide: ret-prefilter
+  in: notes
+  shape: 0
+  full: true
+  text: 'Pre-filter lọc trên payload index của Qdrant trước khi tìm lân cận, nên mọi tin trả về đều thoả điều kiện. Post-filter lấy top-k theo nghĩa rồi mới lọc, điều kiện càng chặt càng rơi nhiều tin.
+    Trên benchmark, cùng cấu hình hybrid, Recall@5 là {} khi lọc trước và {} khi không lọc. Rerank bằng cross-encoder chính xác hơn nhưng chậm; trong lượt đo này rerank tắt vì model không có trong cache.
+    Slide sau: ba điểm RAG có thể hỏng.'
+  keys:
+  - ablation.json:runs[retrieval=hybrid,prefilter=True].recall_at_5
+  - ablation.json:runs[retrieval=hybrid,prefilter=False].recall_at_5
+  fmt:
+  - dec2
+  - dec2
+- slide: ret-prefilter
+  in: body
+  shape: 25
+  full: true
+  text: '{}'
+  keys:
+  - ablation.json:runs[retrieval=hybrid,prefilter=True].recall_at_5
+  fmt:
+  - dec2
+- slide: ret-prefilter
+  in: body
+  shape: 28
+  full: true
+  text: '{}'
+  keys:
+  - ablation.json:runs[retrieval=hybrid,prefilter=False].recall_at_5
+  fmt:
+  - dec2
+- slide: ret-prefilter
+  in: body
+  shape: 31
+  full: true
+  text: 'Nguồn: ablation truy xuất, {} câu có tập tin đúng.'
+  keys:
+  - ablation.json:runs[retrieval=hybrid,prefilter=True].n_questions
+  fmt:
+  - int
+- slide: ret-prompt
+  in: notes
+  shape: 0
+  full: true
+  text: 'Prompt có ba vùng: chỉ thị, ngữ cảnh và câu hỏi. Chỉ thị bắt trả lời từ ngữ cảnh, chép nguyên mã tin cho mỗi nhận định, và cho phép nói không đủ dữ liệu. Mỗi tin trong ngữ cảnh được bọc trong thẻ
+    tai liệu, và mô hình được dặn bỏ qua mọi mệnh lệnh nằm trong tin đăng, vì tin do người dùng tự nhập có thể chứa câu chèn lệnh. Sau khi sinh, code kiểm mọi mã tin được trích có nằm trong ngữ cảnh không.
+    Tỷ lệ câu có trích dẫn lạ của Basic RAG trong lượt đo là {}%. Chỉ đưa top-k tin vào prompt để tránh hiện tượng thông tin ở giữa ngữ cảnh dài bị bỏ sót. Slide sau: Basic RAG gặp câu tổng hợp.'
+  keys:
+  - eval_summary.json:cost.basic_rag.bad_citation_rate
+  fmt:
+  - pct1
+- slide: ret-prompt
+  in: body
+  shape: 19
+  full: true
+  text: '{}%'
+  keys:
+  - eval_summary.json:cost.basic_rag.bad_citation_rate
+  fmt:
+  - pct1
+- slide: ret-prompt
+  in: body
+  shape: 22
+  full: true
+  text: '{}%'
+  keys:
+  - eval_summary.json:cost.graph.bad_citation_rate
+  fmt:
+  - pct1
+- slide: ret-prompt
+  in: body
+  shape: 25
+  full: true
+  text: '{}%'
+  keys:
+  - eval_summary.json:cost.hybrid.bad_citation_rate
+  fmt:
+  - pct1
+- slide: ret-basic-fails
+  in: body
+  shape: 17
+  text: Giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy là bao nhiêu?
+  allow: nguyên văn error_analysis.json:examples[9].question
+- slide: ret-basic-fails
+  in: body
+  shape: 20
+  text: Không đủ dữ liệu để tính toán giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy.
+  allow: trích nguyên văn error_analysis.json:examples[9].answer_excerpt
+- slide: ret-basic-fails
+  in: body
+  shape: 22
+  full: true
+  text: Đáp án chuẩn (SQL)  {}
+  keys:
+  - error_analysis.json:examples[9].gt_value
+  fmt:
+  - dec2
+- slide: ret-practice-2
+  in: notes
+  shape: 0
+  full: true
+  text: 'Ba nhóm câu chạy thật qua pipeline Basic RAG trong lượt eval. Tra cứu đúng {}%, ràng buộc {}%, tổng hợp {}%. Mỗi nhóm chỉ có {} câu trong tập con đã chạy, nên một câu đúng sai làm số thay đổi rất
+    nhiều; khoảng tin cậy trên slide cho thấy điều đó. Đọc xu hướng, không đọc từng điểm phần trăm. Câu chuyển: Basic RAG tìm tin giỏi nhưng không hiểu quan hệ; chặng 3 dựng Knowledge Graph để biểu diễn
+    quan hệ đó.'
+  keys:
+  - eval_summary.json:by_category.lookup.basic_rag.accuracy
+  - eval_summary.json:by_category.constraint.basic_rag.accuracy
+  - eval_summary.json:by_category.aggregate.basic_rag.accuracy
+  - eval_summary.json:by_category.lookup.basic_rag.n
+  fmt:
+  - pct0
+  - pct0
+  - pct0
+  - int
+- slide: ret-practice-2
+  chart: 5
+  series:
+  - name: Độ chính xác
+    key:
+    - eval_summary.json:by_category.lookup.basic_rag.accuracy
+    - eval_summary.json:by_category.constraint.basic_rag.accuracy
+    - eval_summary.json:by_category.aggregate.basic_rag.accuracy
+  categories:
+  - Tra cứu
+  - Ràng buộc
+  - Tổng hợp
+- slide: ret-practice-2
+  in: body
+  shape: 7
+  full: true
+  text: '{}%'
+  keys:
+  - eval_summary.json:by_category.lookup.basic_rag.accuracy
+  fmt:
+  - pct0
+- slide: ret-practice-2
+  in: body
+  shape: 8
+  full: true
+  text: Tra cứu · n = {} · CI95 {}–{}%
+  keys:
+  - eval_summary.json:by_category.lookup.basic_rag.n
+  - eval_summary.json:by_category.lookup.basic_rag.ci95[0]
+  - eval_summary.json:by_category.lookup.basic_rag.ci95[1]
+  fmt:
+  - int
+  - pct0
+  - pct0
+- slide: ret-practice-2
+  in: body
+  shape: 10
+  full: true
+  text: '{}%'
+  keys:
+  - eval_summary.json:by_category.constraint.basic_rag.accuracy
+  fmt:
+  - pct0
+- slide: ret-practice-2
+  in: body
+  shape: 11
+  full: true
+  text: Ràng buộc · n = {} · CI95 {}–{}%
+  keys:
+  - eval_summary.json:by_category.constraint.basic_rag.n
+  - eval_summary.json:by_category.constraint.basic_rag.ci95[0]
+  - eval_summary.json:by_category.constraint.basic_rag.ci95[1]
+  fmt:
+  - int
+  - pct0
+  - pct0
+- slide: ret-practice-2
+  in: body
+  shape: 13
+  full: true
+  text: '{}%'
+  keys:
+  - eval_summary.json:by_category.aggregate.basic_rag.accuracy
+  fmt:
+  - pct0
+- slide: ret-practice-2
+  in: body
+  shape: 14
+  full: true
+  text: Tổng hợp · n = {} · CI95 {}–{}%
+  keys:
+  - eval_summary.json:by_category.aggregate.basic_rag.n
+  - eval_summary.json:by_category.aggregate.basic_rag.ci95[0]
+  - eval_summary.json:by_category.aggregate.basic_rag.ci95[1]
+  fmt:
+  - int
+  - pct0
+  - pct0
+- slide: ret-practice-2
+  in: body
+  shape: 15
+  full: true
+  text: Chấm bằng luật trên tập con {} câu; mô hình sinh gemini-flash-lite-latest.
+  keys:
+  - eval_summary.json:n_questions
+  fmt:
+  - int
+- slide: kg-schema
+  in: notes
+  shape: 0
+  full: true
+  text: 'Đây là schema đang chạy trên toàn bộ dữ liệu: {} nhãn node và {} kiểu cạnh. Listing ở giữa, nối sang loại hình, tháng đăng, tiện ích; bên phải là phường, đường, dự án, đều đi lên quận rồi lên tỉnh.
+    Khoá của phường gồm cả tỉnh và quận, vì cùng một tên phường có ở nhiều quận; chỉ dùng tên thì các phường trùng tên bị gộp sai. Phường nối vào cụm phường do Leiden tìm ra. MarketStat là thống kê giá
+    tính sẵn theo khu vực, loại hình và tháng, trỏ vào khu vực bằng STAT_OF. Dữ liệu thiếu phường ở {}% tin, nên tin đó nối thẳng vào quận, thiếu cả quận thì nối vào tỉnh. Slide sau: đồ thị được dựng thế
+    nào.'
+  keys:
+  - graph_report.json:nodes|len
+  - graph_report.json:relationships|len
+  - ingest_report.json:missing_pct.ward
+  fmt:
+  - int
+  - int
+  - dec1
+- slide: kg-schema
+  in: body
+  shape: 40
+  full: true
+  text: 'Cạnh dự phòng  {}% tin thiếu phường:
+
+    Listing -[:IN_DISTRICT]-> District; thiếu cả quận: -[:IN_PROVINCE]-> Province'
+  keys:
+  - ingest_report.json:missing_pct.ward
+  fmt:
+  - dec1
+- slide: kg-build
+  in: notes
+  shape: 0
+  full: true
+  text: 'Mọi node và cạnh đều sinh từ cột có cấu trúc bằng luật, không gọi LLM. DuckDB đọc bảng sạch, tính sẵn các tổng hợp rồi xuất CSV theo định dạng của neo4j-admin. Lệnh database import full nạp toàn
+    bộ đồ thị trong {} giây, nhanh hơn nhiều so với chèn từng lô bằng Cypher. Sau đó tạo ràng buộc khoá, index, rồi kiểm hai bất biến: số tin và tổng giá phải khớp bảng sạch. Phần khó là entity resolution:
+    cùng một quận có thể ghi là chữ số, viết tắt hay đầy đủ, nếu không chuẩn hoá sẽ thành nhiều node. Tiện ích lấy bằng từ điển biểu thức chính quy trên mô tả; MarketStat là trung vị giá tính bằng DuckDB,
+    chỉ tạo khi nhóm đủ số tin tối thiểu. Slide sau: truy vấn đồ thị bằng Cypher.'
+  keys:
+  - graph_report.json:import_seconds
+  fmt:
+  - dec1
+- slide: kg-build
+  in: body
+  shape: 10
+  text: neo4j-admin
+  allow: tên công cụ
+- slide: kg-build
+  in: body
+  shape: 21
+  full: true
+  text: '{} giây'
+  keys:
+  - graph_report.json:import_seconds
+  fmt:
+  - dec1
+- slide: kg-build
+  in: body
+  shape: 24
+  full: true
+  text: '{}'
+  keys:
+  - graph_report.json:nodes.Listing
+  fmt:
+  - int
+- slide: kg-build
+  in: body
+  shape: 28
+  text: “Q.7”, “q7”, “7”
+  allow: ví dụ chuẩn hoá trong places.normalize_place
+- slide: kg-build
+  in: body
+  shape: 31
+  text: Quận 7
+  allow: ví dụ chuẩn hoá trong places.normalize_place
+- slide: kg-build
+  in: body
+  shape: 33
+  text: “P.5”
+  allow: ví dụ chuẩn hoá trong places.normalize_place
+- slide: kg-build
+  in: body
+  shape: 36
+  text: Phường 5
+  allow: ví dụ chuẩn hoá trong places.normalize_place
+- slide: kg-cypher-agg
+  in: body
+  shape: 7
+  text: Giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy là bao nhiêu?
+  allow: nguyên văn examples.json:graph[2].question
+- slide: kg-cypher-agg
+  in: body
+  shape: 9
+  text: 'MATCH (m:MarketStat {scope: ''district'', area_key: ''Hà Nội|Cầu Giấy'', property_type: ''Căn hộ chung cư'', month: ''ALL'', deal_type: ''sale''}) RETURN round(m.median_price_m2_mil, 2) AS median_price_m2_mil,
+    m.n AS n
+
+    LIMIT 50'
+  allow: nguyên văn examples.json:graph[2].cypher
+- slide: kg-cypher-agg
+  in: body
+  shape: 10
+  full: true
+  text: '{} dòng kết quả  ·  {} ms trên Neo4j'
+  keys:
+  - examples.json:graph[2].rows|len
+  - examples.json:graph[2].latency_ms
+  fmt:
+  - int
+  - int
+- slide: kg-cypher-multihop
+  in: body
+  shape: 7
+  text: Dự án Sunshine Sky City nằm ở quận nào, và giá/m² căn hộ của quận đó cao hay thấp hơn trung vị căn hộ toàn TP.HCM bao nhiêu %?
+  allow: nguyên văn examples.json:graph[1].question
+- slide: kg-cypher-multihop
+  in: body
+  shape: 9
+  text: 'MATCH (p:Project)-[:IN_DISTRICT]->(d:District)-[:IN_PROVINCE]->(:Province {name: ''Hồ Chí Minh''}) WHERE toLower(p.name) CONTAINS ''sunshine sky city'' MATCH (md:MarketStat {scope: ''district'',
+    property_type: ''Căn hộ chung cư'', month: ''ALL'', deal_type: ''sale''})-[:STAT_OF]->(d) MATCH (mv:MarketStat {scope: ''province'', property_type: ''Căn hộ chung cư'', month: ''ALL'', deal_type: ''sale''})-[:STAT_OF]->(:Province
+    {name: ''Hồ Chí Minh''}) RETURN d.name AS district, round(md.median_price_m2_mil, 2) AS district_median_m2_mil, round(mv.median_price_m2_mil, 2) AS hcm_median_m2_mil, round((md.median_price_m2_mil /
+    mv.median_price_m2_mil - 1) * 100, 2) AS percentage_diff
+
+    LIMIT 50'
+  allow: nguyên văn examples.json:graph[1].cypher
+- slide: kg-cypher-multihop
+  in: body
+  shape: 10
+  full: true
+  text: '{} dòng kết quả  ·  {} ms trên Neo4j'
+  keys:
+  - examples.json:graph[1].rows|len
+  - examples.json:graph[1].latency_ms
+  fmt:
+  - int
+  - int
+- slide: kg-communities
+  in: notes
+  shape: 0
+  full: true
+  text: 'Hai khái niệm. Centrality đo mức quan trọng của một node theo vị trí, dạng đơn giản nhất là bậc chia cho số node còn lại; ở đây chỉ để hiểu, pipeline không dùng nó. Modularity đo các cụm dày cạnh
+    hơn ngẫu nhiên bao nhiêu. Không chạy Leiden trên cây tỉnh, quận, phường, vì cây không có cạnh chéo nên không có cụm. Code dựng đồ thị tương đồng: mỗi phường đủ số tin là một hồ sơ gồm log giá trên mét
+    vuông trung vị, log số tin và tỷ lệ từng loại hình, chuẩn hoá rồi nối với {} phường gần nhất. Leiden với seed {} chia {} phường thành {} cụm, modularity {}, tức cấu trúc cụm rõ. Mỗi phường được nối
+    vào node Cluster. Slide sau là con số kiểm tra toàn đồ thị.'
+  keys:
+  - graph_report.json:communities.k
+  - graph_report.json:communities.seed
+  - graph_report.json:communities.n_wards
+  - graph_report.json:communities.n_clusters
+  - graph_report.json:communities.modularity
+  fmt:
+  - int
+  - int
+  - int
+  - int
+  - dec2
+- slide: kg-communities
+  in: body
+  shape: 6
+  text: C(v) = deg(v) / (n − 1)
+  allow: công thức lý thuyết
+- slide: kg-communities
+  in: body
+  shape: 8
+  text: Q = Σc [ Lc / m − (dc / 2m)² ]
+  allow: công thức lý thuyết
+- slide: kg-communities
+  in: body
+  shape: 9
+  text: 'Ví dụ: hai tam giác nối một cạnh, m = 7, Q = 5/14 ≈ 0,357; node cầu C = 0,6'
+  allow: ví dụ minh hoạ công thức
+- slide: kg-communities
+  in: body
+  shape: 13
+  full: true
+  text: '{}'
+  keys:
+  - graph_report.json:communities.n_wards
+  fmt:
+  - int
+- slide: kg-communities
+  in: body
+  shape: 16
+  full: true
+  text: '{}'
+  keys:
+  - graph_report.json:communities.n_clusters
+  fmt:
+  - int
+- slide: kg-communities
+  in: body
+  shape: 19
+  full: true
+  text: '{}'
+  keys:
+  - graph_report.json:communities.modularity
+  fmt:
+  - dec2
+- slide: kg-communities
+  in: body
+  shape: 22
+  full: true
+  text: k = {}
+  keys:
+  - graph_report.json:communities.k
+  fmt:
+  - int
+- slide: kg-communities
+  in: body
+  shape: 23
+  full: true
+  text: láng giềng gần nhất, seed {}
+  keys:
+  - graph_report.json:communities.seed
+  fmt:
+  - int
+- slide: kg-practice-3
+  in: notes
+  shape: 0
+  full: true
+  text: 'Đồ thị nạp từ đúng bảng sạch của chặng một: tổng cộng {} node và {} cạnh. Listing chiếm phần lớn node với {} tin; MarketStat có {} node thống kê. Bên cạnh, IN_WARD có {} cạnh, ít hơn số tin vì
+    tin thiếu phường đi qua IN_DISTRICT. HAS_AMENITY nhiều hơn số tin vì một tin có thể có nhiều tiện ích. Hai bất biến được kiểm tự động sau import: số node Listing bằng số tin sạch, và tổng giá khớp.
+    Cả hai đều đạt. Hết phần knowledge graph; tiếp theo là ghép RAG và đồ thị thành GraphRAG và đo xem có đáng không.'
+  keys:
+  - ={graph_report.json:nodes.Listing}+{graph_report.json:nodes.PropertyType}+{graph_report.json:nodes.Province}+{graph_report.json:nodes.District}+{graph_report.json:nodes.Ward}+{graph_report.json:nodes.Street}+{graph_report.json:nodes.Project}+{graph_report.json:nodes.Month}+{graph_report.json:nodes.Amenity}+{graph_report.json:nodes.Cluster}+{graph_report.json:nodes.MarketStat}
+  - ={graph_report.json:relationships.HAS_AMENITY}+{graph_report.json:relationships.IN_CLUSTER}+{graph_report.json:relationships.IN_DISTRICT}+{graph_report.json:relationships.IN_PROJECT}+{graph_report.json:relationships.IN_PROVINCE}+{graph_report.json:relationships.IN_WARD}+{graph_report.json:relationships.OF_TYPE}+{graph_report.json:relationships.ON_STREET}+{graph_report.json:relationships.POSTED_IN}+{graph_report.json:relationships.STAT_OF}
+  - graph_report.json:nodes.Listing
+  - graph_report.json:nodes.MarketStat
+  - graph_report.json:relationships.IN_WARD
+  fmt:
+  - int
+  - int
+  - int
+  - int
+  - int
+- slide: kg-practice-3
+  chart: 6
+  series:
+  - name: Số node
+    key:
+    - graph_report.json:nodes.MarketStat
+    - graph_report.json:nodes.Cluster
+    - graph_report.json:nodes.Amenity
+    - graph_report.json:nodes.Month
+    - graph_report.json:nodes.Project
+    - graph_report.json:nodes.Street
+    - graph_report.json:nodes.Ward
+    - graph_report.json:nodes.District
+    - graph_report.json:nodes.Province
+    - graph_report.json:nodes.PropertyType
+    - graph_report.json:nodes.Listing
+  categories:
+  - MarketStat
+  - Cluster
+  - Amenity
+  - Month
+  - Project
+  - Street
+  - Ward
+  - District
+  - Province
+  - PropertyType
+  - Listing
+- slide: kg-practice-3
+  chart: 8
+  series:
+  - name: Số cạnh
+    key:
+    - graph_report.json:relationships.STAT_OF
+    - graph_report.json:relationships.POSTED_IN
+    - graph_report.json:relationships.ON_STREET
+    - graph_report.json:relationships.OF_TYPE
+    - graph_report.json:relationships.IN_WARD
+    - graph_report.json:relationships.IN_PROVINCE
+    - graph_report.json:relationships.IN_PROJECT
+    - graph_report.json:relationships.IN_DISTRICT
+    - graph_report.json:relationships.IN_CLUSTER
+    - graph_report.json:relationships.HAS_AMENITY
+  categories:
+  - STAT_OF
+  - POSTED_IN
+  - ON_STREET
+  - OF_TYPE
+  - IN_WARD
+  - IN_PROVINCE
+  - IN_PROJECT
+  - IN_DISTRICT
+  - IN_CLUSTER
+  - HAS_AMENITY
+- slide: kg-practice-3
+  in: body
+  shape: 10
+  full: true
+  text: 'Tổng  {} node · {} cạnh     Số Listing = số tin sạch: đạt     Tổng giá khớp: đạt'
+  keys:
+  - ={graph_report.json:nodes.Listing}+{graph_report.json:nodes.PropertyType}+{graph_report.json:nodes.Province}+{graph_report.json:nodes.District}+{graph_report.json:nodes.Ward}+{graph_report.json:nodes.Street}+{graph_report.json:nodes.Project}+{graph_report.json:nodes.Month}+{graph_report.json:nodes.Amenity}+{graph_report.json:nodes.Cluster}+{graph_report.json:nodes.MarketStat}
+  - ={graph_report.json:relationships.HAS_AMENITY}+{graph_report.json:relationships.IN_CLUSTER}+{graph_report.json:relationships.IN_DISTRICT}+{graph_report.json:relationships.IN_PROJECT}+{graph_report.json:relationships.IN_PROVINCE}+{graph_report.json:relationships.IN_WARD}+{graph_report.json:relationships.OF_TYPE}+{graph_report.json:relationships.ON_STREET}+{graph_report.json:relationships.POSTED_IN}+{graph_report.json:relationships.STAT_OF}
+  fmt:
+  - int
+  - int
+- slide: gr-patterns
+  in: body
+  shape: 12
+  text: 10 s, tối đa 50 dòng
+  allow: hằng số vre.config cypher_timeout, cypher_max_rows
+- slide: gr-patterns
+  in: body
+  shape: 18
+  text: 'MATCH (d:District)-[:IN_PROVINCE]->(:Province {name: ''Đà Nẵng''}) WITH d MATCH (l:Listing)-[:IN_WARD|IN_DISTRICT*1..2]->(d) WHERE l.property_type = ''Đất'' AND l.deal_type = ''sale'' RETURN count(DISTINCT
+    l) AS n_listings
+
+    LIMIT 50'
+  allow: nguyên văn examples.json:graph[4].cypher
+- slide: gr-router
+  in: notes
+  shape: 0
+  full: true
+  text: 'Router là một lượt gọi mô hình với structured output, chọn một trong các nhãn: Basic RAG, Graph, cả hai, hoặc định giá. Trên tập con đã chạy, router chọn đúng nhãn ở {}% số câu; bỏ nhóm không trả
+    lời được thì {}%. Nếu Cypher lỗi, trả về rỗng hoặc Neo4j mất kết nối, hệ thống lui về Basic RAG. Truy xuất RAG chạy song song với router nên đường lui không phải chờ thêm. Slide sau: đánh giá được thiết
+    kế thế nào.'
+  keys:
+  - eval_summary.json:router.accuracy
+  - eval_summary.json:router.accuracy_excl_unanswerable
+  fmt:
+  - pct0
+  - pct0
+- slide: gr-router
+  in: body
+  shape: 20
+  full: true
+  text: '{}%'
+  keys:
+  - eval_summary.json:router.accuracy
+  fmt:
+  - pct0
+- slide: gr-router
+  in: body
+  shape: 21
+  full: true
+  text: router đúng nhãn · {} câu
+  keys:
+  - eval_summary.json:router.n
+  fmt:
+  - int
+- slide: gr-router
+  in: body
+  shape: 23
+  full: true
+  text: '{}%'
+  keys:
+  - eval_summary.json:router.accuracy_excl_unanswerable
+  fmt:
+  - pct0
+- slide: gr-router
+  in: body
+  shape: 24
+  full: true
+  text: không tính câu không trả lời được · {} câu
+  keys:
+  - eval_summary.json:router.n_excl_unanswerable
+  fmt:
+  - int
+- slide: ev-setup
+  in: notes
+  shape: 0
+  full: true
+  text: 'Benchmark có {} câu, đáp án chuẩn tính bằng SQL trên bảng sạch. Vì hạn mức API miễn phí, lượt đánh giá chạy trên tập con {} câu, đủ chín nhóm, với cả bốn hệ. Mô hình sinh là bản miễn phí ghi trên
+    slide, khác mô hình dự kiến ban đầu. Câu trả lời được chấm bằng luật so với đáp án chuẩn, không dùng LLM làm giám khảo. Vì vậy mọi con số phía sau là chỉ dấu trên cỡ mẫu nhỏ, và slide nào cũng ghi n
+    với khoảng tin cậy. Slide sau: ablation truy xuất.'
+  keys:
+  - benchmark_gt.json:items|len
+  - eval_summary.json:n_questions
+  fmt:
+  - int
+  - int
+- slide: ev-setup
+  in: body
+  shape: 6
+  full: true
+  text: '{}'
+  keys:
+  - benchmark_gt.json:items|len
+  fmt:
+  - int
+- slide: ev-setup
+  in: body
+  shape: 9
+  full: true
+  text: '{}'
+  keys:
+  - eval_summary.json:n_questions
+  fmt:
+  - int
+- slide: ev-setup
+  in: body
+  shape: 12
+  full: true
+  text: '{}'
+  keys:
+  - eval_summary.json:systems|len
+  fmt:
+  - int
+- slide: ev-setup
+  in: body
+  shape: 17
+  text: 'Câu hỏi tìm tin: Recall@5 theo cụm tin trùng; ≥ 0,8 được 2 điểm, > 0 được 1 điểm'
+  allow: luật chấm, eval_summary.scoring_rules
+- slide: ev-setup
+  in: body
+  shape: 17
+  text: 'Câu hỏi ra số: có số trong câu trả lời lệch ≤ 5% so với đáp án SQL được 2 điểm, ≤ 20% được 1 điểm'
+  allow: luật chấm, eval_summary.scoring_rules
+- slide: ev-setup
+  in: body
+  shape: 17
+  text: 'Câu hỏi ra tên (quận, tháng): câu trả lời chứa đúng tên được 2 điểm'
+  allow: luật chấm, eval_summary.scoring_rules
+- slide: ev-setup
+  in: body
+  shape: 17
+  text: “Đúng” = đạt 2/2 điểm; faithfulness để trống vì cần LLM chấm
+  allow: định nghĩa accuracy trong eval
+- slide: ev-ablation
+  in: notes
+  shape: 0
+  full: true
+  text: 'Ablation chạy thẳng trên chỉ mục đầy đủ, không qua mô hình sinh, nên không tốn lời gọi API. Ba cách truy xuất dense, BM25 và hybrid, mỗi cách có và không có lọc trước. Rerank không có trong lượt
+    đo vì model cross-encoder không có trong cache. Số câu có tập tin đúng: {}. Bước nhảy lớn nhất đến từ bộ lọc, vì câu tìm tin có điều kiện cứng mà embedding không đảm bảo. Trên dữ liệu này BM25 có lọc
+    ngang hoặc hơn hybrid có lọc, vì đề bài chứa tên dự án và con số khớp đúng từ. Hybrid không tự động thắng; phải đo mới biết. So sánh model embedding nằm ở chặng 1. Slide sau: kết quả câu trả lời theo
+    nhóm câu hỏi.'
+  keys:
+  - ablation.json:runs[0].n_questions
+  fmt:
+  - int
+- slide: ev-ablation
+  chart: 5
+  series:
+  - name: Recall@5
+    key: ablation.json:runs[*].recall_at_5
+  - name: MRR
+    key: ablation.json:runs[*].mrr
+  categories:
+  - Dense
+  - Dense + lọc
+  - BM25
+  - BM25 + lọc
+  - Hybrid
+  - Hybrid + lọc
+- slide: ev-ablation
+  in: body
+  shape: 6
+  text: Không qua LLM, 0 lời gọi API
+  allow: mô tả thiết kế ablation
+- slide: ev-results
+  in: notes
+  shape: 0
+  full: true
+  text: 'Biểu đồ là độ chính xác của bốn hệ theo từng nhóm câu. Tổng trên tập con: LLM thuần {}%, Basic RAG {}%, Graph {}%, Hybrid {}%. Mỗi nhóm chỉ có {} câu, nên một câu đúng sai làm số đổi rất nhiều.
+    Đọc theo hình dạng: hệ nào mạnh ở nhóm nào, chứ không so từng điểm phần trăm. Khoảng tin cậy ở slide sau.'
+  keys:
+  - eval_summary.json:overall.llm_only.accuracy
+  - eval_summary.json:overall.basic_rag.accuracy
+  - eval_summary.json:overall.graph.accuracy
+  - eval_summary.json:overall.hybrid.accuracy
+  - eval_summary.json:by_category.lookup.llm_only.n
+  fmt:
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - int
+- slide: ev-results
+  chart: 5
+  series:
+  - name: LLM thuần
+    key:
+    - eval_summary.json:by_category.lookup.llm_only.accuracy
+    - eval_summary.json:by_category.constraint.llm_only.accuracy
+    - eval_summary.json:by_category.aggregate.llm_only.accuracy
+    - eval_summary.json:by_category.multihop.llm_only.accuracy
+    - eval_summary.json:by_category.temporal.llm_only.accuracy
+    - eval_summary.json:by_category.comparison.llm_only.accuracy
+    - eval_summary.json:by_category.project_street.llm_only.accuracy
+    - eval_summary.json:by_category.valuation.llm_only.accuracy
+    - eval_summary.json:by_category.unanswerable.llm_only.accuracy
+  - name: Basic RAG
+    key:
+    - eval_summary.json:by_category.lookup.basic_rag.accuracy
+    - eval_summary.json:by_category.constraint.basic_rag.accuracy
+    - eval_summary.json:by_category.aggregate.basic_rag.accuracy
+    - eval_summary.json:by_category.multihop.basic_rag.accuracy
+    - eval_summary.json:by_category.temporal.basic_rag.accuracy
+    - eval_summary.json:by_category.comparison.basic_rag.accuracy
+    - eval_summary.json:by_category.project_street.basic_rag.accuracy
+    - eval_summary.json:by_category.valuation.basic_rag.accuracy
+    - eval_summary.json:by_category.unanswerable.basic_rag.accuracy
+  - name: Graph
+    key:
+    - eval_summary.json:by_category.lookup.graph.accuracy
+    - eval_summary.json:by_category.constraint.graph.accuracy
+    - eval_summary.json:by_category.aggregate.graph.accuracy
+    - eval_summary.json:by_category.multihop.graph.accuracy
+    - eval_summary.json:by_category.temporal.graph.accuracy
+    - eval_summary.json:by_category.comparison.graph.accuracy
+    - eval_summary.json:by_category.project_street.graph.accuracy
+    - eval_summary.json:by_category.valuation.graph.accuracy
+    - eval_summary.json:by_category.unanswerable.graph.accuracy
+  - name: Hybrid
+    key:
+    - eval_summary.json:by_category.lookup.hybrid.accuracy
+    - eval_summary.json:by_category.constraint.hybrid.accuracy
+    - eval_summary.json:by_category.aggregate.hybrid.accuracy
+    - eval_summary.json:by_category.multihop.hybrid.accuracy
+    - eval_summary.json:by_category.temporal.hybrid.accuracy
+    - eval_summary.json:by_category.comparison.hybrid.accuracy
+    - eval_summary.json:by_category.project_street.hybrid.accuracy
+    - eval_summary.json:by_category.valuation.hybrid.accuracy
+    - eval_summary.json:by_category.unanswerable.hybrid.accuracy
+  categories:
+  - Tra cứu
+  - Ràng buộc
+  - Tổng hợp
+  - Đa chặng
+  - Thời gian
+  - So sánh
+  - Dự án, đường
+  - Định giá
+  - Không trả lời được
+- slide: ev-results
+  in: body
+  shape: 6
+  full: true
+  text: Tổng · LLM thuần {}% · Basic RAG {}% · Graph {}% · Hybrid {}% · n = {} câu mỗi hệ
+  keys:
+  - eval_summary.json:overall.llm_only.accuracy
+  - eval_summary.json:overall.basic_rag.accuracy
+  - eval_summary.json:overall.graph.accuracy
+  - eval_summary.json:overall.hybrid.accuracy
+  - eval_summary.json:n_questions
+  fmt:
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - int
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 1
+  - 2
+  full: true
+  text: '{} điểm %'
+  keys:
+  - eval_summary.json:pairwise[20].diff
+  fmt:
+  - spct0
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 1
+  - 3
+  full: true
+  text: '{} … {}'
+  keys:
+  - eval_summary.json:pairwise[20].ci95[0]
+  - eval_summary.json:pairwise[20].ci95[1]
+  fmt:
+  - spct0
+  - spct0
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 1
+  - 4
+  full: true
+  text: '{}'
+  keys:
+  - eval_summary.json:pairwise[20].p_value
+  fmt:
+  - dec2
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 2
+  - 2
+  full: true
+  text: '{} điểm %'
+  keys:
+  - eval_summary.json:pairwise[0].diff
+  fmt:
+  - spct0
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 2
+  - 3
+  full: true
+  text: '{} … {}'
+  keys:
+  - eval_summary.json:pairwise[0].ci95[0]
+  - eval_summary.json:pairwise[0].ci95[1]
+  fmt:
+  - spct0
+  - spct0
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 2
+  - 4
+  full: true
+  text: '{}'
+  keys:
+  - eval_summary.json:pairwise[0].p_value
+  fmt:
+  - dec2
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 3
+  - 2
+  full: true
+  text: '{} điểm %'
+  keys:
+  - eval_summary.json:pairwise[40].diff
+  fmt:
+  - spct0
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 3
+  - 3
+  full: true
+  text: '{} … {}'
+  keys:
+  - eval_summary.json:pairwise[40].ci95[0]
+  - eval_summary.json:pairwise[40].ci95[1]
+  fmt:
+  - spct0
+  - spct0
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 3
+  - 4
+  full: true
+  text: '{}'
+  keys:
+  - eval_summary.json:pairwise[40].p_value
+  fmt:
+  - dec2
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 4
+  - 2
+  full: true
+  text: '{} điểm %'
+  keys:
+  - eval_summary.json:pairwise[26].diff
+  fmt:
+  - spct0
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 4
+  - 3
+  full: true
+  text: '{} … {}'
+  keys:
+  - eval_summary.json:pairwise[26].ci95[0]
+  - eval_summary.json:pairwise[26].ci95[1]
+  fmt:
+  - spct0
+  - spct0
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 4
+  - 4
+  full: true
+  text: '{}'
+  keys:
+  - eval_summary.json:pairwise[26].p_value
+  fmt:
+  - dec2
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 5
+  - 2
+  full: true
+  text: '{} điểm %'
+  keys:
+  - eval_summary.json:pairwise[6].diff
+  fmt:
+  - spct0
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 5
+  - 3
+  full: true
+  text: '{} … {}'
+  keys:
+  - eval_summary.json:pairwise[6].ci95[0]
+  - eval_summary.json:pairwise[6].ci95[1]
+  fmt:
+  - spct0
+  - spct0
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 5
+  - 4
+  full: true
+  text: '{}'
+  keys:
+  - eval_summary.json:pairwise[6].p_value
+  fmt:
+  - dec2
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 6
+  - 2
+  full: true
+  text: '{} điểm %'
+  keys:
+  - eval_summary.json:pairwise[46].diff
+  fmt:
+  - spct0
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 6
+  - 3
+  full: true
+  text: '{} … {}'
+  keys:
+  - eval_summary.json:pairwise[46].ci95[0]
+  - eval_summary.json:pairwise[46].ci95[1]
+  fmt:
+  - spct0
+  - spct0
+- slide: ev-pairwise
+  in: body
+  shape: 5
+  cell:
+  - 6
+  - 4
+  full: true
+  text: '{}'
+  keys:
+  - eval_summary.json:pairwise[46].p_value
+  fmt:
+  - dec2
+- slide: ev-cost
+  in: notes
+  shape: 0
+  full: true
+  text: 'Độ trễ đo trên từng câu trong lượt eval, gồm router và Cypher nếu có. LLM thuần trung vị {} giây, Basic RAG trung vị {} giây, Graph trung vị {} giây, Hybrid trung vị {} giây. Token vào phản ánh
+    lượng ngữ cảnh: Graph và Hybrid nhận thêm kết quả Cypher và lượt router. Độ trễ còn phụ thuộc API miễn phí và số lượt thử lại, nên chỉ so tương đối. Các rủi ro triển khai đều có biện pháp trong code:
+    giá là giá rao chứ không phải giá giao dịch, nên luôn kèm nguồn; số điện thoại bị ẩn trước khi lưu; Cypher chỉ đọc; API có giới hạn tần suất và cache. Slide sau: hệ thống sai vì đâu.'
+  keys:
+  - eval_summary.json:cost.llm_only.latency_ms_p50
+  - eval_summary.json:cost.basic_rag.latency_ms_p50
+  - eval_summary.json:cost.graph.latency_ms_p50
+  - eval_summary.json:cost.hybrid.latency_ms_p50
+  fmt:
+  - k1
+  - k1
+  - k1
+  - k1
+- slide: ev-cost
+  chart: 5
+  series:
+  - name: p50 (giây)
+    key:
+    - eval_summary.json:cost.llm_only.latency_ms_p50
+    - eval_summary.json:cost.basic_rag.latency_ms_p50
+    - eval_summary.json:cost.graph.latency_ms_p50
+    - eval_summary.json:cost.hybrid.latency_ms_p50
+    scale: 0.001
+  - name: p95 (giây)
+    key:
+    - eval_summary.json:cost.llm_only.latency_ms_p95
+    - eval_summary.json:cost.basic_rag.latency_ms_p95
+    - eval_summary.json:cost.graph.latency_ms_p95
+    - eval_summary.json:cost.hybrid.latency_ms_p95
+    scale: 0.001
+  categories:
+  - LLM thuần
+  - Basic RAG
+  - Graph
+  - Hybrid
+- slide: ev-cost
+  chart: 6
+  series:
+  - name: Token vào
+    key:
+    - eval_summary.json:cost.llm_only.input_tokens_mean
+    - eval_summary.json:cost.basic_rag.input_tokens_mean
+    - eval_summary.json:cost.graph.input_tokens_mean
+    - eval_summary.json:cost.hybrid.input_tokens_mean
+  - name: Token ra
+    key:
+    - eval_summary.json:cost.llm_only.output_tokens_mean
+    - eval_summary.json:cost.basic_rag.output_tokens_mean
+    - eval_summary.json:cost.graph.output_tokens_mean
+    - eval_summary.json:cost.hybrid.output_tokens_mean
+  categories:
+  - LLM thuần
+  - Basic RAG
+  - Graph
+  - Hybrid
+- slide: ev-errors
+  in: body
+  shape: 5
+  cell:
+  - 1
+  - 3
+  full: true
+  text: '{}'
+  keys:
+  - error_analysis.json:counts.graph.cypher_wrong_result
+  fmt:
+  - int
+- slide: ev-errors
+  in: body
+  shape: 5
+  cell:
+  - 1
+  - 4
+  full: true
+  text: '{}'
+  keys:
+  - error_analysis.json:counts.hybrid.cypher_wrong_result
+  fmt:
+  - int
+- slide: ev-errors
+  in: body
+  shape: 5
+  cell:
+  - 2
+  - 2
+  full: true
+  text: '{}'
+  keys:
+  - error_analysis.json:counts.basic_rag.retrieval_miss
+  fmt:
+  - int
+- slide: ev-errors
+  in: body
+  shape: 5
+  cell:
+  - 2
+  - 4
+  full: true
+  text: '{}'
+  keys:
+  - error_analysis.json:counts.hybrid.retrieval_miss
+  fmt:
+  - int
+- slide: ev-errors
+  in: body
+  shape: 5
+  cell:
+  - 3
+  - 1
+  full: true
+  text: '{}'
+  keys:
+  - error_analysis.json:counts.llm_only.refusal_missing
+  fmt:
+  - int
+- slide: ev-errors
+  in: body
+  shape: 5
+  cell:
+  - 3
+  - 2
+  full: true
+  text: '{}'
+  keys:
+  - error_analysis.json:counts.basic_rag.refusal_missing
+  fmt:
+  - int
+- slide: ev-errors
+  in: body
+  shape: 5
+  cell:
+  - 3
+  - 3
+  full: true
+  text: '{}'
+  keys:
+  - error_analysis.json:counts.graph.refusal_missing
+  fmt:
+  - int
+- slide: ev-errors
+  in: body
+  shape: 5
+  cell:
+  - 3
+  - 4
+  full: true
+  text: '{}'
+  keys:
+  - error_analysis.json:counts.hybrid.refusal_missing
+  fmt:
+  - int
+- slide: ev-errors
+  in: body
+  shape: 5
+  cell:
+  - 4
+  - 1
+  full: true
+  text: '{}'
+  keys:
+  - error_analysis.json:counts.llm_only.insufficient_context
+  fmt:
+  - int
+- slide: ev-errors
+  in: body
+  shape: 5
+  cell:
+  - 4
+  - 2
+  full: true
+  text: '{}'
+  keys:
+  - error_analysis.json:counts.basic_rag.insufficient_context
+  fmt:
+  - int
+- slide: ev-errors
+  in: body
+  shape: 5
+  cell:
+  - 4
+  - 3
+  full: true
+  text: '{}'
+  keys:
+  - error_analysis.json:counts.graph.insufficient_context
+  fmt:
+  - int
+- slide: ev-errors
+  in: body
+  shape: 5
+  cell:
+  - 4
+  - 4
+  full: true
+  text: '{}'
+  keys:
+  - error_analysis.json:counts.hybrid.insufficient_context
+  fmt:
+  - int
+- slide: ev-errors
+  in: body
+  shape: 8
+  text: Giá/m² trung vị căn hộ ở Vinhomes Central Park cao gấp bao nhiêu lần trung vị căn hộ của quận chứa dự án đó?
+  allow: trích nguyên văn error_analysis.json:examples[0].question
+- slide: ev-errors
+  in: body
+  shape: 11
+  text: Căn hộ 75m2, 2 phòng ngủ ở Cầu Giấy, Hà Nội hiện đáng giá khoảng bao nhiêu?
+  allow: trích nguyên văn error_analysis.json:examples[2].question
+- slide: ext-valuation
+  in: body
+  shape: 4
+  full: true
+  text: 'Thêm embedding mô tả cho sai số định giá thấp nhất: MAPE {}% so với {}% khi chỉ dùng bảng số'
+  keys:
+  - valuation_metrics.json:variants.full.mape
+  - valuation_metrics.json:variants.tabular.mape
+  fmt:
+  - pct1
+  - pct1
+- slide: ext-valuation
+  in: notes
+  shape: 0
+  full: true
+  text: 'Mô-đun định giá ước lượng giá trên mét vuông của một tin bán. Mốc so sánh đơn giản nhất là lấy trung vị giá của phường. Biến thể bảng số dùng XGBoost trên loại hình, diện tích, số phòng, tiện ích
+    trích từ mô tả, và mã hoá mục tiêu theo tỉnh, quận, phường, đường, dự án. Biến thể đầy đủ thêm embedding mô tả của e5-large, nén PCA 32 chiều. Dữ liệu chia theo thời gian: học trên các tháng cũ, chấm
+    trên các tháng mới nhất, nên không rò tương lai vào quá khứ. Trên {} tin test, MAE của ba biến thể lần lượt {}, {}, {} triệu mỗi mét vuông. Đây là giá rao, không phải giá giao dịch. Slide sau: mô hình
+    dựa vào đặc trưng nào.'
+  keys:
+  - valuation_metrics.json:variants.full.n_test
+  - valuation_metrics.json:variants.baseline_ward_median.mae_mil_m2
+  - valuation_metrics.json:variants.tabular.mae_mil_m2
+  - valuation_metrics.json:variants.full.mae_mil_m2
+  fmt:
+  - int
+  - dec1
+  - dec1
+  - dec1
+- slide: ext-valuation
+  in: notes
+  shape: 0
+  text: e5-large
+  allow: tên model embedding
+- slide: ext-valuation
+  in: notes
+  shape: 0
+  text: PCA 32 chiều
+  allow: hằng số vre.config pca_dim
+- slide: ext-valuation
+  chart: 5
+  series:
+  - name: MAE (triệu/m²)
+    key:
+    - valuation_metrics.json:variants.baseline_ward_median.mae_mil_m2
+    - valuation_metrics.json:variants.tabular.mae_mil_m2
+    - valuation_metrics.json:variants.full.mae_mil_m2
+  categories:
+  - Trung vị phường
+  - XGBoost bảng số
+  - XGBoost + embedding
+- slide: ext-valuation
+  in: body
+  shape: 6
+  cell:
+  - 1
+  - 1
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.baseline_ward_median.mae_mil_m2
+  fmt:
+  - dec1
+- slide: ext-valuation
+  in: body
+  shape: 6
+  cell:
+  - 1
+  - 2
+  full: true
+  text: '{}%'
+  keys:
+  - valuation_metrics.json:variants.baseline_ward_median.mape
+  fmt:
+  - pct1
+- slide: ext-valuation
+  in: body
+  shape: 6
+  cell:
+  - 1
+  - 3
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.baseline_ward_median.r2
+  fmt:
+  - dec2
+- slide: ext-valuation
+  in: body
+  shape: 6
+  cell:
+  - 2
+  - 1
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.tabular.mae_mil_m2
+  fmt:
+  - dec1
+- slide: ext-valuation
+  in: body
+  shape: 6
+  cell:
+  - 2
+  - 2
+  full: true
+  text: '{}%'
+  keys:
+  - valuation_metrics.json:variants.tabular.mape
+  fmt:
+  - pct1
+- slide: ext-valuation
+  in: body
+  shape: 6
+  cell:
+  - 2
+  - 3
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.tabular.r2
+  fmt:
+  - dec2
+- slide: ext-valuation
+  in: body
+  shape: 6
+  cell:
+  - 3
+  - 1
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.full.mae_mil_m2
+  fmt:
+  - dec1
+- slide: ext-valuation
+  in: body
+  shape: 6
+  cell:
+  - 3
+  - 2
+  full: true
+  text: '{}%'
+  keys:
+  - valuation_metrics.json:variants.full.mape
+  fmt:
+  - pct1
+- slide: ext-valuation
+  in: body
+  shape: 6
+  cell:
+  - 3
+  - 3
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.full.r2
+  fmt:
+  - dec2
+- slide: ext-valuation
+  in: body
+  shape: 8
+  full: true
+  text: •  Học  2025-06 → 2026-01 · {} tin
+  keys:
+  - valuation_metrics.json:variants.full.n_train
+  fmt:
+  - int
+- slide: ext-valuation
+  in: body
+  shape: 8
+  text: 2025-06
+  allow: nguyên văn valuation_metrics.json:split.train_months[0]
+- slide: ext-valuation
+  in: body
+  shape: 8
+  text: 2026-01
+  allow: nguyên văn valuation_metrics.json:split.train_months[-1]
+- slide: ext-valuation
+  in: body
+  shape: 9
+  full: true
+  text: •  Chấm  2026-02 → 2026-03 · {} tin
+  keys:
+  - valuation_metrics.json:variants.full.n_test
+  fmt:
+  - int
+- slide: ext-valuation
+  in: body
+  shape: 9
+  text: 2026-02
+  allow: nguyên văn valuation_metrics.json:split.test_months[0]
+- slide: ext-valuation
+  in: body
+  shape: 9
+  text: 2026-03
+  allow: nguyên văn valuation_metrics.json:split.test_months[-1]
+- slide: ext-valuation
+  in: body
+  shape: 10
+  text: e5-large
+  allow: tên model embedding
+- slide: ext-valuation
+  in: body
+  shape: 10
+  text: PCA 32 chiều
+  allow: hằng số vre.config pca_dim
+- slide: ext-valuation-detail
+  in: notes
+  shape: 0
+  full: true
+  text: 'Bên trái là mức đóng góp SHAP trung bình của các đặc trưng mạnh nhất trong biến thể XGBoost + embedding, tính trên thang log giá. Các đặc trưng vị trí dẫn đầu, đúng với trực giác rằng giá nhà trước
+    hết do vị trí. Các thanh tên embedding mô tả là thành phần PCA của văn bản tin đăng: chúng mang thông tin mà cột bảng không có, như mô tả mặt tiền hay tình trạng nhà. Bảng bên phải là sai số theo loại
+    hình; căn hộ dễ đoán nhất vì đồng chất, đất khó nhất. Mô hình cho thuê chưa được huấn luyện vì chỉ {} tin thuê sau làm sạch. Slide sau: webapp đặt các hệ cạnh nhau.'
+  keys:
+  - valuation_metrics.json:rent_model.n_rent
+  fmt:
+  - int
+- slide: ext-valuation-detail
+  chart: 5
+  series:
+  - name: SHAP
+    key:
+    - valuation_metrics.json:variants.full.shap_top[9].mean_abs_contribution
+    - valuation_metrics.json:variants.full.shap_top[8].mean_abs_contribution
+    - valuation_metrics.json:variants.full.shap_top[7].mean_abs_contribution
+    - valuation_metrics.json:variants.full.shap_top[6].mean_abs_contribution
+    - valuation_metrics.json:variants.full.shap_top[5].mean_abs_contribution
+    - valuation_metrics.json:variants.full.shap_top[4].mean_abs_contribution
+    - valuation_metrics.json:variants.full.shap_top[3].mean_abs_contribution
+    - valuation_metrics.json:variants.full.shap_top[2].mean_abs_contribution
+    - valuation_metrics.json:variants.full.shap_top[1].mean_abs_contribution
+    - valuation_metrics.json:variants.full.shap_top[0].mean_abs_contribution
+  categories:
+  - Embedding mô tả C
+  - Dự án
+  - Embedding mô tả B
+  - Đường
+  - Embedding mô tả A
+  - Tỉnh/thành
+  - Diện tích
+  - Phường/xã
+  - Quận/huyện
+  - Loại hình
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 1
+  - 1
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.full.by_property_type[0].n
+  fmt:
+  - int
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 1
+  - 2
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.full.by_property_type[0].mae_mil_m2
+  fmt:
+  - dec1
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 1
+  - 3
+  full: true
+  text: '{}%'
+  keys:
+  - valuation_metrics.json:variants.full.by_property_type[0].mape
+  fmt:
+  - pct0
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 1
+  - 4
+  full: true
+  text: '{}%'
+  keys:
+  - valuation_metrics.json:variants.baseline_ward_median.by_property_type[0].mape
+  fmt:
+  - pct0
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 2
+  - 1
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.full.by_property_type[1].n
+  fmt:
+  - int
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 2
+  - 2
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.full.by_property_type[1].mae_mil_m2
+  fmt:
+  - dec1
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 2
+  - 3
+  full: true
+  text: '{}%'
+  keys:
+  - valuation_metrics.json:variants.full.by_property_type[1].mape
+  fmt:
+  - pct0
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 2
+  - 4
+  full: true
+  text: '{}%'
+  keys:
+  - valuation_metrics.json:variants.baseline_ward_median.by_property_type[1].mape
+  fmt:
+  - pct0
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 3
+  - 1
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.full.by_property_type[2].n
+  fmt:
+  - int
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 3
+  - 2
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.full.by_property_type[2].mae_mil_m2
+  fmt:
+  - dec1
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 3
+  - 3
+  full: true
+  text: '{}%'
+  keys:
+  - valuation_metrics.json:variants.full.by_property_type[2].mape
+  fmt:
+  - pct0
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 3
+  - 4
+  full: true
+  text: '{}%'
+  keys:
+  - valuation_metrics.json:variants.baseline_ward_median.by_property_type[2].mape
+  fmt:
+  - pct0
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 4
+  - 1
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.full.by_property_type[3].n
+  fmt:
+  - int
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 4
+  - 2
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.full.by_property_type[3].mae_mil_m2
+  fmt:
+  - dec1
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 4
+  - 3
+  full: true
+  text: '{}%'
+  keys:
+  - valuation_metrics.json:variants.full.by_property_type[3].mape
+  fmt:
+  - pct0
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 4
+  - 4
+  full: true
+  text: '{}%'
+  keys:
+  - valuation_metrics.json:variants.baseline_ward_median.by_property_type[3].mape
+  fmt:
+  - pct0
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 5
+  - 1
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.full.by_property_type[4].n
+  fmt:
+  - int
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 5
+  - 2
+  full: true
+  text: '{}'
+  keys:
+  - valuation_metrics.json:variants.full.by_property_type[4].mae_mil_m2
+  fmt:
+  - dec1
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 5
+  - 3
+  full: true
+  text: '{}%'
+  keys:
+  - valuation_metrics.json:variants.full.by_property_type[4].mape
+  fmt:
+  - pct0
+- slide: ext-valuation-detail
+  in: body
+  shape: 6
+  cell:
+  - 5
+  - 4
+  full: true
+  text: '{}%'
+  keys:
+  - valuation_metrics.json:variants.baseline_ward_median.by_property_type[4].mape
+  fmt:
+  - pct0
+- slide: ext-valuation-detail
+  in: body
+  shape: 8
+  full: true
+  text: 'Cho thuê: chưa huấn luyện
+
+    Chỉ {} tin thuê, dưới ngưỡng tối thiểu 20.000 tin'
+  keys:
+  - valuation_metrics.json:rent_model.n_rent
+  fmt:
+  - int
+- slide: ext-valuation-detail
+  in: body
+  shape: 8
+  text: 20.000 tin
+  allow: hằng số vre.config rent_min_rows
+- slide: end-limits
+  in: notes
+  shape: 0
+  full: true
+  text: 'Về đánh giá, benchmark có {} câu nhưng lượt chạy chỉ dùng tập con {} câu vì hạn mức API miễn phí, chấm bằng luật so với đáp án SQL và chưa đo faithfulness bằng mô hình giám khảo. Mô hình sinh là
+    gemini-flash-lite-latest, khác gpt-oss-120b dự kiến ban đầu. Về dữ liệu, giá là giá rao, không phải giá giao dịch; địa giới có cả tên cũ và tên sau sáp nhập năm 2025; tin không có toạ độ; nhiều cột
+    thiếu, ví dụ đường thiếu {}% và dự án thiếu {}%. Giấy phép dữ liệu chỉ cho phép dùng phi thương mại. Cột bên phải là việc làm tiếp. Slide sau: những điều cần nhớ.'
+  keys:
+  - benchmark_gt.json:items|len
+  - eval_summary.json:n_questions
+  - ingest_report.json:missing_pct.street
+  - ingest_report.json:missing_pct.project
+  fmt:
+  - int
+  - int
+  - dec0
+  - dec0
+- slide: end-limits
+  in: notes
+  shape: 0
+  text: gpt-oss-120b
+  allow: tên model sinh dự kiến ban đầu trong plan
+- slide: end-limits
+  in: body
+  shape: 7
+  full: true
+  text: '•  Tập con {} câu trên {} câu benchmark
+
+    •  Chấm bằng luật so với đáp án SQL; chưa có faithfulness bằng LLM
+
+    •  Mô hình sinh: gemini-flash-lite-latest
+
+    •  Khác gpt-oss-120b dự kiến, do hạn mức và rate limit API'
+  keys:
+  - eval_summary.json:n_questions
+  - benchmark_gt.json:items|len
+  fmt:
+  - int
+  - int
+- slide: end-limits
+  in: body
+  shape: 7
+  text: gpt-oss-120b
+  allow: tên model sinh dự kiến ban đầu trong plan
+- slide: end-limits
+  in: body
+  shape: 10
+  full: true
+  text: '•  Giá rao ≠ giá giao dịch
+
+    •  Địa giới cũ lẫn tên sau sáp nhập 2025
+
+    •  Không có toạ độ
+
+    •  Thiếu cột: phường {}%, đường {}%, dự án {}%
+
+    •  Giấy phép CC-BY-NC 4.0: chỉ phi thương mại'
+  keys:
+  - ingest_report.json:missing_pct.ward
+  - ingest_report.json:missing_pct.street
+  - ingest_report.json:missing_pct.project
+  fmt:
+  - dec0
+  - dec0
+  - dec0
+- slide: end-limits
+  in: body
+  shape: 10
+  text: 'Giấy phép CC-BY-NC 4.0: chỉ phi thương mại'
+  allow: tên giấy phép dataset
+- slide: end-qa
+  in: body
+  shape: 8
+  text: Giấy phép CC-BY-NC 4.0
+  allow: tên giấy phép dataset
+- slide: end-qa
+  in: body
+  shape: 10
+  text: arXiv:2404.16130
+  allow: mã arXiv tài liệu tham khảo
+- slide: end-qa
+  in: body
+  shape: 10
+  text: multilingual-e5-large
+  allow: tên model embedding
+- slide: intro-cover
+  in: body
+  shape: 14
+  text: '1'
+  allow: số trang
+- slide: intro-cover
+  in: body
+  shape: 15
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: intro-agenda
+  in: body
+  shape: 31
+  text: '2'
+  allow: số trang
+- slide: intro-agenda
+  in: body
+  shape: 32
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: intro-questions
+  in: body
+  shape: 27
+  text: '3'
+  allow: số trang
+- slide: intro-questions
+  in: body
+  shape: 28
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: intro-llm-vs-rag
+  in: body
+  shape: 15
+  text: '4'
+  allow: số trang
+- slide: intro-llm-vs-rag
+  in: body
+  shape: 16
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: rag-theory
+  in: body
+  shape: 18
+  text: '5'
+  allow: số trang
+- slide: rag-theory
+  in: body
+  shape: 19
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: rag-two-phases
+  in: body
+  shape: 41
+  text: '6'
+  allow: số trang
+- slide: rag-two-phases
+  in: body
+  shape: 42
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: data-overview
+  in: body
+  shape: 26
+  text: '7'
+  allow: số trang
+- slide: data-overview
+  in: body
+  shape: 27
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: eda-price
+  in: body
+  shape: 9
+  text: '8'
+  allow: số trang
+- slide: eda-price
+  in: body
+  shape: 10
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: eda-geo
+  in: body
+  shape: 9
+  text: '9'
+  allow: số trang
+- slide: eda-geo
+  in: body
+  shape: 10
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: eda-trend
+  in: body
+  shape: 9
+  text: '10'
+  allow: số trang
+- slide: eda-trend
+  in: body
+  shape: 10
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: eda-quality
+  in: body
+  shape: 38
+  text: '11'
+  allow: số trang
+- slide: eda-quality
+  in: body
+  shape: 39
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: rag-two-kinds
+  in: body
+  shape: 16
+  text: '12'
+  allow: số trang
+- slide: rag-two-kinds
+  in: body
+  shape: 17
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: rag-chunking
+  in: body
+  shape: 29
+  text: '13'
+  allow: số trang
+- slide: rag-chunking
+  in: body
+  shape: 30
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: emb-theory
+  in: body
+  shape: 15
+  text: '14'
+  allow: số trang
+- slide: emb-theory
+  in: body
+  shape: 16
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: emb-choice
+  in: body
+  shape: 29
+  text: '15'
+  allow: số trang
+- slide: emb-choice
+  in: body
+  shape: 30
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: rag-practice-1
+  in: body
+  shape: 37
+  text: '16'
+  allow: số trang
+- slide: rag-practice-1
+  in: body
+  shape: 38
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: scale-3-5m
+  in: body
+  shape: 33
+  text: '17'
+  allow: số trang
+- slide: scale-3-5m
+  in: body
+  shape: 34
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: arch-overview
+  in: body
+  shape: 45
+  text: '18'
+  allow: số trang
+- slide: arch-overview
+  in: body
+  shape: 46
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ret-three-needs
+  in: body
+  shape: 19
+  text: '19'
+  allow: số trang
+- slide: ret-three-needs
+  in: body
+  shape: 20
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ret-filters
+  in: body
+  shape: 22
+  text: '20'
+  allow: số trang
+- slide: ret-filters
+  in: body
+  shape: 23
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ret-cosine
+  in: body
+  shape: 13
+  text: '21'
+  allow: số trang
+- slide: ret-cosine
+  in: body
+  shape: 14
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ret-hybrid
+  in: body
+  shape: 20
+  text: '22'
+  allow: số trang
+- slide: ret-hybrid
+  in: body
+  shape: 21
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ret-prefilter
+  in: body
+  shape: 32
+  text: '23'
+  allow: số trang
+- slide: ret-prefilter
+  in: body
+  shape: 33
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ret-failures
+  in: body
+  shape: 27
+  text: '24'
+  allow: số trang
+- slide: ret-failures
+  in: body
+  shape: 28
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ret-prompt
+  in: body
+  shape: 27
+  text: '25'
+  allow: số trang
+- slide: ret-prompt
+  in: body
+  shape: 28
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ret-basic-fails
+  in: body
+  shape: 23
+  text: '26'
+  allow: số trang
+- slide: ret-basic-fails
+  in: body
+  shape: 24
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ret-practice-2
+  in: body
+  shape: 16
+  text: '27'
+  allow: số trang
+- slide: ret-practice-2
+  in: body
+  shape: 17
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: kg-why
+  in: body
+  shape: 25
+  text: '28'
+  allow: số trang
+- slide: kg-why
+  in: body
+  shape: 26
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: kg-triple
+  in: body
+  shape: 29
+  text: '29'
+  allow: số trang
+- slide: kg-triple
+  in: body
+  shape: 30
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: kg-models
+  in: body
+  shape: 8
+  text: '30'
+  allow: số trang
+- slide: kg-models
+  in: body
+  shape: 9
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: kg-schema-rules
+  in: body
+  shape: 19
+  text: '31'
+  allow: số trang
+- slide: kg-schema-rules
+  in: body
+  shape: 20
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: kg-schema
+  in: body
+  shape: 42
+  text: '32'
+  allow: số trang
+- slide: kg-schema
+  in: body
+  shape: 43
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: kg-build
+  in: body
+  shape: 50
+  text: '33'
+  allow: số trang
+- slide: kg-build
+  in: body
+  shape: 51
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: kg-cypher-agg
+  in: body
+  shape: 11
+  text: '34'
+  allow: số trang
+- slide: kg-cypher-agg
+  in: body
+  shape: 12
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: kg-cypher-multihop
+  in: body
+  shape: 11
+  text: '35'
+  allow: số trang
+- slide: kg-cypher-multihop
+  in: body
+  shape: 12
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: kg-communities
+  in: body
+  shape: 25
+  text: '36'
+  allow: số trang
+- slide: kg-communities
+  in: body
+  shape: 26
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: kg-practice-3
+  in: body
+  shape: 11
+  text: '37'
+  allow: số trang
+- slide: kg-practice-3
+  in: body
+  shape: 12
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: gr-theory
+  in: body
+  shape: 30
+  text: '38'
+  allow: số trang
+- slide: gr-theory
+  in: body
+  shape: 31
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: gr-compare
+  in: body
+  shape: 6
+  text: '39'
+  allow: số trang
+- slide: gr-compare
+  in: body
+  shape: 7
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: gr-patterns
+  in: body
+  shape: 19
+  text: '40'
+  allow: số trang
+- slide: gr-patterns
+  in: body
+  shape: 20
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: gr-router
+  in: body
+  shape: 26
+  text: '41'
+  allow: số trang
+- slide: gr-router
+  in: body
+  shape: 27
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ev-layers
+  in: body
+  shape: 14
+  text: '42'
+  allow: số trang
+- slide: ev-layers
+  in: body
+  shape: 15
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ev-setup
+  in: body
+  shape: 18
+  text: '43'
+  allow: số trang
+- slide: ev-setup
+  in: body
+  shape: 19
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ev-ablation
+  in: body
+  shape: 7
+  text: '44'
+  allow: số trang
+- slide: ev-ablation
+  in: body
+  shape: 8
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ev-results
+  in: body
+  shape: 7
+  text: '45'
+  allow: số trang
+- slide: ev-results
+  in: body
+  shape: 8
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ev-pairwise
+  in: body
+  shape: 6
+  text: '46'
+  allow: số trang
+- slide: ev-pairwise
+  in: body
+  shape: 7
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ev-cost
+  in: body
+  shape: 8
+  text: '47'
+  allow: số trang
+- slide: ev-cost
+  in: body
+  shape: 9
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ev-errors
+  in: body
+  shape: 12
+  text: '48'
+  allow: số trang
+- slide: ev-errors
+  in: body
+  shape: 13
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ext-valuation
+  in: body
+  shape: 11
+  text: '49'
+  allow: số trang
+- slide: ext-valuation
+  in: body
+  shape: 12
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ext-valuation-detail
+  in: body
+  shape: 10
+  text: '50'
+  allow: số trang
+- slide: ext-valuation-detail
+  in: body
+  shape: 11
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: ext-demo
+  in: body
+  shape: 13
+  text: '51'
+  allow: số trang
+- slide: ext-demo
+  in: body
+  shape: 14
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: end-limits
+  in: body
+  shape: 14
+  text: '52'
+  allow: số trang
+- slide: end-limits
+  in: body
+  shape: 15
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: end-takeaways
+  in: body
+  shape: 21
+  text: '53'
+  allow: số trang
+- slide: end-takeaways
+  in: body
+  shape: 22
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+- slide: end-qa
+  in: body
+  shape: 11
+  text: '54'
+  allow: số trang
+- slide: end-qa
+  in: body
+  shape: 12
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
+fonts_allow:
+- slide: intro-cover
+  shape: 14
+  reason: footer/số trang
+- slide: intro-cover
+  shape: 15
+  reason: footer/số trang
+- slide: intro-agenda
+  shape: 31
+  reason: footer/số trang
+- slide: intro-agenda
+  shape: 32
+  reason: footer/số trang
+- slide: intro-questions
+  shape: 27
+  reason: footer/số trang
+- slide: intro-questions
+  shape: 28
+  reason: footer/số trang
+- slide: intro-llm-vs-rag
+  shape: 15
+  reason: footer/số trang
+- slide: intro-llm-vs-rag
+  shape: 16
+  reason: footer/số trang
+- slide: rag-theory
+  shape: 18
+  reason: footer/số trang
+- slide: rag-theory
+  shape: 19
+  reason: footer/số trang
+- slide: rag-two-phases
+  shape: 41
+  reason: footer/số trang
+- slide: rag-two-phases
+  shape: 42
+  reason: footer/số trang
+- slide: data-overview
+  shape: 26
+  reason: footer/số trang
+- slide: data-overview
+  shape: 27
+  reason: footer/số trang
+- slide: eda-price
+  shape: 9
+  reason: footer/số trang
+- slide: eda-price
+  shape: 10
+  reason: footer/số trang
+- slide: eda-geo
+  shape: 9
+  reason: footer/số trang
+- slide: eda-geo
+  shape: 10
+  reason: footer/số trang
+- slide: eda-trend
+  shape: 9
+  reason: footer/số trang
+- slide: eda-trend
+  shape: 10
+  reason: footer/số trang
+- slide: eda-quality
+  shape: 38
+  reason: footer/số trang
+- slide: eda-quality
+  shape: 39
+  reason: footer/số trang
+- slide: rag-two-kinds
+  shape: 16
+  reason: footer/số trang
+- slide: rag-two-kinds
+  shape: 17
+  reason: footer/số trang
+- slide: rag-chunking
+  shape: 29
+  reason: footer/số trang
+- slide: rag-chunking
+  shape: 30
+  reason: footer/số trang
+- slide: emb-theory
+  shape: 15
+  reason: footer/số trang
+- slide: emb-theory
+  shape: 16
+  reason: footer/số trang
+- slide: emb-choice
+  shape: 29
+  reason: footer/số trang
+- slide: emb-choice
+  shape: 30
+  reason: footer/số trang
+- slide: rag-practice-1
+  shape: 37
+  reason: footer/số trang
+- slide: rag-practice-1
+  shape: 38
+  reason: footer/số trang
+- slide: scale-3-5m
+  shape: 33
+  reason: footer/số trang
+- slide: scale-3-5m
+  shape: 34
+  reason: footer/số trang
+- slide: arch-overview
+  shape: 45
+  reason: footer/số trang
+- slide: arch-overview
+  shape: 46
+  reason: footer/số trang
+- slide: ret-three-needs
+  shape: 19
+  reason: footer/số trang
+- slide: ret-three-needs
+  shape: 20
+  reason: footer/số trang
+- slide: ret-filters
+  shape: 22
+  reason: footer/số trang
+- slide: ret-filters
+  shape: 23
+  reason: footer/số trang
+- slide: ret-cosine
+  shape: 13
+  reason: footer/số trang
+- slide: ret-cosine
+  shape: 14
+  reason: footer/số trang
+- slide: ret-hybrid
+  shape: 20
+  reason: footer/số trang
+- slide: ret-hybrid
+  shape: 21
+  reason: footer/số trang
+- slide: ret-prefilter
+  shape: 32
+  reason: footer/số trang
+- slide: ret-prefilter
+  shape: 33
+  reason: footer/số trang
+- slide: ret-failures
+  shape: 27
+  reason: footer/số trang
+- slide: ret-failures
+  shape: 28
+  reason: footer/số trang
+- slide: ret-prompt
+  shape: 27
+  reason: footer/số trang
+- slide: ret-prompt
+  shape: 28
+  reason: footer/số trang
+- slide: ret-basic-fails
+  shape: 23
+  reason: footer/số trang
+- slide: ret-basic-fails
+  shape: 24
+  reason: footer/số trang
+- slide: ret-practice-2
+  shape: 16
+  reason: footer/số trang
+- slide: ret-practice-2
+  shape: 17
+  reason: footer/số trang
+- slide: kg-why
+  shape: 25
+  reason: footer/số trang
+- slide: kg-why
+  shape: 26
+  reason: footer/số trang
+- slide: kg-triple
+  shape: 29
+  reason: footer/số trang
+- slide: kg-triple
+  shape: 30
+  reason: footer/số trang
+- slide: kg-models
+  shape: 8
+  reason: footer/số trang
+- slide: kg-models
+  shape: 9
+  reason: footer/số trang
+- slide: kg-schema-rules
+  shape: 19
+  reason: footer/số trang
+- slide: kg-schema-rules
+  shape: 20
+  reason: footer/số trang
+- slide: kg-schema
+  shape: 42
+  reason: footer/số trang
+- slide: kg-schema
+  shape: 43
+  reason: footer/số trang
+- slide: kg-build
+  shape: 50
+  reason: footer/số trang
+- slide: kg-build
+  shape: 51
+  reason: footer/số trang
+- slide: kg-cypher-agg
+  shape: 11
+  reason: footer/số trang
+- slide: kg-cypher-agg
+  shape: 12
+  reason: footer/số trang
+- slide: kg-cypher-multihop
+  shape: 11
+  reason: footer/số trang
+- slide: kg-cypher-multihop
+  shape: 12
+  reason: footer/số trang
+- slide: kg-communities
+  shape: 25
+  reason: footer/số trang
+- slide: kg-communities
+  shape: 26
+  reason: footer/số trang
+- slide: kg-practice-3
+  shape: 11
+  reason: footer/số trang
+- slide: kg-practice-3
+  shape: 12
+  reason: footer/số trang
+- slide: gr-theory
+  shape: 30
+  reason: footer/số trang
+- slide: gr-theory
+  shape: 31
+  reason: footer/số trang
+- slide: gr-compare
+  shape: 6
+  reason: footer/số trang
+- slide: gr-compare
+  shape: 7
+  reason: footer/số trang
+- slide: gr-patterns
+  shape: 19
+  reason: footer/số trang
+- slide: gr-patterns
+  shape: 20
+  reason: footer/số trang
+- slide: gr-router
+  shape: 26
+  reason: footer/số trang
+- slide: gr-router
+  shape: 27
+  reason: footer/số trang
+- slide: ev-layers
+  shape: 14
+  reason: footer/số trang
+- slide: ev-layers
+  shape: 15
+  reason: footer/số trang
+- slide: ev-setup
+  shape: 18
+  reason: footer/số trang
+- slide: ev-setup
+  shape: 19
+  reason: footer/số trang
+- slide: ev-ablation
+  shape: 7
+  reason: footer/số trang
+- slide: ev-ablation
+  shape: 8
+  reason: footer/số trang
+- slide: ev-results
+  shape: 7
+  reason: footer/số trang
+- slide: ev-results
+  shape: 8
+  reason: footer/số trang
+- slide: ev-pairwise
+  shape: 6
+  reason: footer/số trang
+- slide: ev-pairwise
+  shape: 7
+  reason: footer/số trang
+- slide: ev-cost
+  shape: 8
+  reason: footer/số trang
+- slide: ev-cost
+  shape: 9
+  reason: footer/số trang
+- slide: ev-errors
+  shape: 12
+  reason: footer/số trang
+- slide: ev-errors
+  shape: 13
+  reason: footer/số trang
+- slide: ext-valuation
+  shape: 11
+  reason: footer/số trang
+- slide: ext-valuation
+  shape: 12
+  reason: footer/số trang
+- slide: ext-valuation-detail
+  shape: 10
+  reason: footer/số trang
+- slide: ext-valuation-detail
+  shape: 11
+  reason: footer/số trang
+- slide: ext-demo
+  shape: 13
+  reason: footer/số trang
+- slide: ext-demo
+  shape: 14
+  reason: footer/số trang
+- slide: end-limits
+  shape: 14
+  reason: footer/số trang
+- slide: end-limits
+  shape: 15
+  reason: footer/số trang
+- slide: end-takeaways
+  shape: 21
+  reason: footer/số trang
+- slide: end-takeaways
+  shape: 22
+  reason: footer/số trang
+- slide: end-qa
+  shape: 11
+  reason: footer/số trang
+- slide: end-qa
+  shape: 12
+  reason: footer/số trang

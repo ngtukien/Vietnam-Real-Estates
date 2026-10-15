@@ -1,0 +1,695 @@
+# Mục kiểm số cho slide/hoc-phan-4-graphrag.html (scripts/slide_numbers.py html).
+# Số dữ liệu nằm trong khối `const V={...}` của trang; mỗi khoá V có một mục dưới đây trỏ về results/*.json.
+# Sinh lại khối V: chạy `slide_numbers.py html … --apply` (không gõ tay số).
+html:
+- text: rawRows:'{}'
+  keys:
+  - ingest_report.json:raw_rows
+  fmt:
+  - int
+- text: kept:'{}'
+  keys:
+  - ingest_report.json:dedup.kept
+  fmt:
+  - int
+- text: dupDropped:'{}'
+  keys:
+  - =({ingest_report.json:dedup.exact_dup}+{ingest_report.json:dedup.prefix_dup})
+  fmt:
+  - int
+- text: fixedThousand:'{}'
+  keys:
+  - ingest_report.json:price.fixed_thousand
+  fmt:
+  - int
+- text: wardMissing:'{}'
+  keys:
+  - ingest_report.json:missing_pct.ward
+  fmt:
+  - dec1
+- text: chunks:'{}'
+  keys:
+  - night_report.json:counters.chunks
+  fmt:
+  - int
+- text: dim:'{}'
+  keys:
+  - embedding_benchmark.json:[model=intfloat/multilingual-e5-large].dim
+  fmt:
+  - int
+- text: chunkSize:'{}'
+  keys:
+  - ablation.json:runs[name=full_dense].chunk_size
+  fmt:
+  - int
+- text: topK:'{}'
+  keys:
+  - eval_summary.json:retrieval.basic_rag.top_k
+  fmt:
+  - int
+- text: nodes:'{}'
+  keys:
+  - ={graph_report.json:nodes.Listing}+{graph_report.json:nodes.PropertyType}+{graph_report.json:nodes.Province}+{graph_report.json:nodes.District}+{graph_report.json:nodes.Ward}+{graph_report.json:nodes.Street}+{graph_report.json:nodes.Project}+{graph_report.json:nodes.Month}+{graph_report.json:nodes.Amenity}+{graph_report.json:nodes.Cluster}+{graph_report.json:nodes.MarketStat}
+  fmt:
+  - int
+- text: rels:'{}'
+  keys:
+  - ={graph_report.json:relationships.HAS_AMENITY}+{graph_report.json:relationships.IN_CLUSTER}+{graph_report.json:relationships.IN_DISTRICT}+{graph_report.json:relationships.IN_PROJECT}+{graph_report.json:relationships.IN_PROVINCE}+{graph_report.json:relationships.IN_WARD}+{graph_report.json:relationships.OF_TYPE}+{graph_report.json:relationships.ON_STREET}+{graph_report.json:relationships.POSTED_IN}+{graph_report.json:relationships.STAT_OF}
+  fmt:
+  - int
+- text: provinces:'{}'
+  keys:
+  - graph_report.json:nodes.Province
+  fmt:
+  - int
+- text: districts:'{}'
+  keys:
+  - graph_report.json:nodes.District
+  fmt:
+  - int
+- text: wards:'{}'
+  keys:
+  - graph_report.json:nodes.Ward
+  fmt:
+  - int
+- text: streets:'{}'
+  keys:
+  - graph_report.json:nodes.Street
+  fmt:
+  - int
+- text: projects:'{}'
+  keys:
+  - graph_report.json:nodes.Project
+  fmt:
+  - int
+- text: marketStats:'{}'
+  keys:
+  - graph_report.json:nodes.MarketStat
+  fmt:
+  - int
+- text: clusters:'{}'
+  keys:
+  - graph_report.json:communities.n_clusters
+  fmt:
+  - int
+- text: clusterWards:'{}'
+  keys:
+  - graph_report.json:communities.n_wards
+  fmt:
+  - int
+- text: modularity:'{}'
+  keys:
+  - graph_report.json:communities.modularity
+  fmt:
+  - dec2
+- text: nBench:'{}'
+  keys:
+  - benchmark_gt.json:items|len
+  fmt:
+  - int
+- text: nCat:'{}'
+  keys:
+  - eval_summary.json:coverage|len
+  fmt:
+  - int
+- text: nSub:'{}'
+  keys:
+  - eval_summary.json:n_questions
+  fmt:
+  - int
+- text: perCat:'{}'
+  keys:
+  - eval_summary.json:by_category.lookup.hybrid.n
+  fmt:
+  - int
+- text: nSys:'{}'
+  keys:
+  - eval_summary.json:systems|len
+  fmt:
+  - int
+- text: usd:'{}'
+  keys:
+  - eval_summary.json:cost.hybrid.usd_per_question
+  fmt:
+  - int
+- text: ragasN:'{}'
+  keys:
+  - eval_summary.json:ragas.hybrid.n
+  fmt:
+  - int
+- text: accLlm:'{}'
+  keys:
+  - eval_summary.json:overall.llm_only.accuracy
+  fmt:
+  - pct0
+- text: okLlm:'{}'
+  keys:
+  - ={eval_summary.json:overall.llm_only.accuracy}*{eval_summary.json:overall.llm_only.n}
+  fmt:
+  - int
+- text: accRag:'{}'
+  keys:
+  - eval_summary.json:overall.basic_rag.accuracy
+  fmt:
+  - pct0
+- text: okRag:'{}'
+  keys:
+  - ={eval_summary.json:overall.basic_rag.accuracy}*{eval_summary.json:overall.basic_rag.n}
+  fmt:
+  - int
+- text: accGraph:'{}'
+  keys:
+  - eval_summary.json:overall.graph.accuracy
+  fmt:
+  - pct0
+- text: okGraph:'{}'
+  keys:
+  - ={eval_summary.json:overall.graph.accuracy}*{eval_summary.json:overall.graph.n}
+  fmt:
+  - int
+- text: accHybrid:'{}'
+  keys:
+  - eval_summary.json:overall.hybrid.accuracy
+  fmt:
+  - pct0
+- text: okHybrid:'{}'
+  keys:
+  - ={eval_summary.json:overall.hybrid.accuracy}*{eval_summary.json:overall.hybrid.n}
+  fmt:
+  - int
+- text: routerAcc:'{}'
+  keys:
+  - eval_summary.json:router.accuracy
+  fmt:
+  - pct0
+- text: routerN:'{}'
+  keys:
+  - eval_summary.json:router.n
+  fmt:
+  - int
+- text: routerExcl:'{}'
+  keys:
+  - eval_summary.json:router.accuracy_excl_unanswerable
+  fmt:
+  - pct0
+- text: routerNExcl:'{}'
+  keys:
+  - eval_summary.json:router.n_excl_unanswerable
+  fmt:
+  - int
+- text: routerRagToHybrid:'{}'
+  keys:
+  - eval_summary.json:router.confusion.basic_rag.hybrid
+  fmt:
+  - int
+- text: routerLookupWrong:'{}'
+  keys:
+  - =(1-{eval_summary.json:router.by_category.lookup.accuracy})*{eval_summary.json:router.by_category.lookup.n}
+  fmt:
+  - int
+- text: routerUnansWrong:'{}'
+  keys:
+  - =(1-{eval_summary.json:router.by_category.unanswerable.accuracy})*{eval_summary.json:router.by_category.unanswerable.n}
+  fmt:
+  - int
+- text: routerGraphOk:'{}'
+  keys:
+  - eval_summary.json:router.confusion.graph.graph
+  fmt:
+  - int
+- text: routerValOk:'{}'
+  keys:
+  - eval_summary.json:router.confusion.valuation.valuation
+  fmt:
+  - int
+- text: nBoot:'{}'
+  keys:
+  - eval_summary.json:pairwise[a=hybrid,b=basic_rag,scope=overall,metric=accuracy].n_boot
+  fmt:
+  - int
+- text: retN:'{}'
+  keys:
+  - eval_summary.json:retrieval.basic_rag.n
+  fmt:
+  - int
+- text: retRagR5:'{}'
+  keys:
+  - eval_summary.json:retrieval.basic_rag.recall_at_5
+  fmt:
+  - dec2
+- text: retRagMrr:'{}'
+  keys:
+  - eval_summary.json:retrieval.basic_rag.mrr
+  fmt:
+  - dec2
+- text: retGraphR5:'{}'
+  keys:
+  - eval_summary.json:retrieval.graph.recall_at_5
+  fmt:
+  - dec2
+- text: retGraphMrr:'{}'
+  keys:
+  - eval_summary.json:retrieval.graph.mrr
+  fmt:
+  - dec2
+- text: abQ:'{}'
+  keys:
+  - ablation.json:runs[name=full_dense].n_questions
+  fmt:
+  - int
+- text: abGt:'{}'
+  keys:
+  - ablation.json:corpus.n_gt_listings
+  fmt:
+  - int
+- text: ab_dense:['{}','{}','{}']
+  keys:
+  - ablation.json:runs[name=full_dense].recall_at_5
+  - ablation.json:runs[name=full_dense].mrr
+  - ablation.json:runs[name=full_dense].latency_ms_p50
+  fmt:
+  - dec2
+  - dec2
+  - dec1
+- text: ab_dense_prefilter:['{}','{}','{}']
+  keys:
+  - ablation.json:runs[name=full_dense_prefilter].recall_at_5
+  - ablation.json:runs[name=full_dense_prefilter].mrr
+  - ablation.json:runs[name=full_dense_prefilter].latency_ms_p50
+  fmt:
+  - dec2
+  - dec2
+  - dec1
+- text: ab_bm25:['{}','{}','{}']
+  keys:
+  - ablation.json:runs[name=full_bm25].recall_at_5
+  - ablation.json:runs[name=full_bm25].mrr
+  - ablation.json:runs[name=full_bm25].latency_ms_p50
+  fmt:
+  - dec2
+  - dec2
+  - dec1
+- text: ab_bm25_prefilter:['{}','{}','{}']
+  keys:
+  - ablation.json:runs[name=full_bm25_prefilter].recall_at_5
+  - ablation.json:runs[name=full_bm25_prefilter].mrr
+  - ablation.json:runs[name=full_bm25_prefilter].latency_ms_p50
+  fmt:
+  - dec2
+  - dec2
+  - dec1
+- text: ab_hybrid:['{}','{}','{}']
+  keys:
+  - ablation.json:runs[name=full_hybrid].recall_at_5
+  - ablation.json:runs[name=full_hybrid].mrr
+  - ablation.json:runs[name=full_hybrid].latency_ms_p50
+  fmt:
+  - dec2
+  - dec2
+  - dec1
+- text: ab_hybrid_prefilter:['{}','{}','{}']
+  keys:
+  - ablation.json:runs[name=full_hybrid_prefilter].recall_at_5
+  - ablation.json:runs[name=full_hybrid_prefilter].mrr
+  - ablation.json:runs[name=full_hybrid_prefilter].latency_ms_p50
+  fmt:
+  - dec2
+  - dec2
+  - dec1
+- text: costLlm:['{}','{}','{}','{}']
+  keys:
+  - eval_summary.json:cost.llm_only.latency_ms_p50
+  - eval_summary.json:cost.llm_only.latency_ms_p95
+  - eval_summary.json:cost.llm_only.input_tokens_mean
+  - eval_summary.json:cost.llm_only.output_tokens_mean
+  fmt:
+  - k1
+  - k1
+  - int
+  - int
+- text: costRag:['{}','{}','{}','{}']
+  keys:
+  - eval_summary.json:cost.basic_rag.latency_ms_p50
+  - eval_summary.json:cost.basic_rag.latency_ms_p95
+  - eval_summary.json:cost.basic_rag.input_tokens_mean
+  - eval_summary.json:cost.basic_rag.output_tokens_mean
+  fmt:
+  - k1
+  - k1
+  - int
+  - int
+- text: costGraph:['{}','{}','{}','{}']
+  keys:
+  - eval_summary.json:cost.graph.latency_ms_p50
+  - eval_summary.json:cost.graph.latency_ms_p95
+  - eval_summary.json:cost.graph.input_tokens_mean
+  - eval_summary.json:cost.graph.output_tokens_mean
+  fmt:
+  - k1
+  - k1
+  - int
+  - int
+- text: costHybrid:['{}','{}','{}','{}']
+  keys:
+  - eval_summary.json:cost.hybrid.latency_ms_p50
+  - eval_summary.json:cost.hybrid.latency_ms_p95
+  - eval_summary.json:cost.hybrid.input_tokens_mean
+  - eval_summary.json:cost.hybrid.output_tokens_mean
+  fmt:
+  - k1
+  - k1
+  - int
+  - int
+- text: pwHR:['{}','{}','{}','{}']
+  keys:
+  - eval_summary.json:pairwise[a=hybrid,b=basic_rag,scope=overall,metric=accuracy].diff
+  - eval_summary.json:pairwise[a=hybrid,b=basic_rag,scope=overall,metric=accuracy].ci95[0]
+  - eval_summary.json:pairwise[a=hybrid,b=basic_rag,scope=overall,metric=accuracy].ci95[1]
+  - eval_summary.json:pairwise[a=hybrid,b=basic_rag,scope=overall,metric=accuracy].p_value
+  fmt:
+  - spct0
+  - spct0
+  - spct0
+  - dec2
+- text: pwRL:['{}','{}','{}','{}']
+  keys:
+  - eval_summary.json:pairwise[a=basic_rag,b=llm_only,scope=overall,metric=accuracy].diff
+  - eval_summary.json:pairwise[a=basic_rag,b=llm_only,scope=overall,metric=accuracy].ci95[0]
+  - eval_summary.json:pairwise[a=basic_rag,b=llm_only,scope=overall,metric=accuracy].ci95[1]
+  - eval_summary.json:pairwise[a=basic_rag,b=llm_only,scope=overall,metric=accuracy].p_value
+  fmt:
+  - spct0
+  - spct0
+  - spct0
+  - dec2
+- text: pwHG:['{}','{}','{}','{}']
+  keys:
+  - eval_summary.json:pairwise[a=hybrid,b=graph,scope=overall,metric=accuracy].diff
+  - eval_summary.json:pairwise[a=hybrid,b=graph,scope=overall,metric=accuracy].ci95[0]
+  - eval_summary.json:pairwise[a=hybrid,b=graph,scope=overall,metric=accuracy].ci95[1]
+  - eval_summary.json:pairwise[a=hybrid,b=graph,scope=overall,metric=accuracy].p_value
+  fmt:
+  - spct0
+  - spct0
+  - spct0
+  - dec2
+- text: catLlm:['{}','{}','{}','{}','{}','{}','{}','{}','{}']
+  keys:
+  - eval_summary.json:by_category.lookup.llm_only.accuracy
+  - eval_summary.json:by_category.constraint.llm_only.accuracy
+  - eval_summary.json:by_category.aggregate.llm_only.accuracy
+  - eval_summary.json:by_category.multihop.llm_only.accuracy
+  - eval_summary.json:by_category.temporal.llm_only.accuracy
+  - eval_summary.json:by_category.comparison.llm_only.accuracy
+  - eval_summary.json:by_category.project_street.llm_only.accuracy
+  - eval_summary.json:by_category.valuation.llm_only.accuracy
+  - eval_summary.json:by_category.unanswerable.llm_only.accuracy
+  fmt:
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+- text: catRag:['{}','{}','{}','{}','{}','{}','{}','{}','{}']
+  keys:
+  - eval_summary.json:by_category.lookup.basic_rag.accuracy
+  - eval_summary.json:by_category.constraint.basic_rag.accuracy
+  - eval_summary.json:by_category.aggregate.basic_rag.accuracy
+  - eval_summary.json:by_category.multihop.basic_rag.accuracy
+  - eval_summary.json:by_category.temporal.basic_rag.accuracy
+  - eval_summary.json:by_category.comparison.basic_rag.accuracy
+  - eval_summary.json:by_category.project_street.basic_rag.accuracy
+  - eval_summary.json:by_category.valuation.basic_rag.accuracy
+  - eval_summary.json:by_category.unanswerable.basic_rag.accuracy
+  fmt:
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+- text: catGraph:['{}','{}','{}','{}','{}','{}','{}','{}','{}']
+  keys:
+  - eval_summary.json:by_category.lookup.graph.accuracy
+  - eval_summary.json:by_category.constraint.graph.accuracy
+  - eval_summary.json:by_category.aggregate.graph.accuracy
+  - eval_summary.json:by_category.multihop.graph.accuracy
+  - eval_summary.json:by_category.temporal.graph.accuracy
+  - eval_summary.json:by_category.comparison.graph.accuracy
+  - eval_summary.json:by_category.project_street.graph.accuracy
+  - eval_summary.json:by_category.valuation.graph.accuracy
+  - eval_summary.json:by_category.unanswerable.graph.accuracy
+  fmt:
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+- text: catHybrid:['{}','{}','{}','{}','{}','{}','{}','{}','{}']
+  keys:
+  - eval_summary.json:by_category.lookup.hybrid.accuracy
+  - eval_summary.json:by_category.constraint.hybrid.accuracy
+  - eval_summary.json:by_category.aggregate.hybrid.accuracy
+  - eval_summary.json:by_category.multihop.hybrid.accuracy
+  - eval_summary.json:by_category.temporal.hybrid.accuracy
+  - eval_summary.json:by_category.comparison.hybrid.accuracy
+  - eval_summary.json:by_category.project_street.hybrid.accuracy
+  - eval_summary.json:by_category.valuation.hybrid.accuracy
+  - eval_summary.json:by_category.unanswerable.hybrid.accuracy
+  fmt:
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+  - pct0
+- text: errLlm:{insufficient_context:'{}',refusal_missing:'{}'}
+  keys:
+  - error_analysis.json:counts.llm_only.insufficient_context
+  - error_analysis.json:counts.llm_only.refusal_missing
+  fmt:
+  - int
+  - int
+- text: errRag:{insufficient_context:'{}',retrieval_miss:'{}',refusal_missing:'{}'}
+  keys:
+  - error_analysis.json:counts.basic_rag.insufficient_context
+  - error_analysis.json:counts.basic_rag.retrieval_miss
+  - error_analysis.json:counts.basic_rag.refusal_missing
+  fmt:
+  - int
+  - int
+  - int
+- text: errGraph:{cypher_wrong_result:'{}',refusal_missing:'{}',insufficient_context:'{}'}
+  keys:
+  - error_analysis.json:counts.graph.cypher_wrong_result
+  - error_analysis.json:counts.graph.refusal_missing
+  - error_analysis.json:counts.graph.insufficient_context
+  fmt:
+  - int
+  - int
+  - int
+- text: errHybrid:{retrieval_miss:'{}',cypher_wrong_result:'{}',refusal_missing:'{}',insufficient_context:'{}'}
+  keys:
+  - error_analysis.json:counts.hybrid.retrieval_miss
+  - error_analysis.json:counts.hybrid.cypher_wrong_result
+  - error_analysis.json:counts.hybrid.refusal_missing
+  - error_analysis.json:counts.hybrid.insufficient_context
+  fmt:
+  - int
+  - int
+  - int
+  - int
+- text: ag01Gt:'{}'
+  keys:
+  - benchmark_gt.json:items[id=AG01].gt_rows[0].median_price_m2_mil
+  fmt:
+  - dec2
+- text: ag01N:'{}'
+  keys:
+  - benchmark_gt.json:items[id=AG01].gt_rows[0].n
+  fmt:
+  - int
+- text: ag01Seen:'{}'
+  keys:
+  - ={eval_summary.json:retrieval.basic_rag.top_k}/{benchmark_gt.json:items[id=AG01].gt_rows[0].n}
+  fmt:
+  - pct2
+- text: ag03Gt:'{}'
+  keys:
+  - benchmark_gt.json:items[id=AG03].gt_value
+  fmt:
+  - int
+- text: lk03Ids:'{}'
+  keys:
+  - benchmark_gt.json:items[id=LK03].gt_ids|len
+  fmt:
+  - int
+- text: cs01Ids:'{}'
+  keys:
+  - benchmark_gt.json:items[id=CS01].gt_ids|len
+  fmt:
+  - int
+- text: cs01Naive:'{}'
+  keys:
+  - ={eval_summary.json:retrieval.basic_rag.top_k}/{benchmark_gt.json:items[id=CS01].gt_ids|len}
+  fmt:
+  - dec2
+- text: mh01Gt:'{}'
+  keys:
+  - benchmark_gt.json:items[id=MH01].gt_value
+  fmt:
+  - dec2
+- text: mh04Gt:'{}'
+  keys:
+  - benchmark_gt.json:items[id=MH04].gt_value
+  fmt:
+  - dec2
+- text: mh04Proj:'{}'
+  keys:
+  - benchmark_gt.json:items[id=MH04].gt_rows[0].project_median_price_m2_mil
+  fmt:
+  - dec1
+- text: mh04Dist:'{}'
+  keys:
+  - benchmark_gt.json:items[id=MH04].gt_rows[0].district_median_price_m2_mil
+  fmt:
+  - dec2
+- text: tm02N:'{}'
+  keys:
+  - benchmark_gt.json:items[id=TM02].gt_rows[0].n
+  fmt:
+  - int
+- text: va01Gt:'{}'
+  keys:
+  - benchmark_gt.json:items[id=VA01].gt_value
+  fmt:
+  - dec2
+- text: hybridValPts:'{}'
+  keys:
+  - eval_summary.json:by_category.valuation.hybrid.mean_points
+  fmt:
+  - dec2
+- text: ragConstrPts:'{}'
+  keys:
+  - eval_summary.json:by_category.constraint.basic_rag.mean_points
+  fmt:
+  - dec2
+- text: abDenseLat:'{}'
+  keys:
+  - ablation.json:runs[name=full_dense].latency_ms_p50
+  fmt:
+  - int
+- text: exAg01Ms:'{}'
+  keys:
+  - examples.json:graph[id=AG01].latency_ms
+  fmt:
+  - dec1
+- text: exAg03Ms:'{}'
+  keys:
+  - examples.json:graph[id=AG03].latency_ms
+  fmt:
+  - int
+- text: exAg03Gt:'{}'
+  keys:
+  - examples.json:graph[id=AG03].rows[0].n_listings
+  fmt:
+  - int
+- text: exLk01Hits:'{}'
+  keys:
+  - examples.json:rag[0].hits|len
+  fmt:
+  - int
+- text: exAg04Gt:'{}'
+  keys:
+  - benchmark_gt.json:items[id=AG04].gt_rows[0].median_price_m2_mil
+  fmt:
+  - dec2
+- text: exAg04N:'{}'
+  keys:
+  - benchmark_gt.json:items[id=AG04].gt_rows[0].n
+  fmt:
+  - int
+- text: cfgTimeout:'{}'
+  allow: hằng số vre.config Settings.cypher_timeout (giây), không phải số đo
+- text: cfgMaxRows:'{}'
+  allow: hằng số vre.config Settings.cypher_max_rows, không phải số đo
+- text: cfgRetries:'{}'
+  allow: tham số text2cypher(retries=2) trong src/vre/graph/text2cypher.py
+- text: cfgRrfK:'{}'
+  allow: hằng số k của công thức RRF
+- text: ${{*}}
+  allow: biểu thức JS trong template literal (toạ độ, phép tính giao diện, tham chiếu V.*); số dữ liệu nằm trong V
+- text: ="{*}"
+  allow: giá trị thuộc tính HTML/SVG trong chuỗi JS (toạ độ, kích thước, màu), không phải số liệu
+- text: Quận {}
+  allow: tên quận
+- text: <span class="tick">○</span>{}.
+  allow: số thứ tự mục trong mục lục
+- text: <span class="num">{}</span>
+  allow: số thứ tự mục
+- text: P4-{}
+  allow: mã cell notebook 04
+- text: mục {}
+  allow: tham chiếu số mục trong trang
+- text: /*Q-BEGIN*/{*}/*Q-END*/
+  allow: đề bài nguyên văn benchmark/questions.jsonl (tập con eval_summary.benchmark_subset)
+- text: /*S-BEGIN*/{*}/*S-END*/
+  allow: 'Cypher mẫu cho trò chơi năm trạm: câu thật error_analysis.json examples[0].cypher và câu minh hoạ an toàn'
+- text: /*A2-BEGIN*/{*}/*A2-END*/
+  allow: Cypher thật MH04 trích nguyên văn error_analysis.json examples[0].cypher
+- text: /*ASK-BEGIN*/{*}/*ASK-END*/
+  allow: câu hỏi LK01, bộ lọc và câu trả lời trích nguyên văn examples.json (answers LK01, rag[0].filters)
+- text: 1,96
+  allow: số trong câu trả lời sai MH04 của Graph/Hybrid, trích nguyên văn error_analysis.json examples[0..1].answer_excerpt
+- text: chặng {}–{}
+  allow: số thứ tự chặng
+- text: chặng {} → {}
+  allow: số thứ tự chặng
+- text: chặng {}, {}, {}
+  allow: số thứ tự chặng
+- text: '({}) '
+  allow: đánh số ý (1), (2), (3)
+- text: notebook {}
+  allow: tên notebook 04
+- text: '{} điểm'
+  allow: thang điểm luật chấm 0–2 (eval_summary.scoring_rules), không phải số đo
+- text: '}/{}'
+  allow: thang điểm tối đa 2 sau điểm trung bình lấy từ V
+- text: LIMIT {}
+  allow: cú pháp Cypher trong câu MH04 trích nguyên văn
+- text: trung bình của {} /
+  allow: công thức MRR
+- text: '{}/${'
+  allow: công thức 1/hạng trong ví dụ MRR minh hoạ
+- text: cộng {}/(
+  allow: công thức RRF
+- text: Vành đai {}
+  allow: tên đường Vành đai 4 trong câu hỏi UN04
+- text: “2025-{}”
+  allow: định dạng gt_value của TM02 (benchmark_gt.json), trích nguyên văn
+- text: MarketStat là {}
+  allow: số tin trong câu trả lời Graph TM02, trích nguyên văn error_analysis.json examples[2].answer_excerpt
+- text: «${}»
+  allow: nhóm bắt regex $1 trong code
+- text: padStart({},
+  allow: code định dạng đồng hồ
+- text: ',''{}'')'
+  allow: code định dạng đồng hồ
+- text: '[''0,40'',''0,50'',''0,67'',''1,00'']'
+  allow: đáp án trắc nghiệm của ví dụ Recall minh hoạ (2/3), không phải số đo
+- text: rootMargin:'{*}'
+  allow: tham số IntersectionObserver
