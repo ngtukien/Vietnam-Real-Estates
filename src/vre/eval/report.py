@@ -251,11 +251,12 @@ def results_block(settings: Settings) -> str:
             lines.append("")
         cost = summary.get("cost", {})
         if cost:
-            lines += ["| Hệ thống | Độ trễ p50 (ms) | p95 (ms) | Token vào/ra TB | USD/câu | Trích dẫn sai |",
-                      "|---|---|---|---|---|---|"]
+            lines += ["| Hệ thống | Độ trễ p50 (ms) | p95 (ms) | Token vào/ra TB | USD/câu | Trích dẫn sai | Fallback |",
+                      "|---|---|---|---|---|---|---|"]
             lines += [f"| {s} | {_fmt(c['latency_ms_p50'], nd=0)} | {_fmt(c['latency_ms_p95'], nd=0)} | "
                       f"{_fmt(c['input_tokens_mean'], nd=0)}/{_fmt(c['output_tokens_mean'], nd=0)} | "
-                      f"{_fmt(c['usd_per_question'], nd=5)} | {_fmt(c['bad_citation_rate'], pct=True)} |"
+                      f"{_fmt(c['usd_per_question'], nd=5)} | {_fmt(c['bad_citation_rate'], pct=True)} | "
+                      f"{_fmt(c.get('fallback_rate'), pct=True)} |"
                       for s, c in cost.items()]
             lines.append("")
         router = summary.get("router")

@@ -93,6 +93,7 @@ def _cost(rows: list[dict], price_in: float, price_out: float) -> dict:
             "usd_per_question": _round(mean(usd), 6) if usd else None,
             "bad_citation_rate": _mean(float(bool(r.get("unsupported_citations"))) for r in rows),
             "error_rate": _mean(float(bool(r.get("error"))) for r in rows),
+            "fallback_rate": _mean(float(r.get("fallback") is True) for r in rows),
             "cached_rate": _mean(float(bool(r.get("cached"))) for r in rows)}
 
 

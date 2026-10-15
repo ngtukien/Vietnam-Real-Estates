@@ -67,3 +67,32 @@ def test_negative_truth_needs_down_word():
 def test_forecast_range_midpoint():
     assert R.forecast_bn("dao động khoảng **3,5 đến 6,5 tỷ đồng**") == 5.0
     assert R.forecast_bn("từ 4,68 - 8,59 tỷ") == pytest.approx(6.635)
+
+
+@pytest.mark.parametrize("answer", ["Tháng 07/2025 có nhiều tin nhất.", "Nhiều nhất là 7/2025 (312 tin).",
+                                    "Đó là **tháng 7/2025**.", "tháng 7 năm 2025 dẫn đầu", "Tháng 2025-07."])
+def test_month_answers_normalised(answer):  # TM02: GT "2025-07"
+    assert R.value_points(answer, "2025-07", 0.05) == 2
+
+
+def test_month_answer_wrong_month_scores_zero():
+    assert R.value_points("Tháng 8/2025 có nhiều tin nhất.", "2025-07", 0.05) == 0
+    assert R.value_points("Tháng 17/2025", "2025-07", 0.05) == 0
+    assert R.answer_months("từ 12/2024 đến tháng 3 năm 2025") == {(2024, 12), (2025, 3)}
+
+
+def test_refusal_scores_zero_on_answerable_question():  # CP02: nhắc tên đáp án nhưng từ chối
+    cp = _q(lambda q: q.category == "comparison")
+    refusal = {"system": "llm_only", "answer": "Tôi không đủ dữ liệu để so sánh giá/m² giữa Quận 3 và Phú Nhuận."}
+    out = R.score_row(cp, {"gt_value": "Quận 3"}, refusal, {}, "d")
+    assert out["points"] == 0 and out["reason"] == "từ chối ở câu có đáp án"
+    val_q = _q(lambda q: q.category == "valuation")
+    hedge = {"system": "llm_only", "answer": "Không có dữ liệu để định giá, có thể khoảng 5,3 tỷ."}
+    assert R.score_row(val_q, {"gt_value": "5.3"}, hedge, {}, "d")["points"] == 0
+
+
+def test_comparison_category_uses_winner_rule_with_abbreviated_question():  # CP02 hỏi "q3 hay phu nhuan"
+    assert R.value_points("Phú Nhuận đắt hơn Quận 3.", "Quận 3", None, "nha o q3 hay phu nhuan dat hon",
+                          comparison=True) == 0
+    assert R.value_points("Quận 3 đắt hơn Phú Nhuận.", "Quận 3", None, "nha o q3 hay phu nhuan dat hon",
+                          comparison=True) == 2

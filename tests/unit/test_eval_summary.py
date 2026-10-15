@@ -112,3 +112,11 @@ def test_error_build_counts_and_examples():
         assert len(examples) >= min(2, occurrences)
     first = doc["examples"][0]
     assert set(first) == {"id", "system", "category", "cause", "question", "answer_excerpt", "gt_value", "cypher"}
+
+
+def test_cost_has_fallback_rate():
+    from vre.eval.summary import _cost
+
+    rows = [{"fallback": True}, {"fallback": False}, {}, {"fallback": True}]
+    assert _cost(rows, 0.0, 0.0)["fallback_rate"] == 0.5
+    assert _cost([], 0.0, 0.0)["fallback_rate"] is None

@@ -7,6 +7,8 @@ Luật (ghi nguyên văn vào `eval_summary.scoring_rules`):
 - `gt_kind=value`, đáp án chữ (tên quận, dự án…): so sau khi bỏ dấu, viết thường: câu trả lời chứa đáp án ⇒ 2, không ⇒ 0.
 - định giá (`category=valuation`): số đầu tiên đi kèm "tỷ" (hoặc "triệu", đổi sang tỷ) là giá dự báo; lệch ≤ tolerance ⇒ 2,
   ≤ 2×tolerance ⇒ 1.
+- đáp án tháng 'YYYY-MM': chuẩn hoá '07/2025', 'tháng 7 năm 2025'… rồi so khớp. Nhóm comparison luôn dùng luật bên thắng.
+- câu có đáp án (value, định giá) mà câu trả lời chứa cụm từ chối ⇒ 0, xét TRƯỚC mọi so khớp.
 - `refusal`: câu trả lời chứa cụm từ chối ("không có dữ liệu", "không đủ thông tin", "ngoài phạm vi"…) ⇒ 2, không ⇒ 0.
 - Câu trả lời rỗng ⇒ 0. Không có faithfulness (RAGAS cần LLM) ⇒ `faithfulness = null`.
 """
@@ -36,6 +38,10 @@ RULES = [
     "the first 'cao/đắt/lớn/nhiều hơn' in the answer => 2, else 0",
     "valuation: first amount or range ('a đến b tỷ' => midpoint) with unit 'tỷ'/'triệu' (converted to tỷ) "
     "within value_tolerance => 2, within 2x => 1",
+    "value (month GT 'YYYY-MM'): any month in the answer written as 'MM/YYYY', 'M/YYYY', 'tháng M/YYYY', "
+    "'tháng M năm YYYY' or 'YYYY-MM' equal to gt_value => 2, else 0",
+    "value (comparison category): the winner rule applies even when the question abbreviates the options (e.g. 'q3')",
+    "non-refusal questions (value, valuation): an answer containing a refusal phrase => 0, checked before any match",
     "refusal: answer contains a refusal phrase (no data / insufficient information / out of range) => 2, else 0",
     "empty answer => 0; faithfulness = null (needs an LLM)",
 ]
@@ -50,6 +56,9 @@ _MONEY = re.compile(_NUM + r"(?:\s*(?:-|–|den|toi)\s*" + _NUM + r")?\s*(ty|tri
 UP_WORDS = re.compile(r"\b(cao hon|dat hon|lon hon|nhieu hon)\b")
 DOWN_WORDS = re.compile(r"\b(thap hon|giam|re hon|kem)\b")
 COMPARE_WINDOW = 60
+_GT_MONTH = re.compile(r"(\d{4})-(\d{1,2})")
+_ANSWER_MONTH = re.compile(r"(?<![\d/.-])(\d{1,2})\s*(?:/|-|\.|\s+nam\s+)\s*(\d{4})(?!\d)")
+_ANSWER_ISO_MONTH = re.compile(r"(?<!\d)(\d{4})-(\d{1,2})(?![\d-])")
 
 
 def fold(text: str) -> str:
@@ -102,14 +111,26 @@ def _winner_named(answer: str, target: str) -> bool:
     return target in folded[max(0, match.start() - COMPARE_WINDOW):match.start()]
 
 
-def value_points(answer: str, gt_value: Any, tolerance: float | None, question: str = "") -> int:
+def answer_months(answer: str) -> set[tuple[int, int]]:
+    """Mọi (năm, tháng) trong câu trả lời: '07/2025', '7/2025', 'tháng 7/2025', 'tháng 7 năm 2025', '2025-07'."""
+    folded = fold(answer)
+    found = {(int(y), int(m)) for m, y in _ANSWER_MONTH.findall(folded)}
+    found |= {(int(y), int(m)) for y, m in _ANSWER_ISO_MONTH.findall(folded)}
+    return {(y, m) for y, m in found if 1 <= m <= 12}
+
+
+def value_points(answer: str, gt_value: Any, tolerance: float | None, question: str = "",
+                 comparison: bool = False) -> int:
     tol = DEFAULT_TOLERANCE if tolerance is None else float(tolerance)
+    month = _GT_MONTH.fullmatch(str(gt_value or "").strip())
+    if month:  # đáp án là tháng 'YYYY-MM': chuẩn hoá mọi cách viết tháng trong câu trả lời
+        return 2 if (int(month.group(1)), int(month.group(2))) in answer_months(answer) else 0
     truth = _as_float(gt_value)
     if truth is None:  # đáp án chữ
         target = fold(str(gt_value or ""))
         if not target:
             return 0
-        if target in fold(question):  # câu hỏi tự nêu đáp án (A hay B): phải chỉ đúng bên thắng
+        if comparison or target in fold(question):  # so sánh (A hay B): phải chỉ đúng bên thắng
             return 2 if _winner_named(answer, target) else 0
         return 2 if target in fold(answer) else 0
     found = numbers(answer)
@@ -157,13 +178,16 @@ def score_row(q: Question, gt: dict, row: dict, cluster_of: dict[int, int], dige
     elif q.gt_kind == "refusal":
         refused = is_refusal(answer)
         out["points"], out["reason"] = (2 if refused else 0), ("có cụm từ chối" if refused else "không từ chối")
+    elif is_refusal(answer):  # câu có đáp án mà trả lời "không đủ dữ liệu" ⇒ 0, dù có nhắc tên đáp án
+        out["reason"] = "từ chối ở câu có đáp án"
     elif q.category == "valuation":
         predicted = forecast_bn(answer)
         out["predicted_value"] = predicted
         out["points"] = M.value_points(predicted, float(gt["gt_value"]), float(q.value_tolerance or 0.15))
         out["reason"] = f"dự báo {predicted} tỷ so với {gt['gt_value']}"
     else:
-        out["points"] = value_points(answer, gt.get("gt_value"), q.value_tolerance, q.question)
+        out["points"] = value_points(answer, gt.get("gt_value"), q.value_tolerance, q.question,
+                                     comparison=q.category == "comparison")
         out["reason"] = f"so với gt_value {gt.get('gt_value')}"
     out["correct"] = out["points"] == 2
     return out
@@ -172,6 +196,6 @@ def score_row(q: Question, gt: dict, row: dict, cluster_of: dict[int, int], dige
 def rules_version() -> str:
     """Dấu vân tay của bộ luật + cụm từ: đổi luật ⇒ `eval score --offline` chấm lại mọi dòng."""
     parts = [*RULES, *REFUSAL_PHRASES, UP_WORDS.pattern, DOWN_WORDS.pattern, str(FULL_RECALL), str(COMPARE_WINDOW),
-             _MONEY.pattern]
+             _MONEY.pattern, _GT_MONTH.pattern, _ANSWER_MONTH.pattern, _ANSWER_ISO_MONTH.pattern]
     payload = "\n".join(parts)
     return hashlib.sha256(payload.encode()).hexdigest()[:12]
