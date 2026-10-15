@@ -18,6 +18,7 @@ import hashlib
 import json
 import logging
 import random
+import re
 import threading
 import time
 from collections.abc import Callable, Iterable
@@ -104,12 +105,19 @@ def is_rate_limited(error: Any) -> bool:
     return "RateLimitError" in text or "429" in text
 
 
+_BODY_DELAY = re.compile(r"retry in ([\d.]+)\s*s|'retryDelay':\s*'([\d.]+)s'", re.IGNORECASE)
+
+
 def retry_after_seconds(error: BaseException | None) -> float | None:
-    """Giây chờ từ header `retry-after-ms` / `retry-after` của lỗi openai; None nếu không có."""
+    """Giây chờ từ header `retry-after-ms` / `retry-after` của lỗi openai; không có header thì đọc thân lỗi
+    (Gemini ghi "Please retry in 54.2s" / `retryDelay: '54s'` trong body, không gửi header). None nếu không có."""
+    if error is None:
+        return None
     response = getattr(error, "response", None)
     headers = getattr(response, "headers", None)
     if not headers:
-        return None
+        match = _BODY_DELAY.search(str(error))
+        return float(match.group(1) or match.group(2)) if match else None
     try:
         if headers.get("retry-after-ms"):
             return float(headers["retry-after-ms"]) / 1000
@@ -117,7 +125,8 @@ def retry_after_seconds(error: BaseException | None) -> float | None:
             return float(headers["retry-after"])
     except (TypeError, ValueError):
         return None
-    return None
+    match = _BODY_DELAY.search(str(error))
+    return float(match.group(1) or match.group(2)) if match else None
 
 
 def backoff_delay(attempt: int, retry_after: float | None) -> float:

@@ -159,3 +159,13 @@ def test_retry_errors_reruns_failed_rows(settings):
     assert runner.run_answers(settings, limit=1, systems=["llm_only"], answer_fn=_ok, retry_errors=True)["written"] == 1
     (row,) = runner.read_jsonl(runner.answers_path(settings)).values()
     assert row["error"] is None
+
+
+def test_retry_after_from_gemini_body():
+    class RateLimitError(Exception):
+        response = SimpleNamespace(headers={})
+
+    error = RateLimitError("429 ... Please retry in 54.245789807s. ... 'retryDelay': '54s'")
+    assert runner.retry_after_seconds(error) == pytest.approx(54.245789807)
+    assert runner.retry_after_seconds(RateLimitError("'retryDelay': '8s'")) == 8.0
+    assert runner.retry_after_seconds(RateLimitError("no hint")) is None
