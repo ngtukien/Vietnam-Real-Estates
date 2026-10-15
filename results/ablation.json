@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-15T18:02:45Z",
+  "git_sha": "7d18336",
+  "corpus": {
+    "n_listings": 2537920,
+    "n_gt_listings": 3393,
+    "seed": 42
+  },
+  "runs": [
+    {
+      "name": "full_dense",
+      "embedding": "e5_large",
+      "chunk_size": 400,
+      "retrieval": "dense",
+      "prefilter": false,
+      "rerank": false,
+      "recall_at_5": 0.291358024691358,
+      "recall_at_10": 0.34074074074074073,
+      "mrr": 0.2768959435626102,
+      "ndcg_at_10": 0.2809892472935565,
+      "n_questions": 27,
+      "latency_ms_p50": 475.8
+    },
+    {
+      "name": "full_dense_prefilter",
+      "embedding": "e5_large",
+      "chunk_size": 400,
+      "retrieval": "dense",
+      "prefilter": true,
+      "rerank": false,
+      "recall_at_5": 0.5037037037037037,
+      "recall_at_10": 0.5308641975308642,
+      "mrr": 0.5982510288065844,
+      "ndcg_at_10": 0.5136850883083073,
+      "n_questions": 27,
+      "latency_ms_p50": 395.2
+    },
+    {
+      "name": "full_bm25",
+      "embedding": "e5_large",
+      "chunk_size": 400,
+      "retrieval": "bm25",
+      "prefilter": false,
+      "rerank": false,
+      "recall_at_5": 0.2691358024691358,
+      "recall_at_10": 0.2814814814814815,
+      "mrr": 0.29886831275720166,
+      "ndcg_at_10": 0.2584416307566662,
+      "n_questions": 27,
+      "latency_ms_p50": 38.7
+    },
+    {
+      "name": "full_bm25_prefilter",
+      "embedding": "e5_large",
+      "chunk_size": 400,
+      "retrieval": "bm25",
+      "prefilter": true,
+      "rerank": false,
+      "recall_at_5": 0.5753086419753087,
+      "recall_at_10": 0.5975308641975309,
+      "mrr": 0.6759259259259259,
+      "ndcg_at_10": 0.5958298754973723,
+      "n_questions": 27,
+      "latency_ms_p50": 18.7
+    },
+    {
+      "name": "full_hybrid",
+      "embedding": "e5_large",
+      "chunk_size": 400,
+      "retrieval": "hybrid",
+      "prefilter": false,
+      "rerank": false,
+      "recall_at_5": 0.35802469135802467,
+      "recall_at_10": 0.37777777777777777,
+      "mrr": 0.2958259847148736,
+      "ndcg_at_10": 0.29744155266554995,
+      "n_questions": 27,
+      "latency_ms_p50": 468.1
+    },
+    {
+      "name": "full_hybrid_prefilter",
+      "embedding": "e5_large",
+      "chunk_size": 400,
+      "retrieval": "hybrid",
+      "prefilter": true,
+      "rerank": false,
+      "recall_at_5": 0.528395061728395,
+      "recall_at_10": 0.5679012345679013,
+      "mrr": 0.6515873015873015,
+      "ndcg_at_10": 0.55136460773599,
+      "n_questions": 27,
+      "latency_ms_p50": 385.2
+    }
+  ],
+  "notes": [
+    "rerank runs omitted: RERANK_MODEL cross-encoder/mmarco-mMiniLMv2-L12-H384-v1 not in HF cache (never downloaded)",
+    "chunk_size sweep (256/400/512 subcorpus) dropped by lead scope cut 2026-10-15",
+    "filter_llm_calls=0 (questions not served from the LLM cache in this run)"
+  ]
+}

@@ -229,9 +229,11 @@ def results_block(settings: Settings) -> str:
     summary = _read(settings, "eval_summary.json")
     if summary:
         systems = summary["systems"]
+        judge = summary["llm"].get("judge")
+        scored_by = (f"chấm bằng giám khảo `{judge}`" if summary.get("scoring", "llm_judge") == "llm_judge" and judge
+                     else "chấm theo luật, không giám khảo LLM")
         lines += [f"### Benchmark ({summary['n_questions']}/{summary.get('n_questions_total', summary['n_questions'])} câu, "
-                  f"sinh `{summary['llm'].get('generator')}`, chấm `{summary['llm'].get('judge')}`, "
-                  f"`{summary['git_sha']}`)", "",
+                  f"sinh `{summary['llm'].get('generator')}`, {scored_by}, `{summary['git_sha']}`)", "",
                   "| Nhóm | " + " | ".join(systems) + " |", "|---|" + "---|" * len(systems)]
         rows = {**summary["by_category"], "**Tổng**": summary["overall"]}
         for name, cells in rows.items():
@@ -260,6 +262,8 @@ def results_block(settings: Settings) -> str:
         if router:
             lines += [f"Router (hybrid): {_fmt(router['accuracy'], pct=True)} trên {router['n']} câu; "
                       f"{_fmt(router['accuracy_excl_unanswerable'], pct=True)} khi bỏ nhóm unanswerable.", ""]
+        if summary.get("scoring_rules"):
+            lines += ["Luật chấm (không LLM):", ""] + [f"- {r}" for r in summary["scoring_rules"]] + [""]
         lines += [f"> {n}" for n in summary.get("notes", [])] + [""]
     valuation = _read(settings, "valuation_metrics.json")
     if valuation:
