@@ -36,6 +36,17 @@ qua file tín hiệu (bền) + `SendMessage` (nhanh, tuỳ chọn). Mọi quyế
 Ghi tín hiệu: `& $VRE_PY scripts\vre_pipeline.py signal <NAME> --from p3|p4 --payload '<json>'` (hoặc ghi nguyên tử *.tmp → rename).
 Chờ tín hiệu: chạy poller nền `run_in_background` (kiểm 5 phút/lần), KHÔNG ngồi chờ, làm phần khác trong lúc đó.
 
+## 3b. Tình hình eval (cập nhật 2026-10-16 ~00:40) — p4 phải trình bày đúng như sau
+
+- Groq hết hạn mức ngày, người dùng không có ngân sách ⇒ **không còn eval 100 câu**. Benchmark file vẫn 100 câu / 9 nhóm (`benchmark_gt.json`).
+- Eval chạy trên **tập con 36 câu (4 câu × 9 nhóm) × 4 hệ**, model sinh = **Gemini flash-lite gói miễn phí**, **chấm bằng luật** (không LLM judge;
+  RAGAS faithfulness = null). Số, model, danh sách câu đọc từ `eval_summary.json` (`n_questions`, `llm`, `benchmark_subset`, `scoring`) — không gõ tay.
+  Nếu Gemini thất bại, p3 lùi về 15 câu gpt-oss (chỉ nhóm lookup/constraint) — `eval_summary` sẽ ghi đúng phạm vi; slide đọc theo đó.
+- Ablation truy xuất trên chỉ mục đầy đủ, chunk 400, dense/BM25/hybrid × pre-filter (rerank không có vì model không có trong cache) — `ablation.json`.
+- Slide "Hạn chế" phải nêu: tập con 36 câu, chấm bằng luật, không faithfulness, model sinh khác plan ban đầu (gpt-oss-120b) do hạn mức.
+- **p4 tuyệt đối không gọi LLM** (Groq/Gemini/khác). Chụp demo chat: dùng câu hỏi đã chạy trong eval (cache LLM có sẵn ⇒ 0 lời gọi mới).
+- Lệnh `vre_pipeline.py signal` chỉ nhận `--from p1|p2`: ghi tín hiệu p3/p4 bằng file JSON nguyên tử (`*.tmp` → rename) trong `results/handoff/`.
+
 ## 4. Giờ chốt
 
 - ~03:30 p3 gửi `P3_RESULTS_READY`; ~04:00 `P3_WEBAPP_READY` (khung chụp ≥ 30 phút); ~05:00 `P3_DONE`.
