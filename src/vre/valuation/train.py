@@ -114,8 +114,11 @@ def train_deal(df: pd.DataFrame, variant: F.Variant, settings: Settings, device:
     x_test = F.build_matrix(test, F.target_encode_apply(test, enc), cats, variant, None if pca is None else pca.loc[test.index])
     fit, val = masks["fit"][masks["train"]].to_numpy(), masks["valid"][masks["train"]].to_numpy()
     y = train[F.TARGET].to_numpy()
-    dfit = xgb.DMatrix(x_train[fit], y[fit], enable_categorical=True)
-    dval = xgb.DMatrix(x_train[val], y[val], enable_categorical=True)
+    # QuantileDMatrix: dựng thẳng bin của `hist`, không giữ bản sao float — bộ nhớ (commit) nhỏ hơn nhiều.
+    dfit = xgb.QuantileDMatrix(x_train[fit], y[fit], enable_categorical=True)
+    dval = xgb.QuantileDMatrix(x_train[val], y[val], ref=dfit, enable_categorical=True)
+    feature_names = list(x_train.columns)
+    del x_train
     booster, params = search(dfit, dval, device, settings)
     yhat = np.exp(booster.predict(xgb.DMatrix(x_test, enable_categorical=True)))
     m = metrics(test, yhat, len(train))
@@ -123,7 +126,7 @@ def train_deal(df: pd.DataFrame, variant: F.Variant, settings: Settings, device:
     m["shap_top"] = explain.shap_top(booster, x_test, settings.seed)
     base = baseline_maps(train)
     encoders = {"variant": variant, "trained_at": utc_now(), "te": enc, "categories": cats,
-                "feature_names": list(x_train.columns), "amenities": F.amenity_keys(), "max_month": str(df["month"].max()),
+                "feature_names": feature_names, "amenities": F.amenity_keys(), "max_month": str(df["month"].max()),
                 "pca_dim": settings.pca_dim if variant == "full" else None, "baseline": base,
                 "interval_ratio_q": intervals(test, yhat), "test_mape": m["mape"], "params": params}
     return {"booster": booster, "encoders": encoders, "metrics": m, "test": test, "train": train}
