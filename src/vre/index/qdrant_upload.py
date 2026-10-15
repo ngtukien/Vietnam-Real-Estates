@@ -131,6 +131,9 @@ def upload_part_task(args) -> dict:
     settings, layout, part, avgdl = args
     counters = {"upload_retries": 0}
     qc = qdrant_store.client(settings)
-    n = upload_part(settings, qc, layout.collection, layout, part, avgdl, counters,
-                    log=lambda m: print(m, flush=True))
+    try:
+        n = upload_part(settings, qc, layout.collection, layout, part, avgdl, counters,
+                        log=lambda m: print(m, flush=True))
+    except Exception as exc:  # lỗi gRPC giữ RLock, không pickle được qua ranh giới tiến trình ⇒ gói lại thành chuỗi
+        raise RuntimeError(f"upload part {part:04d}: {type(exc).__name__}: {exc}") from None
     return {"n": n, **counters}
