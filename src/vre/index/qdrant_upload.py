@@ -1,8 +1,11 @@
 """Nạp một part vào Qdrant qua gRPC (data-contract §5): point = chunk, payload từ bảng sạch, bỏ khoá null.
 
 `point_id` tất định ⇒ nạp lại một part không nhân bản. Lỗi/timeout ⇒ tenacity 6 lần, backoff mũ 2–120s; Qdrant không trả lời
-quá 2 phút ⇒ một lần `docker compose up -d --wait qdrant`. Sau khi gửi (`wait=False`), part chỉ được coi là xong khi
-`count(listing_id ∈ part) = n_chunks`; lệch ⇒ upsert lại tối đa 2 lần rồi raise.
+quá 2 phút ⇒ một lần `docker compose up -d --wait qdrant`. Part chỉ được coi là xong khi `count(listing_id ∈ part) = n_chunks`;
+lệch ⇒ upsert lại tối đa 2 lần rồi raise. `wait=True` (không phải `wait=False` như plan): dry-run 2026-10-15 cho thấy khi Qdrant
+đang xây HNSW, `wait=False` đẩy nhanh hơn tốc độ áp dụng ⇒ count tụt sau 10 phút ⇒ upsert lại ⇒ quá tải gRPC. Upload chỉ cần
+~100 point/s (bám theo GPU) nên backpressure không làm chậm tổng thời gian. Chạy trong tiến trình riêng (`upload_part_task`)
+để việc dựng point (Python thuần, giữ GIL) không giành CPU với vòng GPU.
 """
 
 import datetime as dt
@@ -115,9 +118,19 @@ def upload_part(settings, qc, collection: str, layout, part: int, avgdl: float, 
         resilient(settings, lambda: qc.upload_points(
             collection, points=build_points(chunks, emb, table, listings, avgdl),
             batch_size=settings.qdrant_upload_batch, parallel=settings.qdrant_upload_parallel,
-            max_retries=5, wait=False), counters, log)
+            max_retries=5, wait=True), counters, log)
         n = resilient(settings, lambda: wait_count(qc, collection, lo, hi, expected), counters, log)
         if n == expected:
             return n
         log(f"part {part:04d}: Qdrant có {n} point, cần {expected}; upsert lại ({attempt + 1})")
     raise RuntimeError(f"part {part:04d}: count {n} ≠ n_chunks {expected} sau {REUPSERT_ATTEMPTS} lần upsert lại")
+
+
+def upload_part_task(args) -> dict:
+    """Điểm vào tiến trình upload riêng: tự tạo client, trả số point + số lần retry (để cộng vào report)."""
+    settings, layout, part, avgdl = args
+    counters = {"upload_retries": 0}
+    qc = qdrant_store.client(settings)
+    n = upload_part(settings, qc, layout.collection, layout, part, avgdl, counters,
+                    log=lambda m: print(m, flush=True))
+    return {"n": n, **counters}

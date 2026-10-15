@@ -100,7 +100,15 @@ def make_pool(workers: int):
     """
     from concurrent.futures import ProcessPoolExecutor
 
-    return ProcessPoolExecutor(max_workers=workers, mp_context=mp.get_context("spawn"))
+    return ProcessPoolExecutor(max_workers=workers, mp_context=mp.get_context("spawn"), initializer=below_normal_priority)
+
+
+def below_normal_priority() -> None:
+    """Worker CPU nhường vòng GPU: dry-run 2026-10-15 chỉ đạt 26 chunk/s (đo riêng 132/s) khi worker giành CPU."""
+    import psutil
+
+    process = psutil.Process()
+    process.nice(psutil.BELOW_NORMAL_PRIORITY_CLASS if hasattr(psutil, "BELOW_NORMAL_PRIORITY_CLASS") else 10)
 
 
 def terminate_pool(pool) -> None:

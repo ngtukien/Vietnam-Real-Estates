@@ -79,11 +79,12 @@ class NightRun:
                 ledger.set(bm25_avgdl=bm25_mod.corpus_avgdl(layout, list(parts)))
             self.report.end("bm25", note=f"avgdl={ledger.state['bm25_avgdl']:.2f}")
             self.avgdl_ready.set()
+            for pool in (tok_pool, bm25_pool):  # xong phần CPU: trả RAM của 16 worker cho phần còn lại (~8h)
+                bm25_mod.terminate_pool(pool)
         except BaseException as exc:
             self.fail(step, exc)
 
     def feed(self, chunked: dict, tokens: queue.Queue) -> None:
-        """Nạp token của part kế tiếp vào RAM; hàng đợi giới hạn ⇒ tối đa `tokenize_prefetch_parts` part đi trước GPU."""
         try:
             for part in range(self.n_parts):
                 if self.ledger.done(part, "embedded"):
@@ -101,7 +102,7 @@ class NightRun:
         except BaseException as exc:
             self.fail("embed", exc)
 
-    def upload(self, parts: queue.Queue) -> None:
+    def upload(self, parts: queue.Queue, upload_pool) -> None:
         part = None
         try:
             if not self._wait(self.avgdl_ready.is_set):
@@ -111,11 +112,11 @@ class NightRun:
             while (part := parts.get()) is not None and not self.stop.is_set():
                 if self.ledger.done(part, "uploaded"):
                     continue
-                n = qdrant_upload.upload_part(self.settings, self.qc, self.layout.collection, self.layout, part,
-                                              avgdl, self.upload_counters, log)
+                out = upload_pool.submit(qdrant_upload.upload_part_task, (self.settings, self.layout, part, avgdl)).result()
+                self.upload_counters["upload_retries"] += out["upload_retries"]
                 self.ledger.mark(part, "uploaded")
                 self.report.progress("upload", self.ledger.count("uploaded"))
-                log(f"part {part:04d}: uploaded {n} point")
+                log(f"part {part:04d}: uploaded {out['n']} point")
             self.report.end("upload")
         except BaseException as exc:
             self.fail("upload", exc, part)
@@ -158,21 +159,21 @@ def run(settings, resume: bool = True, dry_run: bool = False) -> int:
     # Pool tạo TRƯỚC khi nạp CUDA (spawn: tiến trình con không kế thừa trạng thái GPU).
     tok_pool = bm25_mod.make_pool(settings.tokenize_workers)
     bm25_pool = bm25_mod.make_pool(settings.bm25_workers)
+    upload_pool = bm25_mod.make_pool(1)  # dựng point + gRPC ở tiến trình riêng: không giành GIL với vòng GPU
     status = "failed"
     try:
         if not stages.prepare(job, resume, log):
             status = "skipped"
             return EXIT_OK
         chunked = {p: threading.Event() for p in range(job.n_parts)}
-        tokens: queue.Queue = queue.Queue(maxsize=settings.tokenize_prefetch_parts)
-        uploads: queue.Queue = queue.Queue()
+        tokens, uploads = queue.Queue(maxsize=settings.tokenize_prefetch_parts), queue.Queue()
         for part in stages.resume_uploads(job.ledger, job.n_parts, log):
             uploads.put(part)
         threads = [threading.Thread(target=job.cpu_stages, args=(tok_pool, bm25_pool, chunked), daemon=True),
                    threading.Thread(target=job.feed, args=(chunked, tokens), daemon=True),
-                   threading.Thread(target=job.upload, args=(uploads,), daemon=True)]
-        for t in threads:
-            t.start()
+                   threading.Thread(target=job.upload, args=(uploads, upload_pool), daemon=True)]
+        for thread in threads:
+            thread.start()
         from vre.index.embed import get_encoder
 
         job.encoder = get_encoder(settings, "cuda")
@@ -190,7 +191,7 @@ def run(settings, resume: bool = True, dry_run: bool = False) -> int:
             job.fail(job.step, exc)
     finally:
         job.stop.set()
-        for pool in (tok_pool, bm25_pool):
+        for pool in (tok_pool, bm25_pool, upload_pool):
             bm25_mod.terminate_pool(pool)
         if status != "skipped":
             finish(job, status)
