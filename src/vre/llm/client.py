@@ -8,6 +8,7 @@ Khoá API đọc từ Settings (`GROQ_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API
 from __future__ import annotations
 
 import json
+import logging
 import os
 import threading
 from collections.abc import Iterator
@@ -22,8 +23,12 @@ from pydantic import BaseModel
 from vre.config import get_settings
 from vre.llm import cache
 
+log = logging.getLogger(__name__)
 _client = None
 _client_lock = threading.Lock()  # chatbot gọi từ nhiều luồng: chỉ tạo một client
+_gemini_clients: dict[int, Any] = {}  # chỉ số khoá → client (xoay khoá khi hết hạn mức ngày)
+_gemini_key_index = 0
+_gemini_rotations = 0
 OFFLINE_ENV = "VRE_LLM_OFFLINE"
 _cache_only: ContextVar[bool] = ContextVar("vre_llm_cache_only", default=False)
 
@@ -66,13 +71,63 @@ class LLMResult:
 def client():
     global _client
     _refuse_network("tạo client LLM")  # chốt cuối: không đường nào tới mạng khi offline
+    if get_settings().llm_provider == "gemini":
+        return _gemini_client()[1]
     with _client_lock:
         if _client is None:
             _client = _new_client()
     return _client
 
 
-def _new_client():
+def _gemini_client() -> tuple[int, Any]:
+    """(chỉ số khoá đang dùng, client của khoá đó). Mỗi khoá một client, tạo lười và giữ lại."""
+    keys = get_settings().gemini_key_list
+    if not keys:
+        raise RuntimeError("Thiếu xác thực Gemini: đặt GEMINI_API_KEYS (phẩy) hoặc GEMINI_API_KEY trong .env.")
+    with _client_lock:
+        index = min(_gemini_key_index, len(keys) - 1)
+        if index not in _gemini_clients:
+            _gemini_clients[index] = _new_client(keys[index])
+        return index, _gemini_clients[index]
+
+
+def _rotate_gemini_key(failed_index: int) -> bool:
+    """Khoá `failed_index` hết hạn mức ngày ⇒ chuyển sang khoá kế. False khi không còn khoá nào.
+    Luồng khác đã chuyển rồi ⇒ True (dùng khoá hiện tại). Chỉ ghi chỉ số khoá vào log, không ghi khoá."""
+    global _gemini_key_index, _gemini_rotations
+    total = len(get_settings().gemini_key_list)
+    with _client_lock:
+        if _gemini_key_index != failed_index:
+            return _gemini_key_index < total
+        if failed_index + 1 >= total:
+            return False
+        _gemini_key_index = failed_index + 1
+        _gemini_rotations += 1
+    log.warning("Gemini: khoá #%d hết hạn mức ngày, chuyển sang khoá #%d/%d", failed_index + 1, failed_index + 2, total)
+    return True
+
+
+def gemini_key_rotations() -> int:
+    """Số lần đã chuyển khoá Gemini trong tiến trình này."""
+    return _gemini_rotations
+
+
+_PER_DAY = ("perday", "per_day", "per day", "daily")
+_PER_MINUTE = ("perminute", "per_minute", "per minute")
+
+
+def is_daily_quota(error: BaseException) -> bool:
+    """429 của Gemini là hết hạn mức NGÀY (đổi khoá) hay theo phút (chờ, giữ khoá). Thân lỗi ghi quotaId
+    `...PerDay...`/`...PerMinute...`; không có dấu hiệu phút mà có RESOURCE_EXHAUSTED/quota ⇒ coi là ngày."""
+    body = f"{error} {getattr(error, 'body', '')}".lower()
+    if any(mark in body for mark in _PER_DAY):
+        return True
+    if any(mark in body for mark in _PER_MINUTE):
+        return False
+    return "resource_exhausted" in body or "quota" in body
+
+
+def _new_client(api_key: str | None = None):
     s = get_settings()
     if s.llm_provider == "anthropic":
         if not (s.anthropic_api_key or os.getenv("ANTHROPIC_AUTH_TOKEN")):
@@ -85,10 +140,11 @@ def _new_client():
             raise RuntimeError("Thiếu xác thực OpenAI: đặt OPENAI_API_KEY trong .env.")
         return openai.OpenAI(api_key=s.openai_api_key, timeout=s.llm_timeout, max_retries=2)
     if s.llm_provider == "gemini":
-        if not s.gemini_api_key:
-            raise RuntimeError("Thiếu xác thực Gemini: đặt GEMINI_API_KEY trong .env.")
+        key = api_key or next(iter(s.gemini_key_list), "")
+        if not key:
+            raise RuntimeError("Thiếu xác thực Gemini: đặt GEMINI_API_KEYS (phẩy) hoặc GEMINI_API_KEY trong .env.")
         # Gói miễn phí giới hạn RPM/RPD: SDK tự chờ theo Retry-After và thử lại khi gặp 429.
-        return openai.OpenAI(api_key=s.gemini_api_key, base_url=GEMINI_BASE_URL, timeout=s.llm_timeout, max_retries=4)
+        return openai.OpenAI(api_key=key, base_url=GEMINI_BASE_URL, timeout=s.llm_timeout, max_retries=4)
     if not s.groq_api_key:
         raise RuntimeError("Thiếu xác thực Groq: đặt GROQ_API_KEY trong .env.")
     # Groq giới hạn token/phút theo từng mô hình: SDK tự chờ và thử lại khi gặp 429.
@@ -188,7 +244,7 @@ def _create_with_fallback(model: str, request: dict[str, Any]) -> Any:
     for i, name in enumerate(models):
         for attempt in range(3):
             try:
-                return client().chat.completions.create(model=name, **request)
+                return _create_rotating(name, request)
             except openai.BadRequestError as error:
                 # Groq đôi khi trả JSON rỗng cho structured output (json_validate_failed): thử lại cùng model.
                 if "json_validate_failed" not in str(error) or (attempt == 2 and i == len(models) - 1):
@@ -198,6 +254,22 @@ def _create_with_fallback(model: str, request: dict[str, Any]) -> Any:
                     raise
                 break
     raise RuntimeError("LLM không trả lời sau khi thử mọi model")
+
+
+def _create_rotating(model: str, request: dict[str, Any]) -> Any:
+    """Một lần `create`; với Gemini, 429 hết hạn mức ngày ⇒ đổi sang khoá kế và gọi lại cùng model.
+    429 theo phút (hoặc hết khoá) ⇒ raise để backoff của nơi gọi chờ trên khoá hiện tại."""
+    import openai
+    while True:
+        if get_settings().llm_provider != "gemini":
+            return client().chat.completions.create(model=model, **request)
+        _refuse_network("tạo client LLM")
+        index, api = _gemini_client()
+        try:
+            return api.chat.completions.create(model=model, **request)
+        except openai.RateLimitError as error:
+            if not is_daily_quota(error) or not _rotate_gemini_key(index):
+                raise
 
 
 def _ask_openai(model: str, prompt: str, system: str, schema: dict | None, effort: str, max_tokens: int):

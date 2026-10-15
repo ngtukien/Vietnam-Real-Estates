@@ -108,6 +108,7 @@ class Settings(BaseSettings):
     openai_api_key: str = Field("", validation_alias=_env("OPENAI_API_KEY"))
     anthropic_api_key: str = Field("", validation_alias=_env("ANTHROPIC_API_KEY"))
     gemini_api_key: str = Field("", validation_alias=_env("GEMINI_API_KEY"))
+    gemini_api_keys: str = Field("", validation_alias=_env("GEMINI_API_KEYS"))  # nhiều khoá, phẩy: xoay khi hết hạn mức ngày
     rerank: bool = Field(False, validation_alias=_env("RERANK"))
     rerank_model: str = Field("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1", validation_alias=_env("RERANK_MODEL"))
     rerank_candidates: int = Field(20, validation_alias=_env("RERANK_CANDIDATES"))
@@ -176,6 +177,12 @@ class Settings(BaseSettings):
     @property
     def compose_file(self) -> Path:
         return self.data_root / "docker-compose.yaml"
+
+    @property
+    def gemini_key_list(self) -> list[str]:
+        """Khoá Gemini theo thứ tự xoay: `GEMINI_API_KEYS` (phẩy) rồi `GEMINI_API_KEY`; bỏ rỗng và trùng."""
+        keys = [k.strip() for k in f"{self.gemini_api_keys},{self.gemini_api_key}".split(",")]
+        return list(dict.fromkeys(k for k in keys if k))
 
     @property
     def llm_fallback_list(self) -> list[str]:
