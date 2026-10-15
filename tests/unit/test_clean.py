@@ -54,3 +54,12 @@ def test_clean_frame_drops_and_types(raw_frame):
     assert "[phone_number]" in out.loc[2, "description"] and "[email]" in out.loc[9, "description"]
     assert out.loc[0, "province_2025"] == "Hồ Chí Minh"
     assert "hem_xe_hoi" in out.loc[0, "amenities"] and "so_hong" in out.loc[0, "amenities"]
+
+
+def test_mask_pii_keeps_prices_and_masks_real_phones():
+    """Đo trên 350k tin thô (2026-10-15): mọi khớp '84…' không có '+' đều là số điện thoại thật."""
+    texts = pd.Series(["giá 8,4 tỷ", "giá 84 tỷ/căn", "LH 84977917692 xem nhà", "gọi 087887676",
+                       "giá 1.250.000.000 đồng"], dtype="string")
+    out = mask_pii(texts).tolist()
+    assert out[0] == "giá 8,4 tỷ" and out[1] == "giá 84 tỷ/căn" and out[4] == "giá 1.250.000.000 đồng"
+    assert out[2] == "LH [phone_number] xem nhà" and out[3] == "gọi [phone_number]"

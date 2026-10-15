@@ -2,7 +2,7 @@
 # Phase 3 thêm fastapi, uvicorn, sse-starlette, httpx.
 pandas>=2.2
 pyarrow>=15
-numpy>=1.26
+numpy>=2.0  # np.bitwise_count (SimHash)
 duckdb>=1.1
 pydantic>=2,<3
 pydantic-settings>=2.4

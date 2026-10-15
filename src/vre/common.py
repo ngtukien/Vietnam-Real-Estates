@@ -18,6 +18,8 @@ SIGNALS = ("SKELETON_READY", "CLEAN_DATA_READY", "INDEX_STARTED", "INDEX_DONE", 
            "P1_DONE", "P2_DONE", "CHANGE_REQUEST", "CHANGE_APPLIED", "NOTE")
 SENDERS = ("p1", "p2")
 FINGERPRINT_RTOL = 1e-9
+FINGERPRINT_THREADS = 4  # một cột, đọc tuần tự: không cần nhiều tài nguyên
+FINGERPRINT_MEMORY = "1GB"
 
 
 def utc_now() -> str:
@@ -107,6 +109,8 @@ def listings_fingerprint(clean_path: Path) -> dict[str, Any]:
     import duckdb
 
     con = duckdb.connect()
+    con.execute(f"SET threads = {FINGERPRINT_THREADS}")
+    con.execute(f"SET memory_limit = '{FINGERPRINT_MEMORY}'")
     try:
         n, total = con.execute("SELECT count(*), kahan_sum(price_vnd) FROM read_parquet(?)",
                                [str(clean_path)]).fetchone()

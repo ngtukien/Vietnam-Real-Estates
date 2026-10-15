@@ -104,7 +104,7 @@ là mẫu ngẫu nhiên (dùng để chia part; dry-run 2 part đầu là mẫu 
 | `house_direction`, `balcony_direction` | VARCHAR | có | |
 | `published_at` | TIMESTAMP | có | |
 | `is_price_outlier` | BOOLEAN | không | giá/m² ngoài [p1, p99] của nhóm `(deal_type, property_type, province)` có ≥ 200 tin; nhóm nhỏ hơn dùng ngưỡng cố định [0,05; 2000] tr/m². **[materialized]**: phụ thuộc phân vị toàn cục, không tính lại rẻ ở query |
-| `is_area_outlier` | BOOLEAN | không | area < 10 hoặc > 10.000 hoặc ngoài [p0.5, p99.5] của `(property_type, province)` **[materialized]** cùng lý do |
+| `is_area_outlier` | BOOLEAN | không | area < 10 hoặc > 10.000 hoặc ngoài [p0.5, p99.5] của `(property_type, province)` khi nhóm có ≥ 200 tin (nhóm nhỏ hơn chỉ dùng ngưỡng cố định, tránh loại min/max của mọi nhóm nhỏ) **[materialized]** cùng lý do |
 | `amenities` | VARCHAR[] | không (có thể rỗng) | khoá amenity (§3.2) khớp trong title+description **[materialized]**: regex trên 1,9 tỷ ký tự, đắt |
 
 ### 3.1 View chuẩn `v_listings` (DuckDB, `src/vre/data/views.sql`)

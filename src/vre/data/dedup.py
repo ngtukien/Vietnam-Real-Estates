@@ -16,7 +16,8 @@ from vre.data import simhash
 from vre.data.duck import sql_path
 
 ORDER_REP = "published_at DESC NULLS LAST, n_nonnull DESC"
-PRICE_GROUP_MIN = 200  # nhóm ≥ 200 tin dùng phân vị; nhóm nhỏ hơn dùng ngưỡng cố định
+PRICE_GROUP_MIN = 200  # nhóm giá ≥ 200 tin dùng phân vị; nhóm nhỏ hơn dùng ngưỡng cố định
+AREA_GROUP_MIN = 200  # nhóm diện tích ≥ 200 tin mới áp dải [p0.5, p99.5] (nhóm nhỏ: phân vị chỉ loại min/max)
 PRICE_P = (0.01, 0.99)
 PRICE_FIXED = (0.05, 2000.0)  # tr/m²
 AREA_P = (0.005, 0.995)
@@ -91,7 +92,7 @@ def flag_outliers(con: duckdb.DuckDBPyConnection) -> None:
           coalesce(CASE WHEN pg.n >= {PRICE_GROUP_MIN} THEN k.pm2 < pg.lo OR k.pm2 > pg.hi
                         ELSE k.pm2 < {PRICE_FIXED[0]} OR k.pm2 > {PRICE_FIXED[1]} END, false) AS is_price_outlier,
           coalesce(k.area_m2 < {AREA_FIXED[0]} OR k.area_m2 > {AREA_FIXED[1]}
-                   OR (ag.n >= {PRICE_GROUP_MIN} AND (k.area_m2 < ag.lo OR k.area_m2 > ag.hi)), false) AS is_area_outlier
+                   OR (ag.n >= {AREA_GROUP_MIN} AND (k.area_m2 < ag.lo OR k.area_m2 > ag.hi)), false) AS is_area_outlier
         FROM k
         LEFT JOIN pg ON pg.deal_type = k.deal_type AND pg.property_type = k.property_type
                     AND pg.province IS NOT DISTINCT FROM k.province

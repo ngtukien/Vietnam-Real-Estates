@@ -7,6 +7,7 @@ Giai đoạn 2 toàn cục (DuckDB, `vre.data.dedup`). Cuối lệnh sao chép t
 from __future__ import annotations
 
 import gc
+import hashlib
 import json
 import multiprocessing as mp
 import os
@@ -31,6 +32,25 @@ N_SHARDS = 10
 BATCH_ROWS = 50_000  # bộ nhớ mỗi worker có giới hạn (8 worker chạy song song)
 BENCH_SOURCE = Path(".cache") / "scratch" / "bench_final.jsonl"
 MISSING_COLS = ("ward", "street", "project", "bedrooms")
+# Logic sinh bảng trung gian/bảng sạch: đổi file nào ⇒ hash đổi ⇒ không dùng lại artifact cũ.
+LOGIC_FILES = ("clean.py", "simhash.py", "places.py", "amenities.py", "amenities.yaml", "admin_2025.csv")
+META_NAME = "_ingest_logic.json"
+
+
+def logic_hash() -> str:
+    digest = hashlib.sha256()
+    for name in LOGIC_FILES:
+        digest.update(name.encode() + (Path(__file__).with_name(name)).read_bytes())
+    return digest.hexdigest()[:16]
+
+
+def meta_matches(folder: Path) -> bool:
+    meta = folder / META_NAME
+    return meta.is_file() and json.loads(meta.read_text(encoding="utf-8")).get("logic") == logic_hash()
+
+
+def write_meta(folder: Path) -> None:
+    write_json_atomic(folder / META_NAME, {"logic": logic_hash(), "files": list(LOGIC_FILES)})
 
 
 def interim_dir(settings: Settings) -> Path:
@@ -81,6 +101,9 @@ def already_done(settings: Settings) -> bool:
     bench = settings.results_dir / "embedding_benchmark.json"
     if not (settings.clean_path.is_file() and settings.dup_map_path.is_file() and report.is_file() and bench.is_file()):
         return False
+    if not meta_matches(settings.clean_path.parent):
+        print("ingest: bảng sạch được tạo bởi logic khác (hoặc chưa có dấu logic) ⇒ làm lại", flush=True)
+        return False
     kept = json.loads(report.read_text(encoding="utf-8"))["dedup"]["kept"]
     con = duck.connect(settings, views=False)
     try:
@@ -115,12 +138,14 @@ def run(settings: Settings) -> dict:
     out = interim_dir(settings)
     out.mkdir(parents=True, exist_ok=True)
     with ProcessPoolExecutor(max_workers=settings.ingest_workers, mp_context=mp.get_context("spawn")) as pool:
-        # Resume: shard trung gian đã ghi xong (os.replace) được dùng lại; xoá data/interim/ để làm lại từ đầu.
-        todo = [s for s in range(N_SHARDS) if not (out / f"shard_{s:04d}.parquet").is_file()]
+        # Resume: shard trung gian đã ghi xong được dùng lại CHỈ khi cùng logic (meta); khác logic ⇒ làm lại cả 10 shard.
+        reuse = meta_matches(out)
+        todo = [s for s in range(N_SHARDS) if not (reuse and (out / f"shard_{s:04d}.parquet").is_file())]
         print(f"ingest: {N_SHARDS - len(todo)} shard trung gian dùng lại, {len(todo)} shard cần xử lý", flush=True)
         futures = [pool.submit(process_shard, s, str(settings.raw_dir), str(out)) for s in todo]
         for fut in futures:
             print("ingest shard:", fut.result(), flush=True)
+    write_meta(out)
     con = duck.connect(settings, views=False)
     try:
         stats = dedup.run_global(con, out, settings.clean_path, settings.dup_map_path)
@@ -128,6 +153,7 @@ def run(settings: Settings) -> dict:
     finally:
         con.close()
     write_json_atomic(settings.results_dir / "ingest_report.json", report)
+    write_meta(settings.clean_path.parent)
     copy_embedding_benchmark(settings)
     print(f"ingest: peak RSS tiến trình chính {peak_rss_gb():.2f} GB, {report['seconds']} s", flush=True)
     return report

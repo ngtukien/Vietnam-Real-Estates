@@ -22,7 +22,7 @@ from typing import Any  # noqa: E402
 import typer  # noqa: E402
 
 from vre.checks import require  # noqa: E402
-from vre.config import EMBED_MODEL_SLUG, get_settings  # noqa: E402
+from vre.config import get_settings  # noqa: E402
 
 app = typer.Typer(add_completion=False, no_args_is_help=True, help="Pipeline VRE: ingest → eda → graph → price → night.")
 
@@ -84,7 +84,9 @@ def price(variant: Variant = typer.Option(..., "--variant", help="tabular (CPU) 
     settings = get_settings()
     checks = PRICE_CHECKS + (("gpu",) if variant is Variant.full else ())
     require(settings, *checks)
-    pca_file = settings.features_dir / f"emb_pca{settings.pca_dim}_{EMBED_MODEL_SLUG}.parquet"
+    from vre.valuation.features import pca_path
+
+    pca_file = pca_path(settings)
     if variant is Variant.full and not pca_file.is_file():
         raise typer.BadParameter(f"Thiếu file PCA {pca_file} (Phase 2 sinh)")
     from vre.valuation.train import run
