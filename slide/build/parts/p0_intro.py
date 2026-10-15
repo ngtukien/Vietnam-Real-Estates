@@ -5,6 +5,91 @@ from kit import MX, SIZE, W, Deck
 def build(d: Deck) -> None:
     cover(d)
     agenda(d)
+    questions(d)
+    llm_vs_rag(d)
+
+
+def excerpt(d: Deck, key: str, limit: int = 420) -> str:
+    """Trích nguyên văn chuỗi trong results (rút gọn theo ranh giới từ nếu dài)."""
+    value = d.V(key)
+    if value is None:
+        return d.A("⟨?⟩", f"thiếu {key}")
+    text = " ".join(str(value).split())
+    if len(text) > limit:
+        text = text[:limit].rsplit(" ", 1)[0] + " …"
+    return d.A(text, f"trích nguyên văn {key}")
+
+
+def pick_pair(d: Deck, a: str, b: str) -> str | None:
+    """Câu đầu tiên trong examples.answers có cả hệ a và hệ b (lấy từ lần chạy eval thật)."""
+    rows = d.V("examples.json:answers") or []
+    seen: dict[str, set] = {}
+    for r in rows:
+        seen.setdefault(r["id"], set()).add(r["system"])
+    return next((q for q, sys in seen.items() if {a, b} <= sys), None)
+
+
+def questions(d: Deck) -> None:
+    gt = "benchmark_gt.json:items"
+    lk, cs, ag = d.Q("LK01"), d.Q("CS01"), d.Q("AG04")
+    s = d.slide("intro-questions", "Bài toán", "Ba mức câu hỏi đòi hỏi ba mức công nghệ khác nhau", notes=(
+        f"Bộ benchmark có {d.N(gt + '|len')} câu chia chín nhóm, từ tra cứu một tin tới tổng hợp trên toàn bộ dữ liệu. "
+        "Ba câu trên slide là ba mức khó. Câu tra cứu chỉ cần tìm đúng một tin, mã đầy đủ là "
+        f"{d.N(gt + '[id=LK01].gt_ids[0]', 'str')}. Câu ràng buộc có nhiều điều kiện cứng cùng lúc, có "
+        f"{d.N(gt + '[id=CS01].gt_ids|len')} tin thoả, nên embedding không đủ mà phải lọc. Câu tổng hợp phải gom "
+        f"{d.N(gt + '[id=AG04].gt_rows[0].n')} tin căn hộ của một quận để tính trung vị, không tin đơn lẻ nào chứa đáp án. "
+        "Đáp án chuẩn của mọi câu tính bằng SQL trên bảng sạch, không nhờ LLM. "
+        "Không có một công cụ nào hợp cho cả ba; phần còn lại của bài đi lần lượt từng mức."))
+    levels = [
+        ("Mức 1 · Tra cứu", lk, "blue", "Basic RAG",
+         [("Đáp án chuẩn  ", {"bold": True}), (d.A("đúng 1 tin", "đề bài tra cứu một tin") + f" · Tin#…{d.N(gt + '[id=LK01].gt_ids[0]', 'last6')}", {})]),
+        ("Mức 2 · Ràng buộc", cs, "teal", "RAG + lọc metadata",
+         [("Đáp án chuẩn  ", {"bold": True}), (f"{d.N(gt + '[id=CS01].gt_ids|len')} tin thoả mọi điều kiện", {})]),
+        ("Mức 3 · Tổng hợp", ag, "amber", "Knowledge Graph",
+         [("Đáp án chuẩn  ", {"bold": True}),
+          (f"{d.T(gt + '[id=AG04].gt_value')} · {d.N(gt + '[id=AG04].gt_rows[0].median_price_m2_mil', 'dec1')} "
+           f"triệu/m², trên {d.N(gt + '[id=AG04].gt_rows[0].n')} tin", {})]),
+    ]
+    cw = (W - 2 * MX - 2 * 0.35) / 3
+    for i, (tag, q, col, tech, answer) in enumerate(levels):
+        x = MX + i * (cw + 0.35)
+        s.rect(x, 1.9, cw, 4.35, fill="soft", line=None, radius=0.04)
+        s.rect(x, 1.9, cw, 0.09, fill=col, line=None)
+        s.text(x + 0.3, 2.15, cw - 0.6, 0.4, tag, size=SIZE["caption"], bold=True, color=col)
+        s.text(x + 0.3, 2.6, cw - 0.6, 1.9, "“" + d.A(q["question"], f"đề bài benchmark {q['id']}") + "”",
+               size=18, color="ink")
+        s.text(x + 0.3, 4.55, cw - 0.6, 0.9, [answer], size=SIZE["small"])
+        s.rect(x + 0.3, 5.55, cw - 0.6, 0.48, fill=f"{col}_bg", line=None, radius=0.3)
+        s.text(x + 0.3, 5.55, cw - 0.6, 0.48, tech, size=SIZE["small"], bold=True, color=col, align="center",
+               anchor="middle")
+    s.caption(f"Ba câu lấy từ benchmark {d.N(gt + '|len')} câu; đáp án chuẩn tính bằng SQL trên "
+              f"{d.N('benchmark_gt.json:data_fingerprint.n_listings')} tin sạch.")
+
+
+def llm_vs_rag(d: Deck) -> None:
+    qid = pick_pair(d, "llm_only", "basic_rag")
+    ans = "examples.json:answers"
+    q = d.Q(qid) if qid else {"id": "?", "question": "⟨?⟩"}
+    s = d.slide("intro-llm-vs-rag", "Vì sao cần RAG", "LLM thuần không biết dữ liệu riêng nên không trả lời được, "
+                "cũng không dẫn được nguồn", notes=(
+        "Ba điểm yếu của LLM thuần: bịa số, kiến thức đóng băng ở thời điểm huấn luyện, và không biết dữ liệu riêng "
+        "của nhóm nên không dẫn nguồn được. Hai cột là câu trả lời thật của cùng một mô hình cho cùng một câu hỏi trong "
+        "lượt chạy benchmark: bên trái không có ngữ cảnh, bên phải là Basic RAG của nhóm, kèm mã tin kiểm chứng được. "
+        "Fine-tuning dạy phong cách; RAG đưa sự kiện mới vào và cho phép dẫn nguồn, hợp với tin đăng thay đổi mỗi ngày. "
+        "Chuyển sang chặng 1: RAG hoạt động thế nào."))
+    s.text(MX, 1.85, W - 2 * MX, 0.8, [[("Câu hỏi  ", {"bold": True, "color": "teal"}),
+           ("“" + d.A(q["question"], f"đề bài benchmark {q['id']}") + "”", {"color": "ink"})]], size=20)
+    cw = (W - 2 * MX - 0.4) / 2
+    for i, (system, col) in enumerate((("llm_only", "muted"), ("basic_rag", "blue"))):
+        x = MX + i * (cw + 0.4)
+        s.rect(x, 2.75, cw, 3.6, fill="soft", line=None, radius=0.04)
+        s.rect(x, 2.75, 0.08, 3.6, fill=col, line=None)
+        label = {"llm_only": "LLM thuần · không ngữ cảnh", "basic_rag": "Basic RAG · trích dẫn mã tin"}[system]
+        s.text(x + 0.3, 2.9, cw - 0.5, 0.4, label, size=SIZE["caption"], bold=True, color=col)
+        s.text(x + 0.3, 3.35, cw - 0.5, 2.9, excerpt(d, f"{ans}[id={q['id']},system={system}].answer", 380),
+               size=SIZE["small"], color="ink")
+    s.caption(d.A("Đầu ra thật của cùng một mô hình sinh trong lượt chạy eval ", "chú thích") +
+              f"({d.T('eval_summary.json:llm.generator')}); câu {q['id']}.")
 
 
 def cover(d: Deck) -> None:

@@ -153,7 +153,9 @@ def check_pptx(prs, m, res, rep, apply=False):
 def check_chart(chart, e, res, rep, where, name, apply):
     try:
         cats = e["categories"] if isinstance(e["categories"], list) else res.get(e["categories"])
-        series = [(s["name"], [float(v) * s.get("scale", 1) for v in res.get(s["key"])]) for s in e["series"]]
+        series = [(s["name"], [float(v) * s.get("scale", 1) for v in
+                               ([res.get(k) for k in s["key"]] if isinstance(s["key"], list) else res.get(s["key"]))])
+                  for s in e["series"]]
     except (KeyBroken, ValueError, TypeError) as exc:
         rep.fail("broken", where, str(exc), name)
         return

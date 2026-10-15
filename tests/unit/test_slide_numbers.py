@@ -68,6 +68,7 @@ def test_resolver_paths_selectors_and_expressions(results):
     assert r.get("r.json:rows[id=B].v") == 1.25
     assert r.get("r.json:rows[*].v") == [3.5, 1.25]
     assert r.get("r.json:rows[-1].id") == "B"
+    assert r.get("r.json:rows|len") == 2
     assert r.get("=({r.json:kept}+0)/{r.json:counts[1]}") == 2537920 / 20
     for bad in ("r.json:nope", "x.json:kept", "r.json:rows[id=Z].v", "r.json:rows[5]"):
         with pytest.raises(KeyBroken):

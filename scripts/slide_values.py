@@ -41,6 +41,11 @@ class Resolver:
     def get(self, key: str):
         if key.startswith("="):
             return self._expr(key[1:])
+        if key.endswith("|len"):
+            value = self.get(key[:-4])
+            if not isinstance(value, (list, dict, str)):
+                raise KeyBroken(f"{key}: |len trên giá trị không đếm được")
+            return len(value)
         name, _, path = key.partition(":")
         node = self._load(name.strip())
         return _walk(node, _TOKEN.findall(path.strip()), key) if path.strip() else node

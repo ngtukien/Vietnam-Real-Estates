@@ -295,14 +295,14 @@ class Slide:
     def chart(self, x, y, w, h, kind, categories, series, number_format="0", legend=True, labels=True,
               font_size=SIZE["caption"], max_value=None):
         """categories: khoá results (list) hoặc list nhãn cố định; series: [(tên, khoá, màu, scale=1)]."""
-        cats = categories if isinstance(categories, list) else self.V(categories) or []
+        cats = categories if isinstance(categories, list) else self.d.V(categories) or []
         data = CategoryChartData()
         data.categories = [str(c) for c in cats]
         rec = []
         for item in series:
             sname, key, _color, *rest = item
             scale = rest[0] if rest else 1
-            vals = self.V(key) or [0] * len(cats)
+            vals = ([self.d.V(k) for k in key] if isinstance(key, list) else self.d.V(key)) or [0] * len(cats)
             data.add_series(sname, [None if v is None else float(v) * scale for v in vals])
             rec.append({"name": sname, "key": key, **({"scale": scale} if scale != 1 else {})})
         ct = {"bar": XL_CHART_TYPE.BAR_CLUSTERED, "column": XL_CHART_TYPE.COLUMN_CLUSTERED,
