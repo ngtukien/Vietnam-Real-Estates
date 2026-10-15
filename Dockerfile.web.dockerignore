@@ -1,0 +1,7 @@
+# Ngữ cảnh build của Dockerfile.web (BuildKit đọc <Dockerfile>.dockerignore): chỉ mã nguồn web, không node_modules/dữ liệu.
+*
+!web/
+web/node_modules
+web/dist
+web/test-results
+web/playwright-report
