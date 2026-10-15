@@ -46,11 +46,26 @@ def test_readme_block_generated_from_results(tmp_path):
     assert report.readme(settings, readme)["changed"] is False  # idempotent
 
 
-def test_answer_examples_from_correct_rows():
+def test_answer_examples_pairs_and_contrast():
     questions = {q.id: q for q in load_questions()}
-    answers = {("AG01", "hybrid"): {"answer": "Đáp [Tin#123]", "route": "graph"},
-               ("LK01", "basic_rag"): {"answer": "sai", "route": None}}
-    scores = {("AG01", "hybrid"): {"points": 2}, ("LK01", "basic_rag"): {"points": 0}}
-    out = report.answer_examples(questions, answers, scores)
-    assert out == [{"id": "AG01", "system": "hybrid", "question": questions["AG01"].question,
-                    "answer": "Đáp [Tin#123]", "route": "graph", "cited": [123]}]
+    answers = {("LK01", "llm_only"): {"answer": "không rõ"}, ("LK01", "basic_rag"): {"answer": "Có 2 WC [Tin#123]"},
+               ("AG01", "basic_rag"): {"answer": "sai"}, ("AG01", "graph"): {"answer": "91,26", "route": None},
+               ("AG01", "hybrid"): {"answer": "Đáp [Tin#5]", "route": "graph"}}
+    scores = {("LK01", "llm_only"): {"points": 0}, ("LK01", "basic_rag"): {"points": 2},
+              ("AG01", "basic_rag"): {"points": 0}, ("AG01", "graph"): {"points": 2}, ("AG01", "hybrid"): {"points": 2}}
+    notes: list[str] = []
+    out = report.answer_examples(questions, answers, scores, notes)
+    pair = [e for e in out if e["pair"] == "llm_only_vs_basic_rag"]
+    assert [(e["id"], e["system"]) for e in pair] == [("LK01", "llm_only"), ("LK01", "basic_rag")]
+    assert pair[1]["cited"] == [123]
+    contrast = [(e["id"], e["system"], e["points"]) for e in out if e["pair"] == "basic_rag_vs_graph"]
+    assert contrast == [("AG01", "basic_rag", 0), ("AG01", "graph", 2)]
+    assert not notes
+
+
+def test_answer_examples_notes_missing_cases():
+    questions = {q.id: q for q in load_questions()}
+    notes: list[str] = []
+    out = report.answer_examples(questions, {("AG01", "hybrid"): {"answer": "x"}}, {("AG01", "hybrid"): {"points": 2}},
+                                 notes)
+    assert [(e["id"], e["pair"]) for e in out] == [("AG01", None)] and len(notes) == 2

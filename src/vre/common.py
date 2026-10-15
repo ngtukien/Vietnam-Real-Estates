@@ -15,8 +15,8 @@ if TYPE_CHECKING:
 
 CODE_ROOT = Path(__file__).resolve().parents[2]
 SIGNALS = ("SKELETON_READY", "CLEAN_DATA_READY", "INDEX_STARTED", "INDEX_DONE", "INDEX_FAILED",
-           "P1_DONE", "P2_DONE", "CHANGE_REQUEST", "CHANGE_APPLIED", "NOTE")
-SENDERS = ("p1", "p2")
+           "P1_DONE", "P2_DONE", "P3_RESULTS_READY", "CHANGE_REQUEST", "CHANGE_APPLIED", "NOTE")
+SENDERS = ("p1", "p2", "p3", "p4")  # p3/p4: phiên Phase 3 (kết quả eval) và Phase 4 (slide)
 FINGERPRINT_RTOL = 1e-9
 FINGERPRINT_THREADS = 4  # một cột, đọc tuần tự: không cần nhiều tài nguyên
 FINGERPRINT_MEMORY = "1GB"
@@ -90,7 +90,7 @@ def write_handoff(settings: Settings, name: str, sender: str, payload: dict[str,
     if name not in SIGNALS:
         raise ValueError(f"Tín hiệu lạ {name!r}; hợp lệ: {', '.join(SIGNALS)}")
     if sender not in SENDERS:
-        raise ValueError(f"Người gửi lạ {sender!r}; hợp lệ: p1, p2")
+        raise ValueError(f"Người gửi lạ {sender!r}; hợp lệ: {', '.join(SENDERS)}")
     path = settings.handoff_dir / handoff_filename(name, sender, payload)
     seq = 1
     if path.exists():

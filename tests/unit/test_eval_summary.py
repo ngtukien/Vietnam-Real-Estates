@@ -58,9 +58,20 @@ def test_summary_partial_run_is_flagged(tmp_path):
     scores = {k: v for k, v in scores.items() if k[0] in keep}
     scores[("LK01", "graph")] = {**scores[("LK01", "graph")], "points": None, "correct": None}
     doc = summary.build(load_settings(data_root=tmp_path), answers, scores, QUESTIONS, {}, None)
-    assert doc["complete"] is False and doc["n_questions"] == 2
+    assert doc["complete"] is False and doc["n_questions"] == 2 and doc["n_questions_scored"] == 1
+    assert doc["benchmark_subset"] == ["AG01", "LK01"] and doc["n_questions_total"] == 100
     assert doc["by_category"]["lookup"]["graph"]["n_unscored"] == 1
-    assert any("chưa đủ" in n for n in doc["notes"])
+    empty = doc["by_category"]["valuation"]["hybrid"]  # nhóm chưa chạy: n=0, chỉ số null, không phải 0.0
+    assert empty["n"] == 0 and empty["accuracy"] is None and empty["ci95"] is None
+    assert doc["coverage"]["lookup"] == {"n_benchmark": 12, "n_answered_any": 1, "n_answered_all_systems": 0}
+    assert doc["overall_common"]["hybrid"]["n"] == 1  # chỉ AG01 có điểm ở mọi hệ thống
+
+
+def test_summary_marks_rule_based(tmp_path):
+    answers, scores = _fixture()
+    scores = {k: {**v, "scoring": "rule_based"} for k, v in scores.items()}
+    doc = summary.build(load_settings(data_root=tmp_path), answers, scores, QUESTIONS, {}, None)
+    assert doc["scoring"] == "rule_based" and doc["scoring_rules"] and doc["complete"] is True
 
 
 def _q(category):

@@ -190,24 +190,8 @@ def available(name):
     return _AVAILABLE[name]
 
 
-class LLMCacheMiss(RuntimeError):
-    """Notebook không gọi LLM thật: câu chưa có trong cache đĩa LLM."""
-
-
-@contextmanager
-def llm_cache_only():
-    """Trong khối này `ask_llm` chỉ trả kết quả đã có trong cache đĩa; thiếu ⇒ LLMCacheMiss (không có lời gọi mạng)."""
-    from vre.llm import client as llm_client
-
-    def refuse(*args, **kwargs):
-        raise LLMCacheMiss("câu này chưa có trong cache LLM")
-
-    saved = llm_client._ask_openai, llm_client._ask_anthropic
-    llm_client._ask_openai = llm_client._ask_anthropic = refuse
-    try:
-        yield
-    finally:
-        llm_client._ask_openai, llm_client._ask_anthropic = saved
+# Một cài đặt duy nhất cho chế độ chỉ-cache: `vre.llm.client` (cũng là `VRE_LLM_OFFLINE=1` của pipeline/eval).
+from vre.llm.client import LLMCacheMiss, cache_only as llm_cache_only  # noqa: E402,F401
 
 
 def _plain(value):
@@ -1569,7 +1553,8 @@ Cách đọc: thanh lỗi chồng nhau nghĩa là chưa đủ bằng chứng h�
 if summary is None:
     missing("`results/eval_summary.json`", "python scripts/vre_pipeline.py eval")
 else:
-    rows = [{"category": c, "system": s, **{k: v[k] for k in ("n", "accuracy", "mean_points")}, "lo": v["ci95"][0], "hi": v["ci95"][1]}
+    rows = [{"category": c, "system": s, **{k: v[k] for k in ("n", "accuracy", "mean_points")}, "lo": (v["ci95"] or [None, None])[0],
+             "hi": (v["ci95"] or [None, None])[1]}
             for c, by in summary["by_category"].items() for s, v in by.items()]
     cat = pd.DataFrame(rows)
     acc = cat.pivot(index="category", columns="system", values="accuracy")
