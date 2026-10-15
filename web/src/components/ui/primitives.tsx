@@ -17,7 +17,7 @@ export function CardTitle({
   className,
   as: Tag = "h2",
   ...props
-}: React.HTMLAttributes<HTMLHeadingElement> & { as?: "h2" | "h3" | "h4" }) {
+}: React.HTMLAttributes<HTMLHeadingElement> & { as?: "h1" | "h2" | "h3" | "h4" }) {
   return <Tag className={cn("text-base font-semibold leading-tight", className)} {...props} />;
 }
 
