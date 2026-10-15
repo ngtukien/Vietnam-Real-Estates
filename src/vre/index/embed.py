@@ -12,6 +12,10 @@ import numpy as np
 from vre.config import EMBED_MODEL_SLUG, EMBED_MODELS
 
 _lock = threading.Lock()
+# Trần bộ nhớ đệm CUDA của tiến trình. Không có trần, caching allocator giữ khối cho mọi shape lô (đo 2026-10-15: reserved
+# 7,5 GB / allocated 1,2 GB sau 20s) ⇒ vượt VRAM 8 GB, WDDM tràn sang bộ nhớ hệ thống và tính vào commit (máy sập 2 lần).
+# Benchmark đỉnh 2 GB ở budget 32768; chạm trần thì allocator trả cache và thử lại, vẫn thiếu ⇒ OOM ⇒ ngân sách ½.
+VRAM_CAP_GB = 4.0
 _encoder = None
 
 
@@ -27,6 +31,9 @@ class Encoder:
         self.special = tokenize.special_ids(self.tokenizer)
         self.model = AutoModel.from_pretrained(tokenize.model_name(), dtype=torch.float16, attn_implementation="sdpa",
                                                local_files_only=True).to(device).eval()
+        if device == "cuda":
+            total = torch.cuda.get_device_properties(0).total_memory
+            torch.cuda.set_per_process_memory_fraction(min(1.0, VRAM_CAP_GB * 1e9 / total))
         self.dim = EMBED_MODELS[EMBED_MODEL_SLUG][1]
         self.max_length = settings.embed_max_length
         self.max_batch = settings.embed_max_batch
