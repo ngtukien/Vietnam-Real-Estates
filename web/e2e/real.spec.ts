@@ -2,10 +2,11 @@ import { expect, test } from "@playwright/test";
 
 /**
  * Kịch bản thủ công `npm run e2e:real`: webapp chạy với backend THẬT (Qdrant + Neo4j + mô hình định giá),
- * API khởi động với `VRE_LLM_OFFLINE=1` và đúng provider/model của lượt eval (gemini / gemini-flash-lite-latest)
+ * API khởi động với `VRE_LLM_OFFLINE=1` và đúng provider/model của lượt eval (xem `results/eval/raw/run_meta.json`)
  * ⇒ LLM chỉ trả từ cache đĩa, không gọi mạng. Vì vậy chỉ dùng câu hỏi đã có câu trả lời trong
  * `results/eval/raw/answers.jsonl`: AG01 (aggregate, route graph) và LK01 (lookup, route basic_rag).
  * Câu chưa có trong cache sẽ hiện lỗi LLMCacheMiss — đó là lỗi đúng, không phải lỗi test.
+ * Không khẳng định văn bản cụ thể của câu trả lời (đổi model sinh ⇒ đổi câu chữ); chỉ khẳng định cấu trúc.
  */
 const AG01 = "Giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy là bao nhiêu?";
 const LK01 = "Mình thấy tin bán căn hộ 3 phòng ngủ 80m2 ở Sun Feliza Suites Cầu Giấy giá 8 tỷ, căn đó có mấy WC vậy?";
@@ -25,11 +26,11 @@ async function ask(page: import("@playwright/test").Page, question: string): Pro
 test("thật — chat hybrid, câu aggregate: route graph + Cypher + câu trả lời từ cache", async ({ page }) => {
   await ask(page, AG01);
   const answer = page.getByTestId("answer");
-  await expect(answer).toContainText("91,26", SLOW);
-  await expect(answer).toContainText("[Cypher]");
-  await expect(page.getByTestId("route-badge")).toBeVisible();
+  await expect(page.getByTestId("usage")).toBeVisible(SLOW);
+  await expect(answer).not.toBeEmpty();
+  await expect(page.getByTestId("route-badge")).toContainText("Route:");
   await expect(page.getByTestId("cypher-panel")).toBeVisible();
-  await expect(page.getByTestId("cypher-panel")).toContainText("MarketStat");
+  await expect(page.getByTestId("cypher-panel")).toContainText("Cầu Giấy");
   await expect(page.getByTestId("usage")).toContainText("từ cache");
   await expect(page.getByTestId("run-error")).toHaveCount(0);
 });
@@ -37,9 +38,12 @@ test("thật — chat hybrid, câu aggregate: route graph + Cypher + câu trả 
 test("thật — chat hybrid, câu lookup: route basic_rag + nguồn + trích dẫn tin", async ({ page }) => {
   await ask(page, LK01);
   const answer = page.getByTestId("answer");
-  await expect(answer).toContainText(`Tin#${LK01_LISTING}`, SLOW);
-  await expect(page.getByTestId("route-badge")).toBeVisible();
+  await expect(page.getByTestId("usage")).toBeVisible(SLOW);
+  await expect(answer).toContainText("Tin#");
+  await expect(page.getByTestId("route-badge")).toContainText("Route:");
   await expect(page.getByTestId("source-card").first()).toBeVisible();
+  // Tin đúng của LK01 (ground truth) phải nằm trong các nguồn đã truy hồi.
+  await expect(page.getByTestId("source-card").filter({ hasText: LK01_LISTING })).not.toHaveCount(0);
   await expect(page.getByTestId("usage")).toContainText("từ cache");
   await expect(page.getByTestId("run-error")).toHaveCount(0);
 });
@@ -55,7 +59,6 @@ test("thật — so sánh 4 hệ trên AG01: 4 cột, cả 4 trả lời từ ca
     await expect(col.getByTestId("answer")).not.toBeEmpty();
     await expect(col.getByTestId("run-error")).toHaveCount(0);
   }
-  await expect(page.getByTestId("compare-col-hybrid").getByTestId("answer")).toContainText("91,26");
 });
 
 test("thật — định giá (không dùng LLM): kết quả + nhận định giá chào", async ({ page }) => {
