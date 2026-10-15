@@ -1553,7 +1553,8 @@ Cách đọc: thanh lỗi chồng nhau nghĩa là chưa đủ bằng chứng h�
 if summary is None:
     missing("`results/eval_summary.json`", "python scripts/vre_pipeline.py eval")
 else:
-    rows = [{"category": c, "system": s, **{k: v[k] for k in ("n", "accuracy", "mean_points")}, "lo": v["ci95"][0], "hi": v["ci95"][1]}
+    rows = [{"category": c, "system": s, **{k: v[k] for k in ("n", "accuracy", "mean_points")}, "lo": (v["ci95"] or [None, None])[0],
+             "hi": (v["ci95"] or [None, None])[1]}
             for c, by in summary["by_category"].items() for s, v in by.items()]
     cat = pd.DataFrame(rows)
     acc = cat.pivot(index="category", columns="system", values="accuracy")

@@ -79,28 +79,57 @@ def rag_examples(questions: dict, scores: dict, top_k: int = 5) -> list[dict]:
     return out
 
 
-def graph_examples(questions: dict, answers: dict, scores: dict) -> list[dict]:
-    """Cypher do hệ thống graph đã sinh trong lượt eval (answers.jsonl), chạy lại trên Neo4j (chỉ đọc, không LLM)."""
+LOWEST = ("thấp nhất", "rẻ nhất", "thap nhat", "re nhat")
+
+
+def _graph_wanted(q: Any) -> str | None:
+    """Nhãn ví dụ graph cho slide: lookup / aggregate_lowest (quận rẻ nhất, n ≥ 20) / multihop."""
+    if q.category == "lookup":
+        return "lookup"
+    if q.category == "aggregate" and any(w in q.question.lower() for w in LOWEST):
+        return "aggregate_lowest"
+    if q.category == "multihop":
+        return "multihop"
+    return None
+
+
+def graph_examples(questions: dict, answers: dict, scores: dict, notes: list[str] | None = None) -> list[dict]:
+    """Cypher do hệ thống sinh trong lượt eval (answers.jsonl: graph, rồi hybrid route graph), chạy lại trên Neo4j
+    (chỉ đọc, không LLM). Ưu tiên một ví dụ mỗi nhãn `lookup`, `aggregate_lowest`, `multihop`, câu đúng trước."""
     from time import perf_counter
 
     from vre.graph.client import run_cypher
 
+    keys = [k for k, a in answers.items() if k[1] in ("graph", "hybrid") and a.get("cypher") and not a.get("error")]
+    keys.sort(key=lambda k: (k[1] != "graph", scores.get(k, {}).get("points") != 2, k[0]))
+    wanted = ("lookup", "aggregate_lowest", "multihop")
+    ordered = [next(k for k in keys if _graph_wanted(questions[k[0]]) == tag) for tag in wanted
+               if any(_graph_wanted(questions[k[0]]) == tag for k in keys)]
+    ordered += [k for k in keys if k not in ordered]
     out: list[dict] = []
-    keys = sorted(k for k, a in answers.items() if k[1] == "graph" and a.get("cypher") and not a.get("error"))
-    keys.sort(key=lambda k: scores.get(k, {}).get("points") != 2)  # câu đúng trước
-    for qid, _system in keys:
+    seen: set[str] = set()
+    for qid, system in ordered:
         if len(out) >= MAX_EXAMPLES:
             break
+        if qid in seen:
+            continue
+        cypher = answers[(qid, system)]["cypher"]
         started = perf_counter()
         try:
-            rows = run_cypher(answers[(qid, "graph")]["cypher"], timeout=10, max_rows=10)
+            rows = run_cypher(cypher, timeout=10, max_rows=10)
         except Exception as error:  # Cypher cũ không chạy lại được: bỏ ví dụ, ghi log
             log.warning("Cypher của %s không chạy lại được: %s", qid, type(error).__name__)
             continue
-        out.append({"question": questions[qid].question, "cypher": answers[(qid, "graph")]["cypher"],
-                    "columns": [str(c) for c in rows.columns],
+        seen.add(qid)
+        out.append({"question": questions[qid].question, "cypher": cypher, "columns": [str(c) for c in rows.columns],
                     "rows": [{str(k): _cell(v) for k, v in r.items()} for r in rows.to_dict("records")],
-                    "latency_ms": round((perf_counter() - started) * 1000, 1)})
+                    "latency_ms": round((perf_counter() - started) * 1000, 1), "id": qid, "system": system,
+                    "category": questions[qid].category, "tag": _graph_wanted(questions[qid]),
+                    "points": scores.get((qid, system), {}).get("points")})
+    if notes is not None:
+        for tag in wanted:
+            if not any(e["tag"] == tag for e in out):
+                notes.append(f"graph: không có ví dụ '{tag}' trong lượt eval (không có Cypher chạy được cho nhóm này)")
     return out
 
 
@@ -116,17 +145,46 @@ def valuation_examples(questions: dict) -> list[dict]:
     return out
 
 
-def answer_examples(questions: dict, answers: dict, scores: dict) -> list[dict]:
+def _answer_entry(questions: dict, answers: dict, scores: dict, key: tuple[str, str], pair: str | None) -> dict:
     from vre.rag.citations import cited_ids
 
-    good = sorted(k for k, s in scores.items() if s.get("points") == 2 and k in answers and answers[k].get("answer"))
-    picked: list[tuple[str, str]] = []
-    for system in ("hybrid", "basic_rag", "graph", "llm_only", "hybrid", "basic_rag", "graph", "hybrid"):
-        key = next((k for k in good if k[1] == system and k not in picked and k[0] not in {p[0] for p in picked}), None)
+    i, sys_ = key
+    row = answers[key]
+    return {"id": i, "system": sys_, "question": questions[i].question, "answer": row.get("answer") or "",
+            "route": row.get("route"), "cited": cited_ids(row.get("answer") or ""),
+            "points": scores.get(key, {}).get("points"), "category": questions[i].category, "pair": pair}
+
+
+def answer_examples(questions: dict, answers: dict, scores: dict, notes: list[str] | None = None) -> list[dict]:
+    """Câu trả lời thật: (1) cùng câu llm_only vs basic_rag (ưu tiên câu basic_rag đúng); (2) câu aggregate/multihop
+    basic_rag 0 điểm mà graph hoặc hybrid 2 điểm; (3) câu đúng, xen kẽ hệ thống."""
+    points = {k: s.get("points") for k, s in scores.items()}
+    out: list[dict] = []
+    both = sorted({i for i, s in answers if s == "llm_only" and (i, "basic_rag") in answers},
+                  key=lambda i: (points.get((i, "basic_rag")) != 2, points.get((i, "llm_only")) == 2, i))
+    if both:
+        out += [_answer_entry(questions, answers, scores, (both[0], s), "llm_only_vs_basic_rag")
+                for s in ("llm_only", "basic_rag")]
+    elif notes is not None:
+        notes.append("answers: không có câu nào cả llm_only và basic_rag đều đã trả lời")
+    contrast = next(((i, s) for i in sorted({i for i, _ in answers})
+                     if questions[i].category in ("aggregate", "multihop") and points.get((i, "basic_rag")) == 0
+                     for s in ("graph", "hybrid") if points.get((i, s)) == 2), None)
+    if contrast:
+        out += [_answer_entry(questions, answers, scores, (contrast[0], "basic_rag"), "basic_rag_vs_graph"),
+                _answer_entry(questions, answers, scores, contrast, "basic_rag_vs_graph")]
+    elif notes is not None:
+        notes.append("answers: không có câu aggregate/multihop nào basic_rag 0 điểm mà graph/hybrid 2 điểm (chấm theo luật)")
+    good = sorted(k for k, p in points.items() if p == 2 and k in answers and answers[k].get("answer"))
+    used = {(e["id"], e["system"]) for e in out}
+    for system in ("hybrid", "graph", "basic_rag", "hybrid"):
+        if len(out) >= 8:
+            break
+        key = next((k for k in good if k[1] == system and k not in used and k[0] not in {u[0] for u in used}), None)
         if key:
-            picked.append(key)
-    return [{"id": i, "system": s, "question": questions[i].question, "answer": answers[(i, s)]["answer"],
-             "route": answers[(i, s)].get("route"), "cited": cited_ids(answers[(i, s)]["answer"])} for i, s in picked]
+            out.append(_answer_entry(questions, answers, scores, key, None))
+            used.add(key)
+    return out
 
 
 def examples(settings: Settings) -> dict:
@@ -134,12 +192,16 @@ def examples(settings: Settings) -> dict:
     questions, answers, scores = _load(settings)
     if not scores:
         raise FileNotFoundError("Chưa có scores.jsonl; chạy `eval run` + `eval score` trước")
+    notes: list[str] = []
     doc: dict[str, Any] = {**result_header(SCHEMA_VERSION), "rag": rag_examples(questions, scores),
-                           "graph": graph_examples(questions, answers, scores), "valuation": valuation_examples(questions),
-                           "answers": answer_examples(questions, answers, scores)}
+                           "graph": graph_examples(questions, answers, scores, notes),
+                           "valuation": valuation_examples(questions),
+                           "answers": answer_examples(questions, answers, scores, notes)}
     short = [k for k in ("rag", "graph", "valuation", "answers") if len(doc[k]) < MIN_EXAMPLES]
     if short:
-        doc["notes"] = [f"ít hơn {MIN_EXAMPLES} ví dụ ở: {', '.join(short)} (lượt eval chưa đủ câu)"]
+        notes.append(f"ít hơn {MIN_EXAMPLES} ví dụ ở: {', '.join(short)} (lượt eval chưa đủ câu)")
+    if notes:
+        doc["notes"] = notes
     write_json_atomic(settings.results_dir / "examples.json", doc)
     return doc
 
