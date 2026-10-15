@@ -57,10 +57,11 @@ def free_commit_gb() -> float:
     return status.avail_commit / 1e9
 
 
-def _hours(run: dict, now: dt.datetime) -> float:
-    start = dt.datetime.fromisoformat(run["started_at"].replace("Z", "+00:00"))
-    end = dt.datetime.fromisoformat(run["ended_at"].replace("Z", "+00:00")) if run.get("ended_at") else now
-    return (end - start).total_seconds() / 3600
+def _wall_hours(runs: list[dict], now: dt.datetime) -> float:
+    """Tổng giờ chạy; lần chạy bị kill (không có ended_at) tính tới lúc lần sau bắt đầu, lần cuối còn mở tính tới `now`."""
+    ts = lambda v: dt.datetime.fromisoformat(v.replace("Z", "+00:00"))  # noqa: E731
+    ends = [r.get("ended_at") or (runs[i + 1]["started_at"] if i + 1 < len(runs) else None) for i, r in enumerate(runs)]
+    return sum(((ts(e) if e else now) - ts(r["started_at"])).total_seconds() for r, e in zip(runs, ends, strict=True)) / 3600
 
 
 class Report:
@@ -114,15 +115,19 @@ class Report:
             "schema_version": 1, "generated_at": now_iso(), "git_sha": git_sha(), "status": status,
             "model_slug": EMBED_MODEL_SLUG, "collection": state["collection"],
             "started_at": runs[0]["started_at"] if runs else None, "finished_at": now_iso(),
-            "wall_hours": round(sum(_hours(r, now) for r in runs), 3), "resumed_runs": max(len(runs) - 1, 0),
+            "wall_hours": round(_wall_hours(runs, now), 3), "resumed_runs": max(len(runs) - 1, 0),
             "steps": [s for s in self.steps.values() if s["status"] is not None],
             "counters": self.counters,
             "embed": {"token_budget": self.token_budget,
-                      "chunks_per_s_avg": round(self.embed_chunks / self.embed_seconds, 1) if self.embed_seconds else 0.0},
+                      "chunks_per_s_avg": round(self.embed_chunks / self.embed_seconds, 1) if self.embed_seconds else None},
             "bm25": {"avgdl": state.get("bm25_avgdl")},
             "peaks": {"ram_used_gb": round(self.ram_peak_gb, 2), "vram_peak_gb": round(self.vram_peak_gb, 2)},
             "qdrant": self.qdrant, "errors": self.errors,
         }
+        if not self.embed_seconds:  # lần chạy này không embed (resume sau embed): giữ số đo của report trước, không ghi 0 giả
+            previous = _read(self.layout.report_path) or {}
+            report["embed"] = previous.get("embed") or report["embed"]
+            report["peaks"] = previous.get("peaks") or {"ram_used_gb": None, "vram_peak_gb": None}
         self.layout.report_path.parent.mkdir(parents=True, exist_ok=True)
         write_json_atomic(self.layout.report_path, report)
         return report

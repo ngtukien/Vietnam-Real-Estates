@@ -92,3 +92,16 @@ def test_reconcile_redoes_only_broken_parts(tmp_path):
     stages.reconcile(ledger, layout, 2, log=lambda _: None)
     assert ledger.done(0, "embedded") and ledger.done(0, "chunked")
     assert not ledger.done(1, "embedded") and not ledger.done(1, "chunked") and ledger.done(1, "bm25")
+
+
+def test_wall_hours_closes_killed_runs_at_next_start():
+    import datetime as dt
+
+    from vre.pipeline.report import _wall_hours
+
+    runs = [{"started_at": "2026-10-15T00:00:00Z", "ended_at": None},  # bị kill: tính tới lần sau bắt đầu
+            {"started_at": "2026-10-15T02:00:00Z", "ended_at": "2026-10-15T03:00:00Z"},
+            {"started_at": "2026-10-15T04:00:00Z", "ended_at": None}]  # đang chạy: tính tới now
+    now = dt.datetime(2026, 10, 15, 4, 30, tzinfo=dt.UTC)
+    assert _wall_hours(runs, now) == 2 + 1 + 0.5
+    assert _wall_hours([], now) == 0
