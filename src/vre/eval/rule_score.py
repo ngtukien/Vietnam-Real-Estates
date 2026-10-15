@@ -171,7 +171,7 @@ def score_row(q: Question, gt: dict, row: dict, cluster_of: dict[int, int], dige
 
 def rules_version() -> str:
     """Dấu vân tay của bộ luật + cụm từ: đổi luật ⇒ `eval score --offline` chấm lại mọi dòng."""
-    payload = "
-".join([*RULES, *REFUSAL_PHRASES, UP_WORDS.pattern, DOWN_WORDS.pattern, str(FULL_RECALL),
-                          str(COMPARE_WINDOW), _MONEY.pattern])
+    parts = [*RULES, *REFUSAL_PHRASES, UP_WORDS.pattern, DOWN_WORDS.pattern, str(FULL_RECALL), str(COMPARE_WINDOW),
+             _MONEY.pattern]
+    payload = "\n".join(parts)
     return hashlib.sha256(payload.encode()).hexdigest()[:12]
