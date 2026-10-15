@@ -1,0 +1,49 @@
+{
+ "k": 5,
+ "filters": {
+  "province": "Hồ Chí Minh",
+  "district": "Quận 7",
+  "property_type": "Căn hộ chung cư",
+  "bedrooms": 2,
+  "max_price_mil": 4000.0
+ },
+ "pre": 5,
+ "post": 0,
+ "pre_rows": [
+  [
+   3951331664757594,
+   "Quận 7",
+   2800000000.0,
+   "Giá bất ngờ! Kẹt tiền bán lỗ căn hộ 2 phòng ngủ: 2tỷ8 (bao hết phí san"
+  ],
+  [
+   8176552459100699,
+   "Quận 7",
+   3300000000.0,
+   "QUẬN 7 ăn Hộ Cao Cấp BOULEVARD Đường 15B Phú Mỹ _ 3 tỷ 3"
+  ],
+  [
+   7782917688574793,
+   "Quận 7",
+   2180000000.0,
+   "Bán Căn hộ Hoàng Anh Gia Lai 2 , 2pn-2wc-77m2-2tỷ180"
+  ],
+  [
+   1615269564752922,
+   "Quận 7",
+   3900000000.0,
+   "Bán căn hộ 2 phòng ngủ An Gia Skyline, Lê Thị Chợ, Quận 7 giá 3,9 tỷ"
+  ],
+  [
+   3110486358560917,
+   "Quận 7",
+   3990000000.0,
+   "Bán Căn hộ 2PN tại Q7 Saigon Riverside, 3.988 tỷ, 67m2, View hồ bơi, n"
+  ]
+ ],
+ "_meta": {
+  "cell": "P2-07",
+  "mode": "live",
+  "generated_at": "2026-10-15T15:47:01Z"
+ }
+}

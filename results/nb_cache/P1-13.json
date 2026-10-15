@@ -1,0 +1,71 @@
+{
+ "k": 5,
+ "n_all_ok": 0,
+ "rows": [
+  {
+   "listing_id": 7430604544015860,
+   "điểm": 0.893,
+   "giá": "9,20 tỷ",
+   "m²": 84.0,
+   "địa chỉ": "Tân Phú, Quận 7, Hồ Chí Minh",
+   "đoạn": "Bán M7 2PN giá rẻ Hoàng Trí (zalo) · Căn hộ chung cư · Tân Phú, Quận 7",
+   "đúng quận": true,
+   "đúng số phòng": true,
+   "dưới giá": false,
+   "đúng loại": true
+  },
+  {
+   "listing_id": 3332016841492646,
+   "điểm": 0.8902,
+   "giá": "9,20 tỷ",
+   "m²": 84.0,
+   "địa chỉ": "Tân Phú, Quận 7, Hồ Chí Minh",
+   "đoạn": "Bán M7 2PN giá rẻ [phone_number] Hoàng Trí (zalo) · Căn hộ chung cư · ",
+   "đúng quận": true,
+   "đúng số phòng": true,
+   "dưới giá": false,
+   "đúng loại": true
+  },
+  {
+   "listing_id": 7685080364813,
+   "điểm": 0.8849,
+   "giá": "7,70 tỷ",
+   "m²": 75.5,
+   "địa chỉ": "Tân Phú, Quận 7, Hồ Chí Minh",
+   "đoạn": "Giá tốt! Bán căn 2PN 75.5m2 đầy đủ nội thất, tầng thấp view ngắm hoàng",
+   "đúng quận": true,
+   "đúng số phòng": true,
+   "dưới giá": false,
+   "đúng loại": true
+  },
+  {
+   "listing_id": 780740454016268,
+   "điểm": 0.884,
+   "giá": "7,70 tỷ",
+   "m²": 82.0,
+   "địa chỉ": "Tân Phú, Quận 7, Hồ Chí Minh",
+   "đoạn": "Chính chủ cần bán căn hộ 2pn- 7tỷ7-Infiniti hướng ĐB, giá rẻ nhất, vie",
+   "đúng quận": true,
+   "đúng số phòng": true,
+   "dưới giá": false,
+   "đúng loại": true
+  },
+  {
+   "listing_id": 5230306568768804,
+   "điểm": 0.8834,
+   "giá": "4,80 tỷ",
+   "m²": 74.0,
+   "địa chỉ": "Tân Hưng, Quận 7, Hồ Chí Minh",
+   "đoạn": "Còn sót vài căn 2PN 2WC giá tốt nhất thị trường sunrise city view 4ty8",
+   "đúng quận": true,
+   "đúng số phòng": true,
+   "dưới giá": false,
+   "đúng loại": true
+  }
+ ],
+ "_meta": {
+  "cell": "P1-13",
+  "mode": "live",
+  "generated_at": "2026-10-15T15:46:41Z"
+ }
+}

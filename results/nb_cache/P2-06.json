@@ -1,0 +1,49 @@
+{
+ "toy": [
+  [
+   "Y",
+   0.04892
+  ],
+  [
+   "X",
+   0.0484
+  ],
+  [
+   "Z",
+   0.04788
+  ]
+ ],
+ "overlap": 2,
+ "fused": [
+  [
+   7190586395909740,
+   0.0289,
+   "Độc quyền chuyển nhượng The River - Căn 1PN view sông và hồ bơi chuẩn resort - Đ"
+  ],
+  [
+   8263731079106060,
+   0.0284,
+   "Độc Quyền chuyển nhượng The River - Căn 1PN view sông và hồ bơi chuẩn Resot - Đã"
+  ],
+  [
+   2303733448351949,
+   0.01639,
+   "Bán nhanh căn 2 phòng ngủ giá 4.6 tỷ view sông"
+  ],
+  [
+   1879345725074924,
+   0.01639,
+   "400m2 penthouse view sông, có hồ bơi trong nhà, Empire City, Metropole Thủ Thiêm"
+  ],
+  [
+   4883033395661766,
+   0.01613,
+   "Căn hộ tầng cao view sông, duplex 2PN, Feliz En Vista, full nội thất, sổ hồng ri"
+  ]
+ ],
+ "_meta": {
+  "cell": "P2-06",
+  "mode": "live",
+  "generated_at": "2026-10-15T15:47:00Z"
+ }
+}
