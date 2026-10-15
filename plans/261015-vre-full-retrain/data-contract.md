@@ -439,7 +439,9 @@ Ghi nguyên tử bằng `vre_pipeline.py signal` (§9.3). Gửi lại cùng tín
 
 ## 8. Dữ liệu địa lý — `data/geo/centroids.json` (Phase 3 Lane C ghi, Lane B đọc)
 
-`{schema_version, generated_at, source: "geoBoundaries gbOpen VNM ADM1/ADM2 (CC BY 4.0)", source_vintage: str,
+(Sửa 2026-10-15 theo metadata geoBoundaries thật: ADM1 = Public Domain (2008), ADM2 = OCHA ROAP CC BY 3.0 IGO (2020); không phải CC BY 4.0.
+Ghi công ở footer web + README theo đúng hai license này; `source` lấy nguyên chuỗi `scripts/build_geo.py` ghi.)
+`{schema_version, generated_at, source: "geoBoundaries gbOpen VNM ADM1 (Public Domain) / ADM2 (CC BY 3.0 IGO)", source_vintage: str,
 items: [{level: "province"|"district", key: str, name: str, lat: float, lon: float}], unmatched: [{level, key}], coverage: {province: float, district: float}}`
 — `key` dùng ĐÚNG khoá node Neo4j (`Province.key` = tên tỉnh; `District.key` = `province|district`, data-contract §6.1). Toạ độ WGS84.
 Thư mục `data/geo/` bị gitignore (license nguồn yêu cầu ghi công; file sinh lại bằng `scripts/build_geo.py`).

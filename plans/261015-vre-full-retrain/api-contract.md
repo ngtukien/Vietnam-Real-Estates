@@ -19,7 +19,11 @@ với bảng dưới; `web/src/api/types.ts` sinh bằng `openapi-typescript` t�
 - Mọi response có header `X-Request-Id` (8 ký tự hex). Lỗi luôn kèm `request_id` trong envelope.
 - CORS: chỉ origin trong `VRE_CORS_ORIGINS` (mặc định `http://127.0.0.1:5173,http://localhost:5173`).
 - Giới hạn: body ≤ 8 KiB; `question` 1–500 ký tự (sau `strip`); `VRE_CHAT_MAX_CONCURRENT` (4) câu đồng thời,
-  chờ slot tối đa 60s rồi trả `busy`; `VRE_CHAT_RATE_PER_MIN` (20)/IP/phút; timeout tổng mỗi câu `VRE_CHAT_TIMEOUT_S` (120).
+  chờ slot tối đa 60s rồi trả `busy`; `VRE_CHAT_RATE_PER_MIN` (20)/IP/phút cho `/api/chat` + `/api/compare` (1 compare = 1 lượt,
+  giữ `min(len(systems), max_concurrent)` slot), `VRE_API_RATE_PER_MIN` (300)/IP/phút cho mọi `/api/*` khác trừ `/api/health`
+  (thêm 2026-10-15: trang web gọi nhiều GET lúc tải); timeout tổng mỗi câu `VRE_CHAT_TIMEOUT_S` (120).
+- `/api/compare` khi một số hệ thống không sẵn sàng: vẫn mở stream, hệ đó nhận `error{system_unavailable}` → `done`; chỉ trả HTTP 503 khi
+  không hệ nào chạy được. Trong Docker (`VRE_API_ALLOW_REMOTE_WITHOUT_TOKEN=1`) client không phải loopback; cổng chỉ publish trên 127.0.0.1.
 
 ## 1. Enums
 
@@ -205,7 +209,10 @@ def system_status() -> dict[SystemId, tuple[bool, str | None]]:
 # src/vre/valuation/predict.py
 def valuate(payload: dict) -> dict:
     """payload theo ValuationInput (§3) → dict theo ValuationResult (§3). Raise ValueError (→ 400) khi input sai,
-    RuntimeError (→ 503) khi chưa có model. Ưu tiên model `full`, lùi về `tabular` nếu `full` chưa có (ghi `model.variant`)."""
+    RuntimeError (→ 503) khi chưa có model. Dùng model `tabular` (ghi `model.variant`).
+    Sửa 2026-10-15: `full` cần vector embedding của CHÍNH tin đăng (PCA32 §4); BĐS giả định nhập từ API không có tin
+    ⇒ đặc trưng embedding rỗng và `full` lệch nặng (đo: 23,4 tr/m² so với tabular 53,0 và trung vị phường 96,1).
+    `full` chỉ dùng để báo cáo `valuation_metrics` trên tin thật, không phục vụ `/api/valuate`."""
 ```
 
 ## 8. Tên schema OpenAPI (thêm 2026-10-15, để web code song song trước khi có `api/openapi.json`)

@@ -30,11 +30,13 @@ services:
       NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:-local_dev_password}
       # Không đặt tên NEO4J_*: entrypoint coi mọi NEO4J_* là thiết lập cấu hình.
       GRAPH_PASSWORD: ${NEO4J_PASSWORD:-local_dev_password}
-      # Chia máy với lượt chạy dài của p2 (coordination §8).
-      NEO4J_server_memory_heap_initial__size: 4G
-      NEO4J_server_memory_heap_max__size: 4G
-      NEO4J_server_memory_pagecache_size: 4G
-      NEO4J_dbms_memory_transaction_total_max: 2G
+      # Phase 3: Cypher chỉ đọc MarketStat/đường đi ngắn ⇒ 2G heap + 1G pagecache là đủ; commit Windows
+      # cạn khi để 4G/4G cạnh Qdrant + 5 lane song song (2026-10-15, free commit 2,2 GB).
+      NEO4J_server_memory_heap_initial__size: 2G
+      NEO4J_server_memory_heap_max__size: 2G
+      NEO4J_server_memory_pagecache_size: 1G
+      NEO4J_dbms_memory_transaction_total_max: 1G
+    mem_limit: 4g
     ports:
       - "127.0.0.1:7474:7474"
       - "127.0.0.1:7687:7687"
