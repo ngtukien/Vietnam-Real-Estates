@@ -54,6 +54,26 @@ RAM vật lý ~40 GB, đang dùng ~25 GB (Docker Qdrant ≤ 12 GB + Neo4j heap 4
 - Trước bước nặng: đọc `Win32_OperatingSystem` FreePhysicalMemory/FreeVirtualMemory; free commit < 6 GB ⇒ chờ, không chạy.
 - Lời gọi Groq thật: A1 ≤ 20 lời gọi để kiểm thủ công; các lane khác 0 (dùng fake/cache).
 
+## 4b. Cắt phạm vi để tiết kiệm thời gian (người dùng yêu cầu 2026-10-15)
+
+| Bỏ | Lý do | Thay bằng |
+|---|---|---|
+| Người dùng duyệt 10 câu benchmark | người dùng giao lại cho agent | agent tự soát 10 câu seed 42 (`plans/reports/p3-lane-bench.md`) |
+| Ablation chunk_size 256/512 trên subcorpus | ~1,5 giờ GPU embed lại | ablation retrieval trên chỉ mục đầy đủ, chunk 400 |
+| RAGAS answer_relevancy + context_precision | ~500 lời gọi LLM thêm | giữ faithfulness + judge 0–2 |
+| Build image Docker `api` (torch) + chạy compose profile `app` | build nặng, rủi ro cạn commit | compose `config` hợp lệ; e2e với backend thật chạy native (uvicorn + vite) |
+| Sửa lỗi mypy có sẵn từ trước ở file không đổi | không thuộc Phase 3 | chỉ yêu cầu 0 lỗi mới |
+
+## 4c. Notebook theo bố cục bản cũ (người dùng yêu cầu 2026-10-15, thay D.1 của phase-03)
+
+Bố cục lấy từ `git show b22c3cc^:notebooks/*.ipynb`: `00_setup.ipynb` dùng chung (`%run ./00_setup.ipynb`), mã cell `Px-yy`,
+mỗi cell code đi sau một cell markdown `### Px-yy · <kết luận một câu>` + đoạn giải thích chi tiết; dòng đầu cell code ghi
+`# Px-yy · ẨN|CACHE|LIVE`. Bộ notebook: `00_setup`, `01_rag_indexing` (EDA + làm sạch + chunk + embed + Qdrant),
+`02_retrieval_generation`, `03_knowledge_graph`, `04_graphrag_eval`, `05_valuation` (mới). Được import `vre` qua 00_setup.
+CACHE = đọc `results/*.json` hoặc cache cell `results/nb_cache/<id>.json` (commit, nhỏ); LIVE = demo nhẹ chạy thật khi có dịch vụ/model,
+không có thì đọc cache cell (CI chạy được không cần Docker/GPU/LLM). Số trong heading markdown do `notebooks/build_notebooks.py`
+điền từ JSON (không gõ tay); test kiểm notebook khớp bản sinh lại.
+
 ## 5. Báo cáo
 
 Mỗi lane kết thúc (hoặc chạm ngân sách) ⇒ commit + push nhánh TRƯỚC, rồi ghi `D:\Vietnam-Real-Estates\plans\reports\p3-lane-<core|bench|api|web|docs>.md`
