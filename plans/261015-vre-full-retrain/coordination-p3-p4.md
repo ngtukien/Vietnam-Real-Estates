@@ -1,6 +1,7 @@
 # Phối hợp Phase 3 (phiên p3) ∥ Phase 4 (phiên p4) — 2026-10-16
 
-Người dùng yêu cầu Phase 3 + 4 xong 100% lúc **06:00 2026-10-16**, không ai thức kích hoạt lệnh. Hai phiên chạy song song, tự phối hợp
+Người dùng mong Phase 3 + 4 xong 100% khoảng **06:00 2026-10-16** — đây là MỤC TIÊU để làm nhanh, KHÔNG phải hạn cắt:
+không dừng, không cắt bớt, không hạ chất lượng khi qua 06:00; cứ chạy tiếp tới khi xong hẳn. Không ai thức kích hoạt lệnh. Hai phiên chạy song song, tự phối hợp
 qua file tín hiệu (bền) + `SendMessage` (nhanh, tuỳ chọn). Mọi quyết định chính sách: tự chọn phương án thận trọng nhất, ghi lại, KHÔNG hỏi người dùng
 (trừ bước duyệt deck cuối của Phase 4 — để người dùng duyệt sau 06:00).
 
