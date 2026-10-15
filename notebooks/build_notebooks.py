@@ -735,7 +735,9 @@ def compute():
     try:
         filters, _ = parse_filters(FILTER_QUESTION)
         out["filters"] = filters.model_dump(exclude_none=True)
-    except LLMCacheMiss:
+    except Exception as miss:  # bắt theo tên: kernel có thể giữ hai bản lớp LLMCacheMiss
+        if type(miss).__name__ != "LLMCacheMiss":
+            raise
         pass
     return out
 
@@ -1425,7 +1427,9 @@ def compute():
         try:
             res = cypher_result(text2cypher(graph_q.question))
             out["t2c"] = {"question": graph_q.question, **res}
-        except LLMCacheMiss:
+        except Exception as miss:  # bắt theo tên: kernel có thể giữ hai bản lớp LLMCacheMiss
+            if type(miss).__name__ != "LLMCacheMiss":
+                raise
             pass
     return out
 
@@ -1479,7 +1483,9 @@ def compute():
     for q in QUESTIONS:
         try:
             rows.append([q.id, q.route_gold, router(q.question)["route"]])
-        except LLMCacheMiss:
+        except Exception as miss:  # bắt theo tên: kernel có thể giữ hai bản lớp LLMCacheMiss
+            if type(miss).__name__ != "LLMCacheMiss":
+                raise
             continue
     return {"n": len(rows), "correct": sum(g == p for _, g, p in rows), "rows": rows}
 
