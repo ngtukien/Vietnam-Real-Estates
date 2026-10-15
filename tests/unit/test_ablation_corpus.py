@@ -61,7 +61,7 @@ def test_run_shape_and_resume(tmp_path):
     out = tmp_path / "ablation.json"
     search = mock.Mock(return_value=(hits, False))
     with mock.patch.object(ablation, "load_items", return_value=items), \
-            mock.patch.object(ablation, "extract_filters", return_value=({"Q1": None, "Q2": None}, 0)), \
+            mock.patch.object(ablation, "extract_filters", return_value=({"Q1": None, "Q2": None}, 0, [])), \
             mock.patch.object(ablation, "hf_cached", return_value=False), \
             mock.patch.object(ablation, "search", search), mock.patch.object(ablation, "release_gpu"):
         doc = ablation.run(settings, out=out, log=lambda m: None)
@@ -76,3 +76,22 @@ def test_run_shape_and_resume(tmp_path):
         assert set(r) == keys and r["embedding"] == "e5_large" and r["chunk_size"] == 400
         assert r["recall_at_5"] == pytest.approx(0.5) and r["n_questions"] == 2
     assert json.loads(out.read_text(encoding="utf-8"))["runs"] == doc["runs"]
+
+
+def test_extract_filters_offline_skips_misses_and_never_calls(monkeypatch):
+    from vre.llm import client
+    from vre.rag import filters as rf
+
+    def fake_parse(question):
+        if question == "miss":
+            raise client.LLMCacheMiss("x")
+        return rf.QueryFilters(), client.LLMResult("", {}, 1, 1, True)
+
+    monkeypatch.setenv(client.OFFLINE_ENV, "1")
+    monkeypatch.setattr(rf, "parse_filters", fake_parse)
+    items = [ablation.Item("A", "hit", (1,), frozenset({1})), ablation.Item("B", "miss", (2,), frozenset({2}))]
+    out, calls, missing = ablation.extract_filters(items, lambda _m: None)
+    assert out == {"A": None} and calls == 0 and missing == ["B"]
+    monkeypatch.setattr(rf, "parse_filters", lambda q: (rf.QueryFilters(), client.LLMResult("", {}, 1, 1, False)))
+    with pytest.raises(RuntimeError, match="offline"):
+        ablation.extract_filters(items[:1], lambda _m: None)
