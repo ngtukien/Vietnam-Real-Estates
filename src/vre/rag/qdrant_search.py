@@ -9,7 +9,6 @@ from __future__ import annotations
 import threading
 from typing import Any
 
-import numpy as np
 import pandas as pd
 
 from vre.config import get_settings
@@ -22,7 +21,6 @@ HIT_COLUMNS = (*PAYLOAD_COLUMNS, "score")
 
 _client = None
 _client_lock = threading.Lock()
-_encode_lock = threading.Lock()  # một model GPU dùng chung giữa các luồng của API
 _tokenize_lock = threading.Lock()  # mô hình CRF của pyvi không an toàn đa luồng
 
 
@@ -41,12 +39,11 @@ def collection() -> str:
 
 
 def embed_query(question: str) -> list[float]:
-    """Vector truy vấn e5-large: tiền tố `query: `, mean pooling, L2 (data-contract §9.1, qua `vre.index.embed`)."""
-    from vre.index.embed import get_encoder
+    """Vector truy vấn e5-large: tiền tố `query: `, mean pooling, L2 (data-contract §9.1) — CPU fp16, xem
+    `vre.rag.query_encoder` (encoder GPU tốn ~6 GB commit trên Windows)."""
+    from vre.rag import query_encoder
 
-    with _encode_lock:
-        vector = get_encoder(get_settings()).encode_texts([question], kind="query")[0]
-    return np.asarray(vector, dtype=np.float32).tolist()
+    return query_encoder.embed(question)
 
 
 def tokenize(text: str) -> list[str]:

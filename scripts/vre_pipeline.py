@@ -6,8 +6,12 @@
 Mỗi lệnh chạy `vre.checks.require(...)` rồi import LƯỜI hàm đích (lệnh của p2 chưa có code ⇒ ImportError rõ ràng).
 """
 
+import os
 import sys
 from pathlib import Path
+
+# OpenBLAS cấp bộ đệm theo số luồng (32 lõi ⇒ ~0,8 GB commit ngay khi import numpy); 4 luồng đủ cho pipeline.
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "4")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
@@ -146,8 +150,12 @@ def ask(question: str, system: SystemChoice = typer.Option(SystemChoice.hybrid, 
     settings = get_settings()
     if settings.llm_provider == "groq":
         require(settings, *ASK_CHECKS[system.value])
+    import logging
+
     from vre.qa import stream_answer
 
+    logging.basicConfig(format="[%(name)s] %(message)s")
+    logging.getLogger("vre.graph.text2cypher").setLevel(logging.INFO)  # in độ trễ Cypher
     for name, payload in stream_answer(system.value, question, top_k=top_k, use_rerank=rerank, stream_tokens=False):
         typer.echo(f"event: {name}")
         _echo(payload)

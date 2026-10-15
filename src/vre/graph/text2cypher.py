@@ -47,7 +47,8 @@ def text2cypher(question: str, retries: int = 2) -> dict:
     Trả `cypher, rows (DataFrame), attempts [{cypher, error}], error, usage [in, out], cypher_ms, calls`."""
     from neo4j.exceptions import Neo4jError
 
-    prompt, attempts, usage, system = f"Câu hỏi: {question}", [], [0, 0], cypher_system()
+    prompt, usage, system = f"Câu hỏi: {question}", [0, 0], cypher_system()
+    attempts: list[dict[str, Any]] = []
     calls: list[Any] = []
     cypher, error, cypher_ms = "", None, None
     for _ in range(retries + 1):
@@ -65,6 +66,7 @@ def text2cypher(question: str, retries: int = 2) -> dict:
             try:
                 rows = run_cypher(cypher, timeout=s.cypher_timeout, max_rows=s.cypher_max_rows)
                 cypher_ms = (perf_counter() - start) * 1000
+                log.info("Cypher chạy %.0f ms, %d dòng (lần %d)", cypher_ms, len(rows), len(attempts) + 1)
                 attempts.append({"cypher": cypher, "error": None})
                 return dict(cypher=cypher, rows=rows, attempts=attempts, error=None, usage=usage,
                             cypher_ms=cypher_ms, calls=calls)

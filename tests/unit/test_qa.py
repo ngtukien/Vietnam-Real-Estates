@@ -187,3 +187,40 @@ def test_valuate_contract_errors(tmp_path):
     with pytest.raises(ValueError):
         predict.valuate("not a dict")  # type: ignore[arg-type]
     assert predict.resolve_variant(settings, "sale") == "tabular"
+
+
+def _api_schemas():
+    """`api/schemas.py` của Lane B (sau khi merge: cùng repo; trong lúc làm song song: worktree anh em)."""
+    import importlib.util
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    for path in (root / "api" / "schemas.py", root.parent / "api" / "api" / "schemas.py"):
+        if path.is_file():
+            spec = importlib.util.spec_from_file_location("vre_api_schemas", path)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[spec.name] = module  # annotation hoãn (`from __future__`) cần module trong sys.modules
+            spec.loader.exec_module(module)
+            return module
+    pytest.skip("không tìm thấy api/schemas.py (Lane B)")
+
+
+@pytest.mark.parametrize("route", ["graph", "basic_rag", "valuation", "fallback"])
+def test_events_validate_against_api_schemas(mocks, monkeypatch, route):
+    from vre.valuation import predict
+
+    schemas = _api_schemas()
+    mocks["route"] = "graph" if route == "fallback" else route
+    if route == "fallback":
+        mocks["t2c"] = t2c(error="Neo.ClientError: bad")
+    monkeypatch.setattr(P.hv, "extract_input", lambda q: ({"property_type": "Nhà", "province": "Hồ Chí Minh",
+                                                           "district": "Gò Vấp", "area_m2": 60.0}, call()))
+    monkeypatch.setattr(predict, "valuate", lambda p: {
+        "predicted_price_m2_mil": 100.0, "predicted_price_vnd": 6e9, "interval_price_vnd": {"low": 5e9, "high": 7e9},
+        "baseline_ward_median_price_m2_mil": None, "comparables_n": 3, "verdict": None,
+        "shap": [{"feature": "area_m2", "value": 60.0, "contribution_log": 0.1}],
+        "model": {"variant": "full", "path": "m", "trained_at": "t", "test_mape": 0.2}})
+    for system in ("llm_only", "basic_rag", "graph", "hybrid"):
+        for name, payload in qa.stream_answer(system, "q"):
+            schemas.EVENT_MODELS[name].model_validate({**payload, "request_id": "abcd1234", "system": system})

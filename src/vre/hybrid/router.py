@@ -18,7 +18,10 @@ ROUTES = ("basic_rag", "graph", "hybrid", "valuation")
 RouteName = Literal["basic_rag", "graph", "hybrid", "valuation"]
 # Ngữ cảnh có kết quả Cypher: số tổng hợp không gắn với tin nào, nên không được đòi [Tin#ID] cho mọi ý
 # (benchmark cho thấy mô hình khi đó tự đặt [Tin#1], [Tin#2] theo số dòng) và phải nói rõ đơn vị từng cột.
-GRAPH_CONTEXT_SYSTEM = ANSWER_SYSTEM + """
+_TIN_RULE = "Mỗi nhận định phải kèm nguồn dạng [Tin#ID]; chép NGUYÊN VẸN dãy số ID trong ngữ cảnh."
+assert _TIN_RULE in ANSWER_SYSTEM
+GRAPH_CONTEXT_SYSTEM = ANSWER_SYSTEM.replace(_TIN_RULE, "Nhận định lấy từ một tin cụ thể kèm nguồn [Tin#ID] "
+                                             "(chép nguyên ID); số liệu tổng hợp kèm nguồn [Cypher].") + """
 Phần KẾT QUẢ TRUY VẤN là số liệu Neo4j tính trên toàn bộ dữ liệu: dùng trực tiếp và ghi nguồn [Cypher].
 Chỉ ghi [Tin#ID] với ID có thật trong ngữ cảnh (cột listing_id hoặc dòng [Tin#ID]); không tự đánh số tin.
 Đơn vị: price_vnd theo VND, *_m2_mil theo triệu đồng/m², area_m2 theo m²."""
