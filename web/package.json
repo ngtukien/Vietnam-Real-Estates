@@ -14,7 +14,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "e2e": "playwright test",
-    "gen:types": "openapi-typescript ../api/openapi.json -o src/api/types.ts",
+    "gen:types": "openapi-typescript ../api/openapi.json --default-non-nullable false -o src/api/types.ts",
     "mock-api": "node e2e/mock-api.mjs"
   },
   "dependencies": {
