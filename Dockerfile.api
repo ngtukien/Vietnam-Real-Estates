@@ -1,0 +1,43 @@
+# API FastAPI + SSE (Phase 3, Lane B). Build qua compose: docker compose --profile app build api
+# Dữ liệu KHÔNG nằm trong image: results/, models/, data/clean/, data/geo/, index/ và cache HF được mount read-only.
+# Ngữ cảnh build chỉ gồm src/, api/, requirements/, pyproject.toml (Dockerfile.api.dockerignore).
+FROM python:3.13-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONUTF8=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONPATH=/app/src:/app \
+    VRE_DATA_ROOT=/app \
+    VRE_LOAD_DOTENV=0 \
+    HF_HOME=/hf \
+    HF_HUB_OFFLINE=1 \
+    TRANSFORMERS_OFFLINE=1 \
+    TOKENIZERS_PARALLELISM=false \
+    VRE_DUCKDB_MEMORY_GB=3 \
+    VRE_DUCKDB_THREADS=4 \
+    OPENBLAS_NUM_THREADS=4
+
+WORKDIR /app
+
+# torch CPU trước (wheel CUDA mặc định nặng ~2,5 GB và vô ích trong container không GPU)
+RUN pip install torch --index-url https://download.pytorch.org/whl/cpu
+COPY requirements/base.txt requirements/base.txt
+RUN pip install -r requirements/base.txt "transformers>=5.14,<5.15" "tokenizers==0.22.2" "xgboost>=3.0"
+
+COPY pyproject.toml ./
+COPY src ./src
+COPY api ./api
+
+RUN useradd --uid 10001 --no-create-home vre && mkdir -p /app/.cache && chown vre /app/.cache
+USER vre
+
+EXPOSE 8000
+HEALTHCHECK --interval=15s --timeout=5s --start-period=120s --retries=5 \
+    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=4).status == 200 else 1)"
+
+# --proxy-headers: lấy IP client thật từ X-Forwarded-For của nginx (web) cho rate limit theo IP.
+# Cổng chỉ publish trên 127.0.0.1 (compose) nên chỉ máy chủ gửi được header này.
+CMD ["python", "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-keep-alive", "5", \
+     "--proxy-headers", "--forwarded-allow-ips", "*"]

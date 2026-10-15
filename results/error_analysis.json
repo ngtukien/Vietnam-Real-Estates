@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-15T19:12:11Z",
+  "git_sha": "79fe53b",
+  "counts": {
+    "basic_rag": {
+      "insufficient_context": 23,
+      "retrieval_miss": 4,
+      "refusal_missing": 1
+    },
+    "llm_only": {
+      "insufficient_context": 29,
+      "refusal_missing": 3
+    },
+    "hybrid": {
+      "insufficient_context": 5,
+      "retrieval_miss": 4,
+      "cypher_wrong_result": 1,
+      "refusal_missing": 1
+    },
+    "graph": {
+      "cypher_wrong_result": 4,
+      "refusal_missing": 1,
+      "insufficient_context": 1
+    }
+  },
+  "examples": [
+    {
+      "id": "MH04",
+      "system": "graph",
+      "category": "multihop",
+      "cause": "cypher_wrong_result",
+      "question": "Giá/m² trung vị căn hộ ở Vinhomes Central Park cao gấp bao nhiêu lần trung vị căn hộ của quận chứa dự án đó?",
+      "answer_excerpt": "Giá/m² trung vị căn hộ tại dự án The LandMark - Vinhomes Central Park (Quận Bình Thạnh) là 180,5 triệu đồng/m², cao gấp 1,96 lần so với mức trung vị căn hộ chung cư của toàn quận Bình Thạnh (92,21 triệu đồng/m²).",
+      "gt_value": "1.36",
+      "cypher": "MATCH (mp:MarketStat {scope: 'project', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'})-[:STAT_OF]->(p:Project)-[:IN_DISTRICT]->(d:District) WHERE toLower(p.name) CONTAINS 'vinhomes central park' AND mp.n >= 20 MATCH (md:MarketStat {scope: 'district', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'})-[:STAT_OF]->(d) RETURN p.name AS project, d.name AS district, round(mp.median_price_m2_mil, 2) AS project_median_m2_mil, round(md.median_price_m2_mil, 2) AS district_median_m2_mil, round(mp.median_price_m2_mil / md.median_price_m2_mil, 2) AS ratio LIMIT 1"
+    },
+    {
+      "id": "MH04",
+      "system": "hybrid",
+      "category": "multihop",
+      "cause": "cypher_wrong_result",
+      "question": "Giá/m² trung vị căn hộ ở Vinhomes Central Park cao gấp bao nhiêu lần trung vị căn hộ của quận chứa dự án đó?",
+      "answer_excerpt": "Giá/m² trung vị của căn hộ tại dự án Vinhomes Central Park (Bình Thạnh) cao gấp 1,96 lần so với mức trung vị căn hộ của toàn quận Bình Thạnh [Cypher].",
+      "gt_value": "1.36",
+      "cypher": "MATCH (mp:MarketStat {scope: 'project', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'})-[:STAT_OF]->(p:Project)-[:IN_DISTRICT]->(d:District) WHERE toLower(p.name) CONTAINS 'vinhomes central park' AND mp.n >= 20 MATCH (md:MarketStat {scope: 'district', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'})-[:STAT_OF]->(d) RETURN p.name AS project, d.name AS district, round(mp.median_price_m2_mil, 2) AS project_median_m2_mil, round(md.median_price_m2_mil, 2) AS district_median_m2_mil, round(mp.median_price_m2_mil / md.median_price_m2_mil, 2) AS ratio LIMIT 1"
+    },
+    {
+      "id": "VA01",
+      "system": "graph",
+      "category": "valuation",
+      "cause": "cypher_wrong_result",
+      "question": "Căn hộ 75m2, 2 phòng ngủ ở Cầu Giấy, Hà Nội hiện đáng giá khoảng bao nhiêu?",
+      "answer_excerpt": "Căn hộ diện tích 75m² tại quận Cầu Giấy, Hà Nội có giá trung bình khoảng 91,26 triệu đồng/m², ước tính tổng giá trị khoảng 6,84 tỷ đồng (dựa trên dữ liệu từ 22.783 tin đăng).",
+      "gt_value": "7.33",
+      "cypher": "MATCH (m:MarketStat {scope: 'district', area_key: 'Hà Nội|Cầu Giấy', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'}) RETURN round(m.median_price_m2_mil * 75, 2) AS estimated_price_vnd_million, round(m.median_price_m2_mil, 2) AS median_price_m2_mil, m.n AS n\nLIMIT 50"
+    },
+    {
+      "id": "CS01",
+      "system": "basic_rag",
+      "category": "constraint",
+      "cause": "retrieval_miss",
+      "question": "Tìm căn hộ 2 phòng ngủ ở Quận 7 giá dưới 3 tỷ, chung cư có hồ bơi.",
+      "answer_excerpt": "Dưới đây là các căn hộ 2 phòng ngủ tại Quận 7 có giá dưới 3 tỷ và chung cư có tiện ích hồ bơi dựa trên ngữ cảnh:\n\n* **Căn hộ Q7 Boulevard** (Phú Mỹ, Quận 7): \n  - Giá: 2.1 tỷ (57 m², 2PN, 1WC) hoặc 2.5 tỷ (70 m², 2PN, 2WC) [Tin#5722805248662563].\n  - Tiện ích: Sở hữu hồ bơi tràn 300m2 [Tin#572280524",
+      "gt_value": null,
+      "cypher": null
+    },
+    {
+      "id": "CS01",
+      "system": "hybrid",
+      "category": "constraint",
+      "cause": "retrieval_miss",
+      "question": "Tìm căn hộ 2 phòng ngủ ở Quận 7 giá dưới 3 tỷ, chung cư có hồ bơi.",
+      "answer_excerpt": "Dưới đây là các căn hộ 2 phòng ngủ tại Quận 7 có giá dưới 3 tỷ và chung cư có tiện ích hồ bơi dựa trên ngữ cảnh:\n\n* **Căn hộ Q7 Boulevard** (Phú Mỹ, Quận 7): \n  - Giá: 2.1 tỷ (57 m², 2PN, 1WC) hoặc 2.5 tỷ (70 m², 2PN, 2WC) [Tin#5722805248662563].\n  - Tiện ích: Sở hữu hồ bơi tràn 300m2 [Tin#572280524",
+      "gt_value": null,
+      "cypher": null
+    },
+    {
+      "id": "CS02",
+      "system": "basic_rag",
+      "category": "constraint",
+      "cause": "retrieval_miss",
+      "question": "Nhà hxh Gò Vấp từ 4 tầng trở lên, diện tích từ 60m2, giá dưới 7 tỷ.",
+      "answer_excerpt": "Dựa trên ngữ cảnh được cung cấp, không có căn nhà nào ở Gò Vấp có hẻm xe hơi (HXH), từ 4 tầng trở lên, diện tích từ 60m2 và giá dưới 7 tỷ đồng. \n\nCác căn nhà trong ngữ cảnh có chiều cao từ 4 tầng trở lên (như Tin#6133338198713407 cao 4 tầng [Tin#6133338198713407] và Tin#1404055190520717 cao 5 tầng [",
+      "gt_value": null,
+      "cypher": null
+    },
+    {
+      "id": "UN04",
+      "system": "basic_rag",
+      "category": "unanswerable",
+      "cause": "refusal_missing",
+      "question": "Đường Vành đai 4 có quy hoạch đi qua lô đất nào ở Hoài Đức không?",
+      "answer_excerpt": "Đường Vành đai 4 có quy hoạch đi qua các lô đất sau ở Hoài Đức:\n- Lô đất tại xã Đông La, diện tích 31 m², giá 4,8 tỷ [Tin#7261105475735153].\n- Lô đất mặt đường Vành đai 4 tại xã Đông La, diện tích 31 m², giá từ 5,2 tỷ đến 7 tỷ [Tin#3498762906003524] và 7 tỷ [Tin#7819549847695309].\n- Lô đất tại xã Dư",
+      "gt_value": null,
+      "cypher": null
+    },
+    {
+      "id": "UN04",
+      "system": "graph",
+      "category": "unanswerable",
+      "cause": "refusal_missing",
+      "question": "Đường Vành đai 4 có quy hoạch đi qua lô đất nào ở Hoài Đức không?",
+      "answer_excerpt": "Có nhiều lô đất tại huyện Hoài Đức nằm sát hoặc có quy hoạch đường Vành đai 4 đi qua, tiêu biểu như:\n\n- Lô đất đấu giá xã Tiền Yên, diện tích 89,6 m², giá 8,1 tỷ [Tin#865497293694755].\n- Đất Thượng Thụy, Đức Thượng, diện tích 52 m² [Tin#482408037697519].\n- Đất mặt đường Vành đai 4 xã An Khánh, diện ",
+      "gt_value": null,
+      "cypher": "MATCH (d:District {key: 'Hà Nội|Hoài Đức'}) WITH d MATCH (l:Listing)-[:IN_WARD|IN_DISTRICT*1..2]->(d)-[:IN_PROVINCE]->(pr:Province {key: 'Hà Nội'}) WHERE l.property_type = 'Đất' AND toLower(l.title) CONTAINS 'vành đai 4' AND l.deal_type = 'sale' RETURN l.listing_id AS listing_id, l.title AS title, l.price_vnd AS price_vnd, l.area_m2 AS area_m2 ORDER BY l.published_at DESC LIMIT 20"
+    },
+    {
+      "id": "UN04",
+      "system": "hybrid",
+      "category": "unanswerable",
+      "cause": "refusal_missing",
+      "question": "Đường Vành đai 4 có quy hoạch đi qua lô đất nào ở Hoài Đức không?",
+      "answer_excerpt": "Đường Vành đai 4 có quy hoạch đi qua và nằm sát nhiều lô đất tại huyện Hoài Đức, được ghi nhận qua các tin đăng như:\n\n- Lô đất mặt đường Vành Đai 4 tại xã Đông La với diện tích 31 m², giá 4,8 tỷ [Tin#7261105475735153], hoặc các mức giá từ 5,2 tỷ đến 7 tỷ đồng [Tin#3498762906003524], [Tin#78195498476",
+      "gt_value": null,
+      "cypher": "MATCH (d:District {key: 'Hà Nội|Hoài Đức'}) WITH d MATCH (l:Listing)-[:IN_WARD|IN_DISTRICT*1..2]->(d)-[:IN_PROVINCE]->(pr:Province {key: 'Hà Nội'}) WHERE l.property_type = 'Đất' AND toLower(l.title) CONTAINS 'vành đai 4' AND l.deal_type = 'sale' RETURN l.listing_id AS listing_id, l.title AS title, l.price_vnd AS price_vnd, l.area_m2 AS area_m2 ORDER BY l.published_at DESC LIMIT 20"
+    },
+    {
+      "id": "AG01",
+      "system": "basic_rag",
+      "category": "aggregate",
+      "cause": "insufficient_context",
+      "question": "Giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy là bao nhiêu?",
+      "answer_excerpt": "Không đủ dữ liệu để tính toán giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy.",
+      "gt_value": "91.26",
+      "cypher": null
+    },
+    {
+      "id": "CP02",
+      "system": "hybrid",
+      "category": "comparison",
+      "cause": "insufficient_context",
+      "question": "nha o q3 hay phu nhuan dat hon tinh theo m2",
+      "answer_excerpt": "Không đủ dữ liệu để so sánh giá đất theo m2 giữa Quận 3 và Phú Nhuận vì ngữ cảnh không cung cấp thông tin về giá bất động sản tại quận Phú Nhuận.",
+      "gt_value": "Quận 3",
+      "cypher": null
+    },
+    {
+      "id": "VA02",
+      "system": "graph",
+      "category": "valuation",
+      "cause": "insufficient_context",
+      "question": "Nhà 60m2, 4 tầng ở Gò Vấp, TP.HCM định giá khoảng bao nhiêu tiền?",
+      "answer_excerpt": "Không tìm thấy dữ liệu.",
+      "gt_value": "7.71",
+      "cypher": "MATCH (m:MarketStat {scope: 'district', area_key: 'Hồ Chí Minh|Quận Gò Vấp', property_type: 'Nhà', month: 'ALL', deal_type: 'sale'}) RETURN round(m.median_price_m2_mil * 60, 2) AS estimated_price_mil_vnd, round(m.median_price_m2_mil, 2) AS median_price_m2_mil, m.n AS sample_size\nLIMIT 50"
+    }
+  ],
+  "notes": [
+    "chấm theo luật (không LLM): llm_hallucination chỉ từ unsupported_citations (không có faithfulness)"
+  ]
+}

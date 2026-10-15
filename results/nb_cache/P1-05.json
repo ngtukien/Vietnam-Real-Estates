@@ -1,0 +1,62 @@
+{
+ "places": [
+  [
+   "Q.7",
+   "district",
+   "Quận 7"
+  ],
+  [
+   "q7",
+   "district",
+   "Quận 7"
+  ],
+  [
+   "P.5",
+   "ward",
+   "Phường 5"
+  ],
+  [
+   "TP. Hồ Chí Minh",
+   "province",
+   "Hồ Chí Minh"
+  ],
+  [
+   "Huyện Củ Chi",
+   "district",
+   "Củ Chi"
+  ]
+ ],
+ "prices": [
+  [
+   "7450000000",
+   7450000000.0
+  ],
+  [
+   "abc",
+   NaN
+  ],
+  [
+   "5000000",
+   5000000.0
+  ],
+  [
+   "None",
+   NaN
+  ]
+ ],
+ "pii": [
+  [
+   "Liên hệ 0901 234 567 hoặc a@b.com",
+   "Liên hệ [phone_number] hoặc [email]"
+  ],
+  [
+   "Nhà đẹp, sổ hồng chính chủ",
+   "Nhà đẹp, sổ hồng chính chủ"
+  ]
+ ],
+ "_meta": {
+  "cell": "P1-05",
+  "mode": "live",
+  "generated_at": "2026-10-15T15:46:27Z"
+ }
+}

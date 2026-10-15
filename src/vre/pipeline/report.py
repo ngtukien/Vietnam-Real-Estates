@@ -48,6 +48,8 @@ def require_resources(settings, part: int, log=print) -> None:
 
 
 def free_commit_gb() -> float:
+    if sys.platform != "win32":  # GlobalMemoryStatusEx chỉ có trên Windows; require_resources dùng psutil ở nơi khác
+        raise OSError("free_commit_gb chỉ chạy trên Windows")
     class MemoryStatus(ctypes.Structure):
         _fields_ = [("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong), *[(n, ctypes.c_ulonglong) for n in (
             "total_phys", "avail_phys", "total_commit", "avail_commit", "total_virtual", "avail_virtual", "avail_ext")]]

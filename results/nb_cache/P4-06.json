@@ -1,0 +1,36 @@
+{
+ "n": 5,
+ "correct": 3,
+ "rows": [
+  [
+   "LK01",
+   "basic_rag",
+   "hybrid"
+  ],
+  [
+   "CS01",
+   "basic_rag",
+   "hybrid"
+  ],
+  [
+   "AG01",
+   "graph",
+   "graph"
+  ],
+  [
+   "MH01",
+   "graph",
+   "graph"
+  ],
+  [
+   "TM01",
+   "graph",
+   "graph"
+  ]
+ ],
+ "_meta": {
+  "cell": "P4-06",
+  "mode": "live",
+  "generated_at": "2026-10-15T15:47:12Z"
+ }
+}

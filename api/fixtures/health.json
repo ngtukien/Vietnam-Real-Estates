@@ -1,0 +1,7 @@
+{
+ "status": "ok",
+ "qdrant": true,
+ "neo4j": true,
+ "llm_configured": true,
+ "version": "0.3.0"
+}

@@ -43,11 +43,11 @@ def test_money_edge_cases(text, expected):
 def test_post_filter_matches():
     df = pd.DataFrame({"listing_id": [1, 2, 3], "district": ["Quận 7", "Quận 7", "Quận 8"],
                        "province": "Hồ Chí Minh", "property_type": "Căn hộ chung cư",
-                       "bedrooms": [2.0, 2.0, 2.0], "price": [3e9, None, 3e9], "area": 70.0})
+                       "bedrooms": [2.0, 2.0, 2.0], "price_vnd": [3e9, None, 3e9], "area_m2": 70.0})
     f = filters.QueryFilters(district="Quận 7", bedrooms=2, max_price_mil=4000)
-    assert df[filters.matches(df, f)].listing_id.tolist() == [1]
+    assert df[filters.mask(df, f)].listing_id.tolist() == [1]
     assert filters.post_filter(df, f).listing_id.tolist() == [1]
-    assert filters.matches(df, None).all()
+    assert filters.mask(df, None).all()
 
 
 def test_llm_schema_is_closed():

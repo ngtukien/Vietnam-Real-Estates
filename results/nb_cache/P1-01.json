@@ -1,0 +1,156 @@
+{
+ "raw_columns": [
+  [
+   "name",
+   "string"
+  ],
+  [
+   "description",
+   "string"
+  ],
+  [
+   "property_type_name",
+   "string"
+  ],
+  [
+   "province_name",
+   "string"
+  ],
+  [
+   "district_name",
+   "string"
+  ],
+  [
+   "ward_name",
+   "string"
+  ],
+  [
+   "street_name",
+   "string"
+  ],
+  [
+   "project_name",
+   "string"
+  ],
+  [
+   "price",
+   "string"
+  ],
+  [
+   "area",
+   "double"
+  ],
+  [
+   "floor_count",
+   "double"
+  ],
+  [
+   "frontage_width",
+   "double"
+  ],
+  [
+   "house_depth",
+   "double"
+  ],
+  [
+   "road_width",
+   "double"
+  ],
+  [
+   "bedroom_count",
+   "double"
+  ],
+  [
+   "bathroom_count",
+   "double"
+  ],
+  [
+   "house_direction",
+   "string"
+  ],
+  [
+   "balcony_direction",
+   "string"
+  ],
+  [
+   "published_at",
+   "string"
+  ]
+ ],
+ "clean_columns": [
+  "listing_id",
+  "dup_cluster_id",
+  "n_raw_rows",
+  "source_shard",
+  "source_row",
+  "title",
+  "description",
+  "property_type",
+  "deal_type",
+  "province",
+  "province_2025",
+  "district",
+  "ward",
+  "street",
+  "project",
+  "price_vnd",
+  "price_fixed_thousand",
+  "area_m2",
+  "floors",
+  "frontage_m",
+  "depth_m",
+  "road_width_m",
+  "bedrooms",
+  "bathrooms",
+  "house_direction",
+  "balcony_direction",
+  "published_at",
+  "is_price_outlier",
+  "is_area_outlier",
+  "amenities"
+ ],
+ "n_clean": 2537920,
+ "sample": [
+  {
+   "listing_id": 1407683957,
+   "title": "Nhà lệ mật thang máy, 3 phòng ngủ rộng khép kín, cách 1 nhà ra mặt phố ô tô tránh, mt lý tưởng",
+   "property_type": "Nhà",
+   "deal_type": "sale",
+   "province": "Hà Nội",
+   "district": "Long Biên",
+   "ward": "Việt Hưng",
+   "price_vnd": 9200000000.0,
+   "area_m2": 50.0,
+   "bedrooms": 3.0
+  },
+  {
+   "listing_id": 1421023899,
+   "title": "Bán căn 3PN 2WC 90m2, nhà đẹp giá 6tỷ River Panorama quận 7",
+   "property_type": "Căn hộ chung cư",
+   "deal_type": "sale",
+   "province": "Hồ Chí Minh",
+   "district": "Quận 7",
+   "ward": "Phú Thuận",
+   "price_vnd": 6000000000.0,
+   "area_m2": 90.0,
+   "bedrooms": 3.0
+  },
+  {
+   "listing_id": 6105012228,
+   "title": "Bán căn hộ Ngô Gia Tự cao ốc B - 2pn 2wc tặng nội thất - Dọn vào ở ngay",
+   "property_type": "Căn hộ chung cư",
+   "deal_type": "sale",
+   "province": "Hồ Chí Minh",
+   "district": "Quận 10",
+   "ward": "Phường 2",
+   "price_vnd": 3650000000.0,
+   "area_m2": 55.0,
+   "bedrooms": null
+  }
+ ],
+ "_meta": {
+  "cell": "P1-01",
+  "mode": "cache",
+  "generated_at": "2026-10-15T15:35:20Z"
+ }
+}

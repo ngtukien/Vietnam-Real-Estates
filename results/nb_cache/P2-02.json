@@ -1,0 +1,38 @@
+{
+ "money": [
+  [
+   "5 tỷ",
+   5000.0
+  ],
+  [
+   "1 tỷ 2",
+   1200.0
+  ],
+  [
+   "1 tỷ 50 triệu",
+   1050.0
+  ],
+  [
+   "850 triệu",
+   850.0
+  ],
+  [
+   "3.000.000.000",
+   3000.0
+  ]
+ ],
+ "question": "Tìm căn hộ 2 phòng ngủ ở Quận 7 giá dưới 3 tỷ, chung cư có hồ bơi.",
+ "filters": {
+  "province": "Hồ Chí Minh",
+  "district": "Quận 7",
+  "property_type": "Căn hộ chung cư",
+  "deal_type": "sale",
+  "bedrooms": 2,
+  "max_price_mil": 3000.0
+ },
+ "_meta": {
+  "cell": "P2-02",
+  "mode": "live",
+  "generated_at": "2026-10-15T19:12:42Z"
+ }
+}

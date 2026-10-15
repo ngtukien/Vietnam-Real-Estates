@@ -1,0 +1,30 @@
+{
+ "level": "province",
+ "items": [
+  {
+   "key": "Hồ Chí Minh",
+   "name": "Hồ Chí Minh",
+   "lat": 10.776,
+   "lon": 106.701,
+   "n_listings": 890067,
+   "median_price_m2_mil": 107.5
+  },
+  {
+   "key": "Bắc Giang",
+   "name": "Bắc Giang",
+   "lat": 21.274,
+   "lon": 106.195,
+   "n_listings": 5109,
+   "median_price_m2_mil": 34.38
+  },
+  {
+   "key": "Nam Định",
+   "name": "Nam Định",
+   "lat": null,
+   "lon": null,
+   "n_listings": 4124,
+   "median_price_m2_mil": 16.67
+  }
+ ],
+ "coverage": 0.6666666666666666
+}

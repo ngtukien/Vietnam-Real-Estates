@@ -19,12 +19,13 @@ from vre.valuation.train import baseline_predict, paths
 
 MAX_AREA_M2 = 100_000
 MONTH_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+SERVING_VARIANT: F.Variant = "tabular"  # api-contract §7 (sửa 2026-10-15)
 RESULT_KEYS = ("predicted_price_m2_mil", "predicted_price_vnd", "interval_price_vnd", "baseline_ward_median_price_m2_mil",
                "comparables_n", "verdict", "shap", "model")
 
 
-class ModelUnavailableError(FileNotFoundError):
-    """Model chưa được huấn luyện (API trả 503)."""
+class ModelUnavailableError(RuntimeError):
+    """Model chưa được huấn luyện (API trả 503, api-contract §7: RuntimeError)."""
 
 
 @lru_cache(maxsize=4)
@@ -61,12 +62,9 @@ def validate(inp: dict[str, Any], enc: dict[str, Any]) -> None:
         raise ValueError("asking_price_vnd phải > 0")
 
 
-def _features(row: pd.DataFrame, enc: dict[str, Any], variant: F.Variant) -> pd.DataFrame:
+def _features(row: pd.DataFrame, enc: dict[str, Any]) -> pd.DataFrame:
     te = F.target_encode_apply(row, enc["te"])
-    pca = None
-    if variant == "full":  # tin mới không có embedding ⇒ PCA thiếu (XGBoost xử lý missing)
-        pca = pd.DataFrame(np.nan, index=row.index, columns=[f"pca_{i:02d}" for i in range(int(enc["pca_dim"]))])
-    x = F.build_matrix(row, te, enc["categories"], variant, pca)
+    x = F.build_matrix(row, te, enc["categories"], SERVING_VARIANT, None)
     if list(x.columns) != enc["feature_names"]:
         raise RuntimeError("Cột đặc trưng không khớp model — encoders và model lệch phiên bản")
     return x
@@ -80,17 +78,24 @@ def _verdict(asking: float | None, low: float, high: float) -> str | None:
     return "above_market" if asking > high else "fair"
 
 
-def valuate(input: dict[str, Any], settings: Settings | None = None, variant: F.Variant = "tabular") -> dict[str, Any]:
-    """Định giá một BĐS; `ValueError` = input sai (400), `ModelUnavailableError` = chưa có model (503)."""
+def valuate(payload: dict[str, Any], settings: Settings | None = None) -> dict[str, Any]:
+    """Định giá một BĐS (api-contract §7): payload `ValuationInput` → `ValuationResult`.
+    `ValueError` = input sai (400); `RuntimeError` (`ModelUnavailableError`) = chưa có model (503).
+
+    Luôn dùng model `tabular` (ghi `model.variant`): `full` cần vector embedding của chính tin đăng, BĐS nhập từ API
+    không có ⇒ `full` chỉ để báo cáo `valuation_metrics`. `settings` chỉ để test tiêm cấu hình."""
+    if not isinstance(payload, dict):
+        raise ValueError("payload phải là object ValuationInput")
     settings = settings or get_settings()
-    inp = dict(input)
+    inp = dict(payload)
     deal = inp.get("deal_type") or "sale"
     if deal not in ("sale", "rent"):
         raise ValueError(f"deal_type lạ {deal!r}")
+    variant = SERVING_VARIANT
     booster, enc, model_path = load_model(settings, variant, deal)
     validate(inp, enc)
     row = F.frame_from_input(inp, enc["max_month"])
-    x = _features(row, enc, variant)
+    x = _features(row, enc)
     price_m2 = float(np.exp(booster.predict(xgb.DMatrix(x, enable_categorical=True))[0]))
     area = float(inp["area_m2"])
     price_vnd = price_m2 * 1e6 * area

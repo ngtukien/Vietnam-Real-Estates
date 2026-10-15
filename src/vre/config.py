@@ -27,6 +27,9 @@ LLM_DEFAULTS: dict[str, tuple[str, str, str | None, float, float]] = {
     "groq": ("openai/gpt-oss-120b", "openai/gpt-oss-20b", "openai/gpt-oss-20b", 0.15, 0.60),
     "openai": ("gpt-5.4-mini", "", None, 4.00, 20.00),
     "anthropic": ("claude-opus-5-5", "", None, 4.00, 20.00),
+    # Gemini qua endpoint tương thích OpenAI, gói miễn phí (0 USD); không có giám khảo mặc định (eval chấm theo luật).
+    # Không có model dự phòng: `gemini-2.5-flash-lite` trả 404 "no longer available to new users" (đo 2026-10-16).
+    "gemini": ("gemini-flash-lite-latest", "", None, 0.0, 0.0),
 }
 
 
@@ -104,6 +107,8 @@ class Settings(BaseSettings):
     groq_api_key: str = Field("", validation_alias=_env("GROQ_API_KEY"))
     openai_api_key: str = Field("", validation_alias=_env("OPENAI_API_KEY"))
     anthropic_api_key: str = Field("", validation_alias=_env("ANTHROPIC_API_KEY"))
+    gemini_api_key: str = Field("", validation_alias=_env("GEMINI_API_KEY"))
+    gemini_api_keys: str = Field("", validation_alias=_env("GEMINI_API_KEYS"))  # nhiều khoá, phẩy: xoay khi hết hạn mức ngày
     rerank: bool = Field(False, validation_alias=_env("RERANK"))
     rerank_model: str = Field("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1", validation_alias=_env("RERANK_MODEL"))
     rerank_candidates: int = Field(20, validation_alias=_env("RERANK_CANDIDATES"))
@@ -174,8 +179,20 @@ class Settings(BaseSettings):
         return self.data_root / "docker-compose.yaml"
 
     @property
+    def gemini_key_list(self) -> list[str]:
+        """Khoá Gemini theo thứ tự xoay: `GEMINI_API_KEYS` (phẩy) rồi `GEMINI_API_KEY`; bỏ rỗng và trùng."""
+        keys = [k.strip() for k in f"{self.gemini_api_keys},{self.gemini_api_key}".split(",")]
+        return list(dict.fromkeys(k for k in keys if k))
+
+    @property
     def llm_fallback_list(self) -> list[str]:
         return [m.strip() for m in (self.llm_fallback_models or "").split(",") if m.strip()]
+
+    def fallbacks_for(self, model: str) -> list[str]:
+        """Model dự phòng (429/5xx) cho `model`: bỏ chính nó và bỏ model "phía bên kia" — sinh câu trả lời không
+        bao giờ lui về `judge_model` (giám khảo sẽ chấm câu do chính nó viết), giám khảo không lui về `llm_model`."""
+        other = self.llm_model if model == self.judge_model else self.judge_model
+        return [m for m in self.llm_fallback_list if m not in (model, other)]
 
 
 def dotenv_enabled() -> bool:
@@ -186,7 +203,7 @@ def load_settings(**overrides: object) -> Settings:
     """Tạo Settings mới; `.env` dưới data_root chỉ đọc khi `VRE_LOAD_DOTENV != "0"`."""
     root = Path(os.environ.get("VRE_DATA_ROOT", str(DEFAULT_DATA_ROOT)))
     env_file = root / ".env" if dotenv_enabled() else None
-    return Settings(_env_file=env_file, _env_file_encoding="utf-8", **overrides)  # type: ignore[call-arg]
+    return Settings(_env_file=env_file, _env_file_encoding="utf-8", **overrides)  # type: ignore[call-arg, arg-type]
 
 
 @lru_cache(maxsize=1)

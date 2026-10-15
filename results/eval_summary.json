@@ -1,0 +1,1604 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-15T19:12:11Z",
+  "git_sha": "79fe53b",
+  "index": {
+    "collection": "vre_chunks_e5_large",
+    "model_slug": "e5_large",
+    "n_points": 2685246
+  },
+  "llm": {
+    "provider": "gemini",
+    "generator": "gemini-flash-lite-latest",
+    "judge": null,
+    "generator_fallbacks": [],
+    "same_judge_allowed": false
+  },
+  "systems": [
+    "llm_only",
+    "basic_rag",
+    "graph",
+    "hybrid"
+  ],
+  "scoring": "rule_based",
+  "n_questions": 36,
+  "n_questions_scored": 36,
+  "n_questions_total": 100,
+  "benchmark_subset": [
+    "AG01",
+    "AG02",
+    "AG03",
+    "AG04",
+    "CP01",
+    "CP02",
+    "CP03",
+    "CP04",
+    "CS01",
+    "CS02",
+    "CS03",
+    "CS04",
+    "LK01",
+    "LK02",
+    "LK03",
+    "LK04",
+    "MH01",
+    "MH02",
+    "MH03",
+    "MH04",
+    "PS01",
+    "PS02",
+    "PS03",
+    "PS04",
+    "TM01",
+    "TM02",
+    "TM03",
+    "TM04",
+    "UN01",
+    "UN02",
+    "UN03",
+    "UN04",
+    "VA01",
+    "VA02",
+    "VA03",
+    "VA04"
+  ],
+  "complete": true,
+  "coverage": {
+    "lookup": {
+      "n_benchmark": 12,
+      "n_answered_any": 4,
+      "n_answered_all_systems": 4
+    },
+    "constraint": {
+      "n_benchmark": 12,
+      "n_answered_any": 4,
+      "n_answered_all_systems": 4
+    },
+    "aggregate": {
+      "n_benchmark": 12,
+      "n_answered_any": 4,
+      "n_answered_all_systems": 4
+    },
+    "multihop": {
+      "n_benchmark": 12,
+      "n_answered_any": 4,
+      "n_answered_all_systems": 4
+    },
+    "temporal": {
+      "n_benchmark": 10,
+      "n_answered_any": 4,
+      "n_answered_all_systems": 4
+    },
+    "comparison": {
+      "n_benchmark": 10,
+      "n_answered_any": 4,
+      "n_answered_all_systems": 4
+    },
+    "project_street": {
+      "n_benchmark": 10,
+      "n_answered_any": 4,
+      "n_answered_all_systems": 4
+    },
+    "valuation": {
+      "n_benchmark": 10,
+      "n_answered_any": 4,
+      "n_answered_all_systems": 4
+    },
+    "unanswerable": {
+      "n_benchmark": 12,
+      "n_answered_any": 4,
+      "n_answered_all_systems": 4
+    }
+  },
+  "by_category": {
+    "lookup": {
+      "llm_only": {
+        "n": 4,
+        "accuracy": 0.0,
+        "mean_points": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n_unscored": 0
+      },
+      "basic_rag": {
+        "n": 4,
+        "accuracy": 1.0,
+        "mean_points": 2.0,
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "n_unscored": 0
+      },
+      "graph": {
+        "n": 4,
+        "accuracy": 1.0,
+        "mean_points": 2.0,
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "n_unscored": 0
+      },
+      "hybrid": {
+        "n": 4,
+        "accuracy": 1.0,
+        "mean_points": 2.0,
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "n_unscored": 0
+      }
+    },
+    "constraint": {
+      "llm_only": {
+        "n": 4,
+        "accuracy": 0.0,
+        "mean_points": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n_unscored": 0
+      },
+      "basic_rag": {
+        "n": 4,
+        "accuracy": 0.0,
+        "mean_points": 0.5,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n_unscored": 0
+      },
+      "graph": {
+        "n": 4,
+        "accuracy": 1.0,
+        "mean_points": 2.0,
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "n_unscored": 0
+      },
+      "hybrid": {
+        "n": 4,
+        "accuracy": 0.0,
+        "mean_points": 0.5,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n_unscored": 0
+      }
+    },
+    "aggregate": {
+      "llm_only": {
+        "n": 4,
+        "accuracy": 0.25,
+        "mean_points": 0.5,
+        "ci95": [
+          0.0,
+          0.75
+        ],
+        "n_unscored": 0
+      },
+      "basic_rag": {
+        "n": 4,
+        "accuracy": 0.0,
+        "mean_points": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n_unscored": 0
+      },
+      "graph": {
+        "n": 4,
+        "accuracy": 1.0,
+        "mean_points": 2.0,
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "n_unscored": 0
+      },
+      "hybrid": {
+        "n": 4,
+        "accuracy": 1.0,
+        "mean_points": 2.0,
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "n_unscored": 0
+      }
+    },
+    "multihop": {
+      "llm_only": {
+        "n": 4,
+        "accuracy": 0.0,
+        "mean_points": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n_unscored": 0
+      },
+      "basic_rag": {
+        "n": 4,
+        "accuracy": 0.0,
+        "mean_points": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n_unscored": 0
+      },
+      "graph": {
+        "n": 4,
+        "accuracy": 0.75,
+        "mean_points": 1.5,
+        "ci95": [
+          0.25,
+          1.0
+        ],
+        "n_unscored": 0
+      },
+      "hybrid": {
+        "n": 4,
+        "accuracy": 0.75,
+        "mean_points": 1.5,
+        "ci95": [
+          0.25,
+          1.0
+        ],
+        "n_unscored": 0
+      }
+    },
+    "temporal": {
+      "llm_only": {
+        "n": 4,
+        "accuracy": 0.0,
+        "mean_points": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n_unscored": 0
+      },
+      "basic_rag": {
+        "n": 4,
+        "accuracy": 0.25,
+        "mean_points": 0.5,
+        "ci95": [
+          0.0,
+          0.75
+        ],
+        "n_unscored": 0
+      },
+      "graph": {
+        "n": 4,
+        "accuracy": 1.0,
+        "mean_points": 2.0,
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "n_unscored": 0
+      },
+      "hybrid": {
+        "n": 4,
+        "accuracy": 1.0,
+        "mean_points": 2.0,
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "n_unscored": 0
+      }
+    },
+    "comparison": {
+      "llm_only": {
+        "n": 4,
+        "accuracy": 0.5,
+        "mean_points": 1.0,
+        "ci95": [
+          0.0,
+          1.0
+        ],
+        "n_unscored": 0
+      },
+      "basic_rag": {
+        "n": 4,
+        "accuracy": 0.0,
+        "mean_points": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n_unscored": 0
+      },
+      "graph": {
+        "n": 4,
+        "accuracy": 1.0,
+        "mean_points": 2.0,
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "n_unscored": 0
+      },
+      "hybrid": {
+        "n": 4,
+        "accuracy": 0.75,
+        "mean_points": 1.5,
+        "ci95": [
+          0.25,
+          1.0
+        ],
+        "n_unscored": 0
+      }
+    },
+    "project_street": {
+      "llm_only": {
+        "n": 4,
+        "accuracy": 0.0,
+        "mean_points": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n_unscored": 0
+      },
+      "basic_rag": {
+        "n": 4,
+        "accuracy": 0.0,
+        "mean_points": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n_unscored": 0
+      },
+      "graph": {
+        "n": 4,
+        "accuracy": 1.0,
+        "mean_points": 2.0,
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "n_unscored": 0
+      },
+      "hybrid": {
+        "n": 4,
+        "accuracy": 1.0,
+        "mean_points": 2.0,
+        "ci95": [
+          1.0,
+          1.0
+        ],
+        "n_unscored": 0
+      }
+    },
+    "valuation": {
+      "llm_only": {
+        "n": 4,
+        "accuracy": 0.0,
+        "mean_points": 0.25,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n_unscored": 0
+      },
+      "basic_rag": {
+        "n": 4,
+        "accuracy": 0.0,
+        "mean_points": 0.5,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n_unscored": 0
+      },
+      "graph": {
+        "n": 4,
+        "accuracy": 0.0,
+        "mean_points": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n_unscored": 0
+      },
+      "hybrid": {
+        "n": 4,
+        "accuracy": 0.0,
+        "mean_points": 0.75,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "n_unscored": 0
+      }
+    },
+    "unanswerable": {
+      "llm_only": {
+        "n": 4,
+        "accuracy": 0.25,
+        "mean_points": 0.5,
+        "ci95": [
+          0.0,
+          0.75
+        ],
+        "n_unscored": 0
+      },
+      "basic_rag": {
+        "n": 4,
+        "accuracy": 0.75,
+        "mean_points": 1.5,
+        "ci95": [
+          0.25,
+          1.0
+        ],
+        "n_unscored": 0
+      },
+      "graph": {
+        "n": 4,
+        "accuracy": 0.75,
+        "mean_points": 1.5,
+        "ci95": [
+          0.25,
+          1.0
+        ],
+        "n_unscored": 0
+      },
+      "hybrid": {
+        "n": 4,
+        "accuracy": 0.75,
+        "mean_points": 1.5,
+        "ci95": [
+          0.25,
+          1.0
+        ],
+        "n_unscored": 0
+      }
+    }
+  },
+  "overall": {
+    "llm_only": {
+      "n": 36,
+      "accuracy": 0.1111,
+      "mean_points": 0.25,
+      "ci95": [
+        0.0278,
+        0.2222
+      ],
+      "n_unscored": 0
+    },
+    "basic_rag": {
+      "n": 36,
+      "accuracy": 0.2222,
+      "mean_points": 0.5556,
+      "ci95": [
+        0.0833,
+        0.3611
+      ],
+      "n_unscored": 0
+    },
+    "graph": {
+      "n": 36,
+      "accuracy": 0.8333,
+      "mean_points": 1.6667,
+      "ci95": [
+        0.6944,
+        0.9444
+      ],
+      "n_unscored": 0
+    },
+    "hybrid": {
+      "n": 36,
+      "accuracy": 0.6944,
+      "mean_points": 1.5278,
+      "ci95": [
+        0.5278,
+        0.8333
+      ],
+      "n_unscored": 0
+    }
+  },
+  "overall_common": {
+    "llm_only": {
+      "n": 36,
+      "accuracy": 0.1111,
+      "mean_points": 0.25,
+      "ci95": [
+        0.0278,
+        0.2222
+      ],
+      "n_unscored": 0
+    },
+    "basic_rag": {
+      "n": 36,
+      "accuracy": 0.2222,
+      "mean_points": 0.5556,
+      "ci95": [
+        0.0833,
+        0.3611
+      ],
+      "n_unscored": 0
+    },
+    "graph": {
+      "n": 36,
+      "accuracy": 0.8333,
+      "mean_points": 1.6667,
+      "ci95": [
+        0.6944,
+        0.9444
+      ],
+      "n_unscored": 0
+    },
+    "hybrid": {
+      "n": 36,
+      "accuracy": 0.6944,
+      "mean_points": 1.5278,
+      "ci95": [
+        0.5278,
+        0.8333
+      ],
+      "n_unscored": 0
+    }
+  },
+  "retrieval": {
+    "basic_rag": {
+      "n": 8,
+      "top_k": 5,
+      "recall_at_5": 0.575,
+      "recall_at_10": 0.5375,
+      "mrr": 0.75,
+      "ndcg_at_10": 0.5724
+    },
+    "graph": {
+      "n": 8,
+      "top_k": 5,
+      "recall_at_5": 1.0,
+      "recall_at_10": 1.0,
+      "mrr": 0.9167,
+      "ndcg_at_10": 0.9523
+    },
+    "hybrid": {
+      "n": 8,
+      "top_k": 5,
+      "recall_at_5": 0.575,
+      "recall_at_10": 0.5375,
+      "mrr": 0.75,
+      "ndcg_at_10": 0.5724
+    }
+  },
+  "ragas": {
+    "basic_rag": {
+      "faithfulness": null,
+      "answer_relevancy": null,
+      "context_precision": null,
+      "n": 0
+    },
+    "graph": {
+      "faithfulness": null,
+      "answer_relevancy": null,
+      "context_precision": null,
+      "n": 0
+    },
+    "hybrid": {
+      "faithfulness": null,
+      "answer_relevancy": null,
+      "context_precision": null,
+      "n": 0
+    }
+  },
+  "cost": {
+    "llm_only": {
+      "n": 36,
+      "latency_ms_p50": 4029.1,
+      "latency_ms_p95": 11840.8,
+      "input_tokens_mean": 82.3056,
+      "output_tokens_mean": 158.0278,
+      "usd_per_question": 0.0,
+      "bad_citation_rate": 0.0,
+      "error_rate": 0.0,
+      "fallback_rate": 0.0,
+      "cached_rate": 0.0
+    },
+    "basic_rag": {
+      "n": 36,
+      "latency_ms_p50": 10468.5,
+      "latency_ms_p95": 36999.8,
+      "input_tokens_mean": 1942.3056,
+      "output_tokens_mean": 260.4722,
+      "usd_per_question": 0.0,
+      "bad_citation_rate": 0.0,
+      "error_rate": 0.0,
+      "fallback_rate": 0.0,
+      "cached_rate": 0.0
+    },
+    "graph": {
+      "n": 36,
+      "latency_ms_p50": 8854.9,
+      "latency_ms_p95": 23016.2,
+      "input_tokens_mean": 3842.8056,
+      "output_tokens_mean": 307.7778,
+      "usd_per_question": 0.0,
+      "bad_citation_rate": 0.0,
+      "error_rate": 0.0,
+      "fallback_rate": 0.0,
+      "cached_rate": 0.0
+    },
+    "hybrid": {
+      "n": 36,
+      "latency_ms_p50": 8989.4,
+      "latency_ms_p95": 21686.0,
+      "input_tokens_mean": 4063.1389,
+      "output_tokens_mean": 397.5,
+      "usd_per_question": 0.0,
+      "bad_citation_rate": 0.0,
+      "error_rate": 0.0,
+      "fallback_rate": 0.0556,
+      "cached_rate": 0.0278
+    }
+  },
+  "pairwise": [
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "overall",
+      "metric": "accuracy",
+      "diff": 0.4722,
+      "ci95": [
+        0.3056,
+        0.6389
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 36
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "overall",
+      "metric": "mean_points",
+      "diff": 0.9722,
+      "ci95": [
+        0.6667,
+        1.3056
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 36
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "lookup",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "lookup",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "constraint",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "constraint",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "aggregate",
+      "metric": "accuracy",
+      "diff": 1.0,
+      "ci95": [
+        1.0,
+        1.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "aggregate",
+      "metric": "mean_points",
+      "diff": 2.0,
+      "ci95": [
+        2.0,
+        2.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "multihop",
+      "metric": "accuracy",
+      "diff": 0.75,
+      "ci95": [
+        0.25,
+        1.0
+      ],
+      "p_value": 0.003,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "multihop",
+      "metric": "mean_points",
+      "diff": 1.5,
+      "ci95": [
+        0.5,
+        2.0
+      ],
+      "p_value": 0.003,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "temporal",
+      "metric": "accuracy",
+      "diff": 0.75,
+      "ci95": [
+        0.25,
+        1.0
+      ],
+      "p_value": 0.0037,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "temporal",
+      "metric": "mean_points",
+      "diff": 1.5,
+      "ci95": [
+        0.5,
+        2.0
+      ],
+      "p_value": 0.0037,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "comparison",
+      "metric": "accuracy",
+      "diff": 0.75,
+      "ci95": [
+        0.25,
+        1.0
+      ],
+      "p_value": 0.0037,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "comparison",
+      "metric": "mean_points",
+      "diff": 1.5,
+      "ci95": [
+        0.5,
+        2.0
+      ],
+      "p_value": 0.0037,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "project_street",
+      "metric": "accuracy",
+      "diff": 1.0,
+      "ci95": [
+        1.0,
+        1.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "project_street",
+      "metric": "mean_points",
+      "diff": 2.0,
+      "ci95": [
+        2.0,
+        2.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "valuation",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "valuation",
+      "metric": "mean_points",
+      "diff": 0.25,
+      "ci95": [
+        0.0,
+        0.75
+      ],
+      "p_value": 0.3101,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "unanswerable",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "unanswerable",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "overall",
+      "metric": "accuracy",
+      "diff": 0.1111,
+      "ci95": [
+        -0.0833,
+        0.3056
+      ],
+      "p_value": 0.1538,
+      "n_boot": 10000,
+      "n": 36
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "overall",
+      "metric": "mean_points",
+      "diff": 0.3056,
+      "ci95": [
+        -0.0833,
+        0.6944
+      ],
+      "p_value": 0.0662,
+      "n_boot": 10000,
+      "n": 36
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "lookup",
+      "metric": "accuracy",
+      "diff": 1.0,
+      "ci95": [
+        1.0,
+        1.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "lookup",
+      "metric": "mean_points",
+      "diff": 2.0,
+      "ci95": [
+        2.0,
+        2.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "constraint",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "constraint",
+      "metric": "mean_points",
+      "diff": 0.5,
+      "ci95": [
+        0.0,
+        1.0
+      ],
+      "p_value": 0.0633,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "aggregate",
+      "metric": "accuracy",
+      "diff": -0.25,
+      "ci95": [
+        -0.75,
+        0.0
+      ],
+      "p_value": 0.3202,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "aggregate",
+      "metric": "mean_points",
+      "diff": -0.5,
+      "ci95": [
+        -1.5,
+        0.0
+      ],
+      "p_value": 0.3202,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "multihop",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "multihop",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "temporal",
+      "metric": "accuracy",
+      "diff": 0.25,
+      "ci95": [
+        0.0,
+        0.75
+      ],
+      "p_value": 0.3201,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "temporal",
+      "metric": "mean_points",
+      "diff": 0.5,
+      "ci95": [
+        0.0,
+        1.5
+      ],
+      "p_value": 0.3201,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "comparison",
+      "metric": "accuracy",
+      "diff": -0.5,
+      "ci95": [
+        -1.0,
+        0.0
+      ],
+      "p_value": 0.0602,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "comparison",
+      "metric": "mean_points",
+      "diff": -1.0,
+      "ci95": [
+        -2.0,
+        0.0
+      ],
+      "p_value": 0.0602,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "project_street",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "project_street",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "valuation",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "valuation",
+      "metric": "mean_points",
+      "diff": 0.25,
+      "ci95": [
+        0.0,
+        0.75
+      ],
+      "p_value": 0.3202,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "unanswerable",
+      "metric": "accuracy",
+      "diff": 0.5,
+      "ci95": [
+        -0.5,
+        1.0
+      ],
+      "p_value": 0.2609,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "unanswerable",
+      "metric": "mean_points",
+      "diff": 1.0,
+      "ci95": [
+        -1.0,
+        2.0
+      ],
+      "p_value": 0.2609,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "overall",
+      "metric": "accuracy",
+      "diff": -0.1389,
+      "ci95": [
+        -0.25,
+        -0.0278
+      ],
+      "p_value": 0.0044,
+      "n_boot": 10000,
+      "n": 36
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "overall",
+      "metric": "mean_points",
+      "diff": -0.1389,
+      "ci95": [
+        -0.3611,
+        0.0556
+      ],
+      "p_value": 0.1329,
+      "n_boot": 10000,
+      "n": 36
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "lookup",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "lookup",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "constraint",
+      "metric": "accuracy",
+      "diff": -1.0,
+      "ci95": [
+        -1.0,
+        -1.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "constraint",
+      "metric": "mean_points",
+      "diff": -1.5,
+      "ci95": [
+        -2.0,
+        -1.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "aggregate",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "aggregate",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "multihop",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "multihop",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "temporal",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "temporal",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "comparison",
+      "metric": "accuracy",
+      "diff": -0.25,
+      "ci95": [
+        -0.75,
+        0.0
+      ],
+      "p_value": 0.3201,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "comparison",
+      "metric": "mean_points",
+      "diff": -0.5,
+      "ci95": [
+        -1.5,
+        0.0
+      ],
+      "p_value": 0.3201,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "project_street",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "project_street",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "valuation",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "valuation",
+      "metric": "mean_points",
+      "diff": 0.75,
+      "ci95": [
+        0.25,
+        1.0
+      ],
+      "p_value": 0.0032,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "unanswerable",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "unanswerable",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 4
+    }
+  ],
+  "router": {
+    "accuracy": 0.9167,
+    "n": 36,
+    "accuracy_excl_unanswerable": 0.9375,
+    "n_excl_unanswerable": 32,
+    "by_category": {
+      "lookup": {
+        "n": 4,
+        "accuracy": 0.5
+      },
+      "constraint": {
+        "n": 4,
+        "accuracy": 1.0
+      },
+      "aggregate": {
+        "n": 4,
+        "accuracy": 1.0
+      },
+      "multihop": {
+        "n": 4,
+        "accuracy": 1.0
+      },
+      "temporal": {
+        "n": 4,
+        "accuracy": 1.0
+      },
+      "comparison": {
+        "n": 4,
+        "accuracy": 1.0
+      },
+      "project_street": {
+        "n": 4,
+        "accuracy": 1.0
+      },
+      "valuation": {
+        "n": 4,
+        "accuracy": 1.0
+      },
+      "unanswerable": {
+        "n": 4,
+        "accuracy": 0.75
+      }
+    },
+    "confusion": {
+      "basic_rag": {
+        "basic_rag": 7,
+        "graph": 0,
+        "hybrid": 3,
+        "valuation": 0
+      },
+      "graph": {
+        "basic_rag": 0,
+        "graph": 22,
+        "hybrid": 0,
+        "valuation": 0
+      },
+      "hybrid": {
+        "basic_rag": 0,
+        "graph": 0,
+        "hybrid": 0,
+        "valuation": 0
+      },
+      "valuation": {
+        "basic_rag": 0,
+        "graph": 0,
+        "hybrid": 0,
+        "valuation": 4
+      }
+    }
+  },
+  "notes": [
+    "ragas: answer_relevancy và context_precision bỏ để tiết kiệm lời gọi LLM (chỉ đo faithfulness)",
+    "retrieval: nguồn = top_k=5 tin mà hệ thống đưa vào ngữ cảnh; recall_at_10 vì thế ≤ recall_at_5 khi có hơn 5 cụm đúng (truy xuất thuần ở ablation.json)",
+    "benchmark đầy đủ có 100 câu; bản tóm tắt này chấm 36 câu (benchmark_subset)",
+    "pairwise chỉ dùng câu cả hai hệ thống đều có điểm; overall_common chỉ dùng câu mọi hệ thống đều có điểm; mọi CI có n kèm theo"
+  ],
+  "scoring_rules": [
+    "ids: capped cluster Recall@5 over the system's sources; 2 if >= 0.8, 1 if > 0, else 0",
+    "value (numeric GT): any number in the answer within value_tolerance (default 5%) of gt_value => 2; within max(20%, 2x tolerance) => 1; else 0 (lenient any-number match)",
+    "value (numeric GT < 0, e.g. '% lower'): an answer number matches by absolute value only if the answer also says thấp hơn/giảm/rẻ hơn/kém",
+    "value (text GT not in the question): diacritic-folded, lower-cased answer contains gt_value => 2, else 0",
+    "value (text GT that the question itself names, i.e. comparisons): gt_value must appear within 60 characters before the first 'cao/đắt/lớn/nhiều hơn' in the answer => 2, else 0",
+    "valuation: first amount or range ('a đến b tỷ' => midpoint) with unit 'tỷ'/'triệu' (converted to tỷ) within value_tolerance => 2, within 2x => 1",
+    "value (month GT 'YYYY-MM'): any month in the answer written as 'MM/YYYY', 'M/YYYY', 'tháng M/YYYY', 'tháng M năm YYYY' or 'YYYY-MM' equal to gt_value => 2, else 0",
+    "value (comparison category): the winner rule applies even when the question abbreviates the options (e.g. 'q3')",
+    "non-refusal questions (value, valuation): an answer containing a refusal phrase => 0, checked before any match",
+    "refusal: answer contains a refusal phrase (no data / insufficient information / out of range) => 2, else 0",
+    "empty answer => 0; faithfulness = null (needs an LLM)"
+  ]
+}

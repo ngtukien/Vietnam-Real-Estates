@@ -1,0 +1,8 @@
+# Ngữ cảnh build của Dockerfile.api (BuildKit đọc <Dockerfile>.dockerignore): chỉ code, không dữ liệu/cache.
+*
+!pyproject.toml
+!requirements/base.txt
+!src/
+!api/
+**/__pycache__
+**/*.pyc

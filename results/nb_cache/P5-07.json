@@ -1,0 +1,75 @@
+{
+ "input": {
+  "property_type": "Căn hộ chung cư",
+  "province": "Hồ Chí Minh",
+  "district": "Quận 7",
+  "area_m2": 70,
+  "bedrooms": 2,
+  "bathrooms": 2,
+  "asking_price_vnd": 4500000000.0
+ },
+ "result": {
+  "predicted_price_m2_mil": 50.206687927246094,
+  "predicted_price_vnd": 3514468154.9072266,
+  "interval_price_vnd": {
+   "low": 2988302879.9176316,
+   "high": 4203394848.9725556
+  },
+  "baseline_ward_median_price_m2_mil": 96.1038961038961,
+  "comparables_n": 60867,
+  "verdict": "above_market",
+  "shap": [
+   {
+    "feature": "property_type",
+    "value": "Căn hộ chung cư",
+    "contribution_log": -0.3115554451942444
+   },
+   {
+    "feature": "te_district_key",
+    "value": "Hồ Chí Minh|Quận 7",
+    "contribution_log": 0.1621515303850174
+   },
+   {
+    "feature": "te_project_key",
+    "value": null,
+    "contribution_log": -0.0927693322300911
+   },
+   {
+    "feature": "month_idx",
+    "value": 9.0,
+    "contribution_log": 0.054572127759456635
+   },
+   {
+    "feature": "te_ward_key",
+    "value": null,
+    "contribution_log": -0.04909854382276535
+   },
+   {
+    "feature": "bathrooms",
+    "value": 2.0,
+    "contribution_log": -0.04654005542397499
+   },
+   {
+    "feature": "bedrooms",
+    "value": 2.0,
+    "contribution_log": -0.03995742276310921
+   },
+   {
+    "feature": "am_mat_tien",
+    "value": 0.0,
+    "contribution_log": -0.03849794715642929
+   }
+  ],
+  "model": {
+   "variant": "tabular",
+   "path": "models/valuation/xgb_tabular_sale.json",
+   "trained_at": "2026-10-15T10:00:55Z",
+   "test_mape": 0.24024704284149945
+  }
+ },
+ "_meta": {
+  "cell": "P5-07",
+  "mode": "live",
+  "generated_at": "2026-10-15T15:47:22Z"
+ }
+}

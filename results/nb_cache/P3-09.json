@@ -1,0 +1,76 @@
+{
+ "ms": 1254.2579000000842,
+ "rows": [
+  [
+   8863068411977413,
+   "Bán Căn Góc CC Jamona City 2PN 2WC tại Đào Trí, Phú Thuận, Q7, HCM, giá tốt 3,999 tỷ",
+   3999000000.0,
+   69.0
+  ],
+  [
+   4095244479097769,
+   "Bán căn hộ sky garden 3 phú mỹ hưng, quận 7 3 tỷ 990",
+   3990000000.0,
+   56.0
+  ],
+  [
+   2902402910029161,
+   "Bán CC 2PN 1WC tại River Panorama, 3,99 tỷ, 55m2,hỗ trợ bank, đang có HDT.LH Mr Huy",
+   3990000000.0,
+   55.0
+  ],
+  [
+   7870830303514818,
+   "Cần bán căn hộ Sky Garden 3, 2PN, đang cho thuê 11 triệu/th dòng tiền ổn định, giá chỉ 3.990 tỷ",
+   3990000000.0,
+   56.0
+  ],
+  [
+   1970081863768081,
+   "Cần tiền bán gấp CC 2PN, 1WC, 57m2 giá 3,99 tỷ tại Sky Garden 3, Tân Phong, Q7, HCM, khu an ninh",
+   3990000000.0,
+   57.0
+  ],
+  [
+   2503339284865422,
+   "Bán căn hộ Sky Garden 3 Phú Mỹ Hưng, Quận 7, 3,99 tỷ",
+   3990000000.0,
+   56.0
+  ],
+  [
+   3110486358560917,
+   "Bán Căn hộ 2PN tại Q7 Saigon Riverside, 3.988 tỷ, 67m2, View hồ bơi, nội thất hiện đại",
+   3990000000.0,
+   67.0
+  ],
+  [
+   6209379102214479,
+   "Bán CC River Panorama, 3,99 tỷ, 55m2, 2PN, 1VS tại Hoàng Quốc Việt, p Phú Thuận, Q7, HCM",
+   3990000000.0,
+   55.0
+  ],
+  [
+   8449816079938254,
+   "Bán căn hộ chung cư Hưng Vượng 2, giá cực chất 3,99 tỷ, 98m2, 2PN, Q7, HCM",
+   3990000000.0,
+   98.0
+  ],
+  [
+   7489262956989930,
+   "Chỉ từ 3,3 tỷ all in sở hữu ngay căn hộ 2PN cao cấp, pháp lý rõ ràng. Liên hệ Hồng Điệp [phone_number]!",
+   3990000000.0,
+   63.0
+  ]
+ ],
+ "columns": [
+  "listing_id",
+  "title",
+  "price_vnd",
+  "area_m2"
+ ],
+ "_meta": {
+  "cell": "P3-09",
+  "mode": "live",
+  "generated_at": "2026-10-15T19:13:02Z"
+ }
+}

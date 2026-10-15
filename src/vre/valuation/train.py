@@ -141,12 +141,12 @@ def rent_model(settings: Settings, variant: F.Variant, root: Path, n_rent: int, 
 
 def count_rent(settings: Settings, limit: int | None = None) -> int:
     """Số tin thuê có giá trong cửa sổ; có `limit` (smoke) ⇒ số dòng khung giới hạn = min(count, limit)."""
-    from vre.data.duck import connect
+    from vre.data.duck import connect, one_row
 
     con = connect(settings)
     try:
-        n = int(con.execute("SELECT count(*) FROM v_listings WHERE deal_type='rent' AND price_m2_mil IS NOT NULL "
-                            "AND month BETWEEN ? AND ?", [F.TRAIN_MONTHS[0], F.TEST_MONTHS[1]]).fetchone()[0])
+        n = int(one_row(con.execute("SELECT count(*) FROM v_listings WHERE deal_type='rent' AND price_m2_mil IS NOT NULL "
+                                    "AND month BETWEEN ? AND ?", [F.TRAIN_MONTHS[0], F.TEST_MONTHS[1]]))[0])
     finally:
         con.close()
     return n if limit is None else min(n, int(limit))

@@ -5,6 +5,9 @@ from pathlib import Path
 
 import pytest
 
+# Trước mọi import numpy (chưa module nào ở trên import nó): OpenBLAS 32 luồng giữ ~0,79 GB commit/tiến trình,
+# 4 luồng ~0,12 GB (plans/reports/p3-encoder-crash.md).
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "4")
 os.environ["VRE_LOAD_DOTENV"] = "0"  # test không phụ thuộc `.env` của máy
 
 REPO_ROOT = Path(__file__).resolve().parents[1]

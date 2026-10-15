@@ -23,6 +23,7 @@ markers = [
     "integration: cần dịch vụ Docker (Neo4j/Qdrant) đang chạy",
     "gpu: cần GPU CUDA (chỉ phiên p2 chạy)",
     "slow: chạy lâu",
+    "notebooks: chạy 5 notebook bằng nbclient (< 2 phút)",
 ]
 
 [tool.ruff]

@@ -1,0 +1,736 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-15T19:12:12Z",
+  "git_sha": "79fe53b",
+  "rag": [
+    {
+      "question": "Mình thấy tin bán căn hộ 3 phòng ngủ 80m2 ở Sun Feliza Suites Cầu Giấy giá 8 tỷ, căn đó có mấy WC vậy?",
+      "filters": {
+        "province": "Hà Nội",
+        "district": "Cầu Giấy",
+        "property_type": "Căn hộ chung cư",
+        "deal_type": "sale",
+        "bedrooms": 3,
+        "min_price_mil": 8000.0,
+        "max_price_mil": 8000.0,
+        "min_area_m2": 80.0,
+        "max_area_m2": 80.0,
+        "project": "Sun Feliza Suites"
+      },
+      "hits": [
+        {
+          "listing_id": 3092923782945354,
+          "title": "Bán CC 3PN, 2WC, 80m2 tại Sun Feliza Suites, 8 tỷ, Cầu Giấy, Hà Nội",
+          "score": 44.021202087402344,
+          "province": "Hà Nội",
+          "district": "Cầu Giấy",
+          "price_vnd": 8000000000.0
+        }
+      ]
+    },
+    {
+      "question": "Căn 4PN 132m2 tầng cao ở Sunshine Sky City Q7 rao 7,35 tỷ còn không, thông tin chi tiết thế nào?",
+      "filters": {
+        "province": "Hồ Chí Minh",
+        "district": "Quận 7",
+        "property_type": "Căn hộ chung cư",
+        "deal_type": "sale",
+        "bedrooms": 4,
+        "min_price_mil": 7350.0,
+        "max_price_mil": 7350.0,
+        "min_area_m2": 132.0,
+        "max_area_m2": 132.0,
+        "project": "Sunshine Sky City"
+      },
+      "hits": [
+        {
+          "listing_id": 2734921274202993,
+          "title": "Bán Căn Hộ Sunshine Sky City (4PN+1, 3WC) DT 132m2 tầng cao giá bán: 7ty350. LH:",
+          "score": 38.98542404174805,
+          "province": "Hồ Chí Minh",
+          "district": "Quận 7",
+          "price_vnd": 7350000000.0
+        },
+        {
+          "listing_id": 1076010805356813,
+          "title": "Bán Căn Hộ Sunshine Sky City (4PN+1, 3WC) DT 132m2 tầng cao giá bán: 7ty350. LH: [phone_number]",
+          "score": 38.767005920410156,
+          "province": "Hồ Chí Minh",
+          "district": "Quận 7",
+          "price_vnd": 7350000000.0
+        }
+      ]
+    },
+    {
+      "question": "Tìm giúp tin bán căn hộ Masteri Waterfront 58,62m2 2 phòng ngủ giá 3,73 tỷ.",
+      "filters": {
+        "property_type": "Căn hộ chung cư",
+        "deal_type": "sale",
+        "bedrooms": 2,
+        "min_price_mil": 3730.0,
+        "max_price_mil": 3730.0,
+        "min_area_m2": 58.62,
+        "max_area_m2": 58.62,
+        "project": "Masteri Waterfront"
+      },
+      "hits": [
+        {
+          "listing_id": 8968827788928872,
+          "title": "Bán căn hộ chung cư Masteri Water Front, 3,73 tỷ, 58,62m2, 2PN, 2WC, giá siêu hời",
+          "score": 45.959075927734375,
+          "province": "Hà Nội",
+          "district": "Gia Lâm",
+          "price_vnd": 3730000000.0
+        }
+      ]
+    },
+    {
+      "question": "Biệt thự 224m2 trong khu biệt lập 44 căn ở Mizuki Park giá 21 tỷ có sổ hồng riêng chưa?",
+      "filters": {
+        "property_type": "Biệt thự/Nhà liền kề",
+        "deal_type": "sale",
+        "min_price_mil": 21000.0,
+        "max_price_mil": 21000.0,
+        "min_area_m2": 224.0,
+        "max_area_m2": 224.0,
+        "project": "Mizuki Park"
+      },
+      "hits": [
+        {
+          "listing_id": 5740602997708888,
+          "title": "Biệt thự khu biệt lập 44 căn tại Mizuki ParK giá tốt chỉ 21tỷ có sổ hồng riêng",
+          "score": 42.49037551879883,
+          "province": "Hồ Chí Minh",
+          "district": "Bình Chánh",
+          "price_vnd": 21000000000.0
+        },
+        {
+          "listing_id": 7695074736308617,
+          "title": "Sổ hồng: Biệt thự Valora Island - Dinh thự The Mizuki - Chỉ từ 21 tỷ",
+          "score": 30.305561065673828,
+          "province": "Hồ Chí Minh",
+          "district": "Bình Chánh",
+          "price_vnd": 21000000000.0
+        },
+        {
+          "listing_id": 3977651384917647,
+          "title": "Cắt lỗ giảm 4 tỷ còn 21 tỷ bán nhà biệt thự đơn lập 224m2 view sông. LH - Thạch",
+          "score": 22.137311935424805,
+          "province": "Hồ Chí Minh",
+          "district": "Bình Chánh",
+          "price_vnd": 21000000000.0
+        }
+      ]
+    },
+    {
+      "question": "Tìm căn hộ 2 phòng ngủ ở Quận 7 giá dưới 3 tỷ, chung cư có hồ bơi.",
+      "filters": {
+        "province": "Hồ Chí Minh",
+        "district": "Quận 7",
+        "property_type": "Căn hộ chung cư",
+        "deal_type": "sale",
+        "bedrooms": 2,
+        "max_price_mil": 3000.0
+      },
+      "hits": [
+        {
+          "listing_id": 5722805248662563,
+          "title": "Tổng hợp chọn lọc bán toàn bộ căn Q7 Boulevard 2PN giá 2.1 tỷ, và các căn 1pn, 3pn LH [phone_number]",
+          "score": 0.8713303804397583,
+          "province": "Hồ Chí Minh",
+          "district": "Quận 7",
+          "price_vnd": 2100000000.0
+        },
+        {
+          "listing_id": 6692314695561345,
+          "title": "Bán căn hộ 2 phòng ngủ Ascent Lakeside, Nguyễn Văn Linh, Quận 7 giá 3 tỷ",
+          "score": 18.870586395263672,
+          "province": "Hồ Chí Minh",
+          "district": "Quận 7",
+          "price_vnd": 3000000000.0
+        },
+        {
+          "listing_id": 6307460137585786,
+          "title": "Cần bán căn hộ 2PN HATB nằm ngay trung tâm Q7, tầng đẹp, view thoáng, LH Phi [phone_number]",
+          "score": 0.8704407215118408,
+          "province": "Hồ Chí Minh",
+          "district": "Quận 7",
+          "price_vnd": 2950000000.0
+        },
+        {
+          "listing_id": 1091655847245431,
+          "title": "Bán căn hộ 2 phòng ngủ Ascent Lakeside,Nguyễn Văn Linh,Quận 7 giá 3 tỷ",
+          "score": 18.82601547241211,
+          "province": "Hồ Chí Minh",
+          "district": "Quận 7",
+          "price_vnd": 3000000000.0
+        },
+        {
+          "listing_id": 8277698534058383,
+          "title": "Chủ cần rao Bán CC Riverside Residence, 2 tỷ VND, 72m2, 2PN, 2WC, giá tốt hàng hiếm tại Q7, HCM",
+          "score": 0.8701285123825073,
+          "province": "Hồ Chí Minh",
+          "district": "Quận 7",
+          "price_vnd": 2000000000.0
+        }
+      ]
+    }
+  ],
+  "graph": [
+    {
+      "question": "Mình thấy tin bán căn hộ 3 phòng ngủ 80m2 ở Sun Feliza Suites Cầu Giấy giá 8 tỷ, căn đó có mấy WC vậy?",
+      "cypher": "MATCH (p:Project)-[:IN_DISTRICT]->(:District {key: 'Hà Nội|Cầu Giấy'}) WHERE toLower(p.name) CONTAINS 'sun feliza suites' MATCH (l:Listing)-[:IN_PROJECT]->(p) WHERE l.property_type = 'Căn hộ chung cư' AND l.bedrooms = 3 AND l.area_m2 = 80 AND l.price_vnd = 8e9 AND l.deal_type = 'sale' RETURN l.listing_id AS listing_id, l.title AS title, l.bathrooms AS bathrooms, l.price_vnd AS price_vnd LIMIT 20",
+      "columns": [
+        "listing_id",
+        "title",
+        "bathrooms",
+        "price_vnd"
+      ],
+      "rows": [
+        {
+          "listing_id": 3092923782945354,
+          "title": "Bán CC 3PN, 2WC, 80m2 tại Sun Feliza Suites, 8 tỷ, Cầu Giấy, Hà Nội",
+          "bathrooms": 2,
+          "price_vnd": 8000000000.0
+        }
+      ],
+      "latency_ms": 60.0,
+      "id": "LK01",
+      "system": "graph",
+      "category": "lookup",
+      "tag": "lookup",
+      "points": 2
+    },
+    {
+      "question": "Dự án Sunshine Sky City nằm ở quận nào, và giá/m² căn hộ của quận đó cao hay thấp hơn trung vị căn hộ toàn TP.HCM bao nhiêu %?",
+      "cypher": "MATCH (p:Project)-[:IN_DISTRICT]->(d:District)-[:IN_PROVINCE]->(:Province {name: 'Hồ Chí Minh'}) WHERE toLower(p.name) CONTAINS 'sunshine sky city' MATCH (md:MarketStat {scope: 'district', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'})-[:STAT_OF]->(d) MATCH (mv:MarketStat {scope: 'province', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'})-[:STAT_OF]->(:Province {name: 'Hồ Chí Minh'}) RETURN d.name AS district, round(md.median_price_m2_mil, 2) AS district_median_m2_mil, round(mv.median_price_m2_mil, 2) AS hcm_median_m2_mil, round((md.median_price_m2_mil / mv.median_price_m2_mil - 1) * 100, 2) AS percentage_diff\nLIMIT 50",
+      "columns": [
+        "district",
+        "district_median_m2_mil",
+        "hcm_median_m2_mil",
+        "percentage_diff"
+      ],
+      "rows": [
+        {
+          "district": "Quận 7",
+          "district_median_m2_mil": 75.17,
+          "hcm_median_m2_mil": 65.28,
+          "percentage_diff": 15.15
+        }
+      ],
+      "latency_ms": 69.6,
+      "id": "MH01",
+      "system": "graph",
+      "category": "multihop",
+      "tag": "multihop",
+      "points": 2
+    },
+    {
+      "question": "Giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy là bao nhiêu?",
+      "cypher": "MATCH (m:MarketStat {scope: 'district', area_key: 'Hà Nội|Cầu Giấy', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'}) RETURN round(m.median_price_m2_mil, 2) AS median_price_m2_mil, m.n AS n\nLIMIT 50",
+      "columns": [
+        "median_price_m2_mil",
+        "n"
+      ],
+      "rows": [
+        {
+          "median_price_m2_mil": 91.26,
+          "n": 22783
+        }
+      ],
+      "latency_ms": 4.6,
+      "id": "AG01",
+      "system": "graph",
+      "category": "aggregate",
+      "tag": null,
+      "points": 2
+    },
+    {
+      "question": "gia nha trung binh moi m2 o go vap la bao nhieu (trung vi)?",
+      "cypher": "MATCH (m:MarketStat {scope: 'district', area_key: 'Hồ Chí Minh|Gò Vấp', property_type: 'Nhà', month: 'ALL', deal_type: 'sale'}) RETURN m.median_price_m2_mil AS median_price_m2_mil, m.n AS n\nLIMIT 50",
+      "columns": [
+        "median_price_m2_mil",
+        "n"
+      ],
+      "rows": [
+        {
+          "median_price_m2_mil": 123.52941176470588,
+          "n": 56437
+        }
+      ],
+      "latency_ms": 4.4,
+      "id": "AG02",
+      "system": "graph",
+      "category": "aggregate",
+      "tag": null,
+      "points": 2
+    },
+    {
+      "question": "Có bao nhiêu tin rao bán đất ở Đà Nẵng trong dữ liệu?",
+      "cypher": "MATCH (d:District)-[:IN_PROVINCE]->(:Province {name: 'Đà Nẵng'}) WITH d MATCH (l:Listing)-[:IN_WARD|IN_DISTRICT*1..2]->(d) WHERE l.property_type = 'Đất' AND l.deal_type = 'sale' RETURN count(DISTINCT l) AS n_listings\nLIMIT 50",
+      "columns": [
+        "n_listings"
+      ],
+      "rows": [
+        {
+          "n_listings": 71318
+        }
+      ],
+      "latency_ms": 1153.0,
+      "id": "AG03",
+      "system": "graph",
+      "category": "aggregate",
+      "tag": null,
+      "points": 2
+    }
+  ],
+  "valuation": [
+    {
+      "input": {
+        "property_type": "Căn hộ chung cư",
+        "deal_type": "sale",
+        "province": "Hà Nội",
+        "district": "Cầu Giấy",
+        "area_m2": 75,
+        "month": "2026-03",
+        "bedrooms": 2
+      },
+      "result": {
+        "predicted_price_m2_mil": 61.04177474975586,
+        "predicted_price_vnd": 4578133106.231689,
+        "interval_price_vnd": {
+          "low": 3892722239.3225956,
+          "high": 5475565652.736152
+        },
+        "baseline_ward_median_price_m2_mil": 253.33333333333334,
+        "comparables_n": 62919,
+        "verdict": null,
+        "shap": [
+          {
+            "feature": "property_type",
+            "value": "Căn hộ chung cư",
+            "contribution_log": -0.4476161003112793
+          },
+          {
+            "feature": "te_district_key",
+            "value": "Hà Nội|Cầu Giấy",
+            "contribution_log": 0.33263131976127625
+          },
+          {
+            "feature": "te_project_key",
+            "value": null,
+            "contribution_log": -0.07667161524295807
+          },
+          {
+            "feature": "month_idx",
+            "value": 9.0,
+            "contribution_log": 0.058982137590646744
+          },
+          {
+            "feature": "bedrooms",
+            "value": 2.0,
+            "contribution_log": -0.057434964925050735
+          },
+          {
+            "feature": "am_mat_tien",
+            "value": 0.0,
+            "contribution_log": -0.05653849244117737
+          },
+          {
+            "feature": "te_street_key",
+            "value": null,
+            "contribution_log": -0.028562411665916443
+          },
+          {
+            "feature": "house_direction",
+            "value": null,
+            "contribution_log": -0.022126590833067894
+          }
+        ],
+        "model": {
+          "variant": "tabular",
+          "path": "models/valuation/xgb_tabular_sale.json",
+          "trained_at": "2026-10-15T10:00:55Z",
+          "test_mape": 0.24024704284149945
+        }
+      }
+    },
+    {
+      "input": {
+        "property_type": "Nhà",
+        "deal_type": "sale",
+        "province": "Hồ Chí Minh",
+        "district": "Gò Vấp",
+        "area_m2": 60,
+        "month": "2026-03",
+        "floors": 4
+      },
+      "result": {
+        "predicted_price_m2_mil": 106.2779769897461,
+        "predicted_price_vnd": 6376678619.384766,
+        "interval_price_vnd": {
+          "low": 4681128484.8401,
+          "high": 8588834407.630649
+        },
+        "baseline_ward_median_price_m2_mil": 120.0,
+        "comparables_n": 52926,
+        "verdict": null,
+        "shap": [
+          {
+            "feature": "property_type",
+            "value": "Nhà",
+            "contribution_log": 0.21239757537841797
+          },
+          {
+            "feature": "floors",
+            "value": 4.0,
+            "contribution_log": 0.1045764833688736
+          },
+          {
+            "feature": "te_district_key",
+            "value": "Hồ Chí Minh|Gò Vấp",
+            "contribution_log": 0.09663882851600647
+          },
+          {
+            "feature": "te_ward_key",
+            "value": null,
+            "contribution_log": -0.0850318968296051
+          },
+          {
+            "feature": "am_mat_tien",
+            "value": 0.0,
+            "contribution_log": -0.054808419197797775
+          },
+          {
+            "feature": "te_province",
+            "value": "Hồ Chí Minh",
+            "contribution_log": -0.05417558178305626
+          },
+          {
+            "feature": "te_street_key",
+            "value": null,
+            "contribution_log": -0.05370994657278061
+          },
+          {
+            "feature": "month_idx",
+            "value": 9.0,
+            "contribution_log": 0.046043891459703445
+          }
+        ],
+        "model": {
+          "variant": "tabular",
+          "path": "models/valuation/xgb_tabular_sale.json",
+          "trained_at": "2026-10-15T10:00:55Z",
+          "test_mape": 0.24024704284149945
+        }
+      }
+    },
+    {
+      "input": {
+        "property_type": "Đất",
+        "deal_type": "sale",
+        "province": "Hồ Chí Minh",
+        "district": "Thủ Đức",
+        "area_m2": 100,
+        "month": "2026-03"
+      },
+      "result": {
+        "predicted_price_m2_mil": 56.15141296386719,
+        "predicted_price_vnd": 5615141296.386719,
+        "interval_price_vnd": {
+          "low": 3619864509.90737,
+          "high": 8907448869.34196
+        },
+        "baseline_ward_median_price_m2_mil": 89.33333333333333,
+        "comparables_n": 114558,
+        "verdict": null,
+        "shap": [
+          {
+            "feature": "property_type",
+            "value": "Đất",
+            "contribution_log": -0.2838999330997467
+          },
+          {
+            "feature": "te_district_key",
+            "value": "Hồ Chí Minh|Thủ Đức",
+            "contribution_log": 0.1897716373205185
+          },
+          {
+            "feature": "te_ward_key",
+            "value": null,
+            "contribution_log": -0.14395545423030853
+          },
+          {
+            "feature": "te_province",
+            "value": "Hồ Chí Minh",
+            "contribution_log": -0.07058360427618027
+          },
+          {
+            "feature": "te_street_key",
+            "value": null,
+            "contribution_log": -0.0651216059923172
+          },
+          {
+            "feature": "month_idx",
+            "value": 9.0,
+            "contribution_log": 0.05625160038471222
+          },
+          {
+            "feature": "am_mat_tien",
+            "value": 0.0,
+            "contribution_log": -0.05091308802366257
+          },
+          {
+            "feature": "te_project_key",
+            "value": null,
+            "contribution_log": -0.036659032106399536
+          }
+        ],
+        "model": {
+          "variant": "tabular",
+          "path": "models/valuation/xgb_tabular_sale.json",
+          "trained_at": "2026-10-15T10:00:55Z",
+          "test_mape": 0.24024704284149945
+        }
+      }
+    },
+    {
+      "input": {
+        "property_type": "Căn hộ chung cư",
+        "deal_type": "sale",
+        "province": "Hồ Chí Minh",
+        "district": "Quận 7",
+        "area_m2": 70,
+        "month": "2026-03",
+        "bedrooms": 2
+      },
+      "result": {
+        "predicted_price_m2_mil": 53.03326416015625,
+        "predicted_price_vnd": 3712328491.2109375,
+        "interval_price_vnd": {
+          "low": 3156540743.155137,
+          "high": 4440040930.76269
+        },
+        "baseline_ward_median_price_m2_mil": 96.1038961038961,
+        "comparables_n": 60867,
+        "verdict": null,
+        "shap": [
+          {
+            "feature": "property_type",
+            "value": "Căn hộ chung cư",
+            "contribution_log": -0.32500359416007996
+          },
+          {
+            "feature": "te_district_key",
+            "value": "Hồ Chí Minh|Quận 7",
+            "contribution_log": 0.18103058636188507
+          },
+          {
+            "feature": "te_project_key",
+            "value": null,
+            "contribution_log": -0.09082234650850296
+          },
+          {
+            "feature": "month_idx",
+            "value": 9.0,
+            "contribution_log": 0.055980488657951355
+          },
+          {
+            "feature": "bedrooms",
+            "value": 2.0,
+            "contribution_log": -0.04895074665546417
+          },
+          {
+            "feature": "te_street_key",
+            "value": null,
+            "contribution_log": -0.04230209439992905
+          },
+          {
+            "feature": "te_ward_key",
+            "value": null,
+            "contribution_log": -0.041165176779031754
+          },
+          {
+            "feature": "am_mat_tien",
+            "value": 0.0,
+            "contribution_log": -0.04110371321439743
+          }
+        ],
+        "model": {
+          "variant": "tabular",
+          "path": "models/valuation/xgb_tabular_sale.json",
+          "trained_at": "2026-10-15T10:00:55Z",
+          "test_mape": 0.24024704284149945
+        }
+      }
+    },
+    {
+      "input": {
+        "property_type": "Nhà",
+        "deal_type": "sale",
+        "province": "Hà Nội",
+        "district": "Đống Đa",
+        "area_m2": 45,
+        "month": "2026-03",
+        "floors": 5
+      },
+      "result": {
+        "predicted_price_m2_mil": 215.41455078125,
+        "predicted_price_vnd": 9693654785.15625,
+        "interval_price_vnd": {
+          "low": 7116125219.021866,
+          "high": 13056514327.277842
+        },
+        "baseline_ward_median_price_m2_mil": 264.70588235294116,
+        "comparables_n": 44735,
+        "verdict": null,
+        "shap": [
+          {
+            "feature": "te_district_key",
+            "value": "Hà Nội|Đống Đa",
+            "contribution_log": 0.4713602662086487
+          },
+          {
+            "feature": "property_type",
+            "value": "Nhà",
+            "contribution_log": 0.31899648904800415
+          },
+          {
+            "feature": "floors",
+            "value": 5.0,
+            "contribution_log": 0.11637376993894577
+          },
+          {
+            "feature": "area_m2",
+            "value": 45.0,
+            "contribution_log": 0.0699966549873352
+          },
+          {
+            "feature": "am_mat_tien",
+            "value": 0.0,
+            "contribution_log": -0.0540989525616169
+          },
+          {
+            "feature": "bedrooms",
+            "value": null,
+            "contribution_log": 0.05146941542625427
+          },
+          {
+            "feature": "te_province",
+            "value": "Hà Nội",
+            "contribution_log": 0.04679315164685249
+          },
+          {
+            "feature": "month_idx",
+            "value": 9.0,
+            "contribution_log": 0.03936023637652397
+          }
+        ],
+        "model": {
+          "variant": "tabular",
+          "path": "models/valuation/xgb_tabular_sale.json",
+          "trained_at": "2026-10-15T10:00:55Z",
+          "test_mape": 0.24024704284149945
+        }
+      }
+    }
+  ],
+  "answers": [
+    {
+      "id": "LK01",
+      "system": "llm_only",
+      "question": "Mình thấy tin bán căn hộ 3 phòng ngủ 80m2 ở Sun Feliza Suites Cầu Giấy giá 8 tỷ, căn đó có mấy WC vậy?",
+      "answer": "Dựa trên thiết kế tiêu chuẩn của các dự án căn hộ cao cấp tại Hà Nội (với diện tích khoảng 80m2 cho 3 phòng ngủ), các căn hộ này thường được bố trí **2 nhà vệ sinh** (1 WC chung và 1 WC nằm trong phòng ngủ master) để đảm bảo công năng sử dụng. \n\nTuy nhiên, thiết kế chi tiết có thể thay đổi tùy theo mặt bằng thực tế của chủ đầu tư tại dự án Sun Feliza Suites Cầu Giấy. Để chính xác 100%, bạn nên trực tiếp yêu cầu người bán gửi bản vẽ mặt bằng (layout) hoặc sổ hồng của căn hộ đó.",
+      "route": null,
+      "cited": [],
+      "points": 0,
+      "category": "lookup",
+      "pair": "llm_only_vs_basic_rag"
+    },
+    {
+      "id": "LK01",
+      "system": "basic_rag",
+      "question": "Mình thấy tin bán căn hộ 3 phòng ngủ 80m2 ở Sun Feliza Suites Cầu Giấy giá 8 tỷ, căn đó có mấy WC vậy?",
+      "answer": "Căn hộ 3 phòng ngủ tại Sun Feliza Suites có 2 WC [Tin#3092923782945354].",
+      "route": null,
+      "cited": [
+        3092923782945354
+      ],
+      "points": 2,
+      "category": "lookup",
+      "pair": "llm_only_vs_basic_rag"
+    },
+    {
+      "id": "AG01",
+      "system": "basic_rag",
+      "question": "Giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy là bao nhiêu?",
+      "answer": "Không đủ dữ liệu để tính toán giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy.",
+      "route": null,
+      "cited": [],
+      "points": 0,
+      "category": "aggregate",
+      "pair": "basic_rag_vs_graph"
+    },
+    {
+      "id": "AG01",
+      "system": "graph",
+      "question": "Giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy là bao nhiêu?",
+      "answer": "Giá trung vị mỗi m² căn hộ chung cư tại quận Cầu Giấy là 91,26 triệu đồng/m² (dựa trên mẫu 22.783 tin đăng).",
+      "route": null,
+      "cited": [],
+      "points": 2,
+      "category": "aggregate",
+      "pair": "basic_rag_vs_graph"
+    },
+    {
+      "id": "AG02",
+      "system": "hybrid",
+      "question": "gia nha trung binh moi m2 o go vap la bao nhieu (trung vi)?",
+      "answer": "Giá nhà trung bình (theo trung vị) mỗi m² ở quận Gò Vấp, Hồ Chí Minh là khoảng 123,53 triệu đồng/m² [Cypher].",
+      "route": "graph",
+      "cited": [],
+      "points": 2,
+      "category": "aggregate",
+      "pair": null
+    },
+    {
+      "id": "AG03",
+      "system": "graph",
+      "question": "Có bao nhiêu tin rao bán đất ở Đà Nẵng trong dữ liệu?",
+      "answer": "Có 71.318 tin rao bán đất ở Đà Nẵng trong dữ liệu.",
+      "route": null,
+      "cited": [],
+      "points": 2,
+      "category": "aggregate",
+      "pair": null
+    },
+    {
+      "id": "LK02",
+      "system": "basic_rag",
+      "question": "Căn 4PN 132m2 tầng cao ở Sunshine Sky City Q7 rao 7,35 tỷ còn không, thông tin chi tiết thế nào?",
+      "answer": "Căn hộ 4PN diện tích 132m2 tầng cao tại dự án Sunshine Sky City, Quận 7 được rao bán với giá 7,35 tỷ đồng (7ty350) [Tin#2734921274202993], [Tin#1076010805356813]. \n\n**Thông tin chi tiết:**\n* **Diện tích:** 132m² [Tin#2734921274202993], [Tin#1076010805356813].\n* **Thiết kế:** 4 phòng ngủ riêng biệt, 2 nhà vệ sinh (hoặc 3WC tùy mô tả), 1 phòng kho, tầng cao, 2 ban công rộng và view thoáng [Tin#2734921274202993], [Tin#1076010805356813].\n* **Nội thất:** Cao cấp nhập khẩu từ Châu Âu, trang bị kính low E 3 lớp [Tin#2734921274202993], [Tin#1076010805356813].\n* **Giá bán:** 7,35 tỷ đồng (bao thuế phí, không gồm 5% sổ) [Tin#2734921274202993], [Tin#1076010805356813].\n* **Hỗ trợ tài chính:** Ngân hàng hỗ trợ vay 70% [Tin#2734921274202993], [Tin#1076010805356813].\n\nNgữ cảnh không cung cấp thông tin để xác nhận căn hộ này \"còn hay không\", chỉ ghi nhận đây là các tin đăng bán [Tin#2734921274202993], [Tin#1076010805356813].",
+      "route": null,
+      "cited": [
+        2734921274202993,
+        1076010805356813
+      ],
+      "points": 2,
+      "category": "lookup",
+      "pair": null
+    },
+    {
+      "id": "AG04",
+      "system": "hybrid",
+      "question": "Quận nào ở Hà Nội có giá/m² căn hộ trung vị cao nhất (chỉ tính quận có từ 20 tin)?",
+      "answer": "Quận Tây Hồ ở Hà Nội có giá/m² căn hộ trung vị cao nhất với mức 107,14 triệu đồng/m² (tính trên 6.379 tin) [Cypher].",
+      "route": "graph",
+      "cited": [],
+      "points": 2,
+      "category": "aggregate",
+      "pair": null
+    }
+  ],
+  "notes": [
+    "graph: không có ví dụ 'aggregate_lowest' trong lượt eval (không có Cypher chạy được cho nhóm này)"
+  ]
+}

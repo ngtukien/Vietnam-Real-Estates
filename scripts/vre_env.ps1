@@ -24,5 +24,7 @@ foreach ($name in $paths.Keys) {
 }
 $env:PYTHONUTF8 = '1'
 $env:TOKENIZERS_PARALLELISM = 'false'
+# OpenBLAS mặc định 32 luồng giữ ~0,79 GB commit chỉ để import numpy; 4 luồng còn ~0,12 GB (khớp Dockerfile.api).
+$env:OPENBLAS_NUM_THREADS = '4'
 $VRE_PY = Join-Path $VreRoot '.venv\Scripts\python.exe'
 $global:VRE_PY = $VRE_PY

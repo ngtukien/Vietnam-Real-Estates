@@ -1,0 +1,39 @@
+{
+ "n_rows": 20,
+ "n_questions": 5,
+ "by_system": [
+  {
+   "system": "basic_rag",
+   "n": 5,
+   "errors": 0,
+   "latency_ms_p50": 21872.4,
+   "input_tokens": 2861.4
+  },
+  {
+   "system": "graph",
+   "n": 5,
+   "errors": 0,
+   "latency_ms_p50": 75812.6,
+   "input_tokens": 3710.8
+  },
+  {
+   "system": "hybrid",
+   "n": 5,
+   "errors": 0,
+   "latency_ms_p50": 89973.9,
+   "input_tokens": 5921.0
+  },
+  {
+   "system": "llm_only",
+   "n": 5,
+   "errors": 0,
+   "latency_ms_p50": 1724.2,
+   "input_tokens": 163.8
+  }
+ ],
+ "_meta": {
+  "cell": "P4-10",
+  "mode": "live",
+  "generated_at": "2026-10-15T15:47:12Z"
+ }
+}

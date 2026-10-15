@@ -1,0 +1,31 @@
+{
+ "listing_id": 10807228521320,
+ "body_tokens": 816,
+ "header_tokens": 47,
+ "budget": 353,
+ "overlap": 100,
+ "n_formula": 3,
+ "n_actual": 3,
+ "chunks": [
+  [
+   0,
+   400,
+   "Deal siêu vip 2000 tỷ! 1,8ha siêu đất vàng mặt tiền sông Thủ Thiêm TP Thủ Đức (bao giấy tờ) · Đất · An Khánh, "
+  ],
+  [
+   1,
+   400,
+   "Deal siêu vip 2000 tỷ! 1,8ha siêu đất vàng mặt tiền sông Thủ Thiêm TP Thủ Đức (bao giấy tờ) · Đất · An Khánh, "
+  ],
+  [
+   2,
+   357,
+   "Deal siêu vip 2000 tỷ! 1,8ha siêu đất vàng mặt tiền sông Thủ Thiêm TP Thủ Đức (bao giấy tờ) · Đất · An Khánh, "
+  ]
+ ],
+ "_meta": {
+  "cell": "P1-07",
+  "mode": "live",
+  "generated_at": "2026-10-15T15:46:28Z"
+ }
+}
