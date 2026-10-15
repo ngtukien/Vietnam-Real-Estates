@@ -24,8 +24,12 @@ def models():
     from vre.index.tokenize import model_name
 
     settings = load_settings()
+    encoder = get_encoder(settings, "cuda")
+    # Encoder đặt trần cache CUDA 4 GB cho cả tiến trình (bảo vệ lượt chạy dài); test cần thêm model tham chiếu fp32
+    # (~2,2 GB) trong cùng tiến trình nên gỡ trần cho riêng tiến trình test.
+    torch.cuda.set_per_process_memory_fraction(1.0)
     reference = SentenceTransformer(model_name(), device="cuda", local_files_only=True)
-    return settings, get_encoder(settings, "cuda"), reference
+    return settings, encoder, reference
 
 
 def _sentences() -> list[str]:

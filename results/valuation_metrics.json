@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-15T10:00:58Z",
-  "git_sha": "4a08ad7",
+  "generated_at": "2026-10-15T14:00:24Z",
+  "git_sha": "996d20a",
   "split": {
     "train_months": [
       "2025-06",
@@ -234,7 +234,350 @@
       ],
       "model_path": "models/valuation/xgb_tabular_sale.json"
     },
-    "full": null,
+    "full": {
+      "n_train": 1865193,
+      "n_test": 395910,
+      "mae_mil_m2": 24.049848124317442,
+      "mape": 0.19093792065698692,
+      "r2": 0.8447809585032156,
+      "by_property_type": [
+        {
+          "property_type": "Biệt thự/Nhà liền kề",
+          "n": 32103,
+          "mae_mil_m2": 32.37412173288923,
+          "mape": 0.17582913926955274,
+          "r2": 0.7991726435555607
+        },
+        {
+          "property_type": "Căn hộ chung cư",
+          "n": 94213,
+          "mae_mil_m2": 9.617644292298262,
+          "mape": 0.12617325527198506,
+          "r2": 0.8386676647774518
+        },
+        {
+          "property_type": "Nhà",
+          "n": 172451,
+          "mae_mil_m2": 35.78278164452007,
+          "mape": 0.18491644025386164,
+          "r2": 0.7839760224096074
+        },
+        {
+          "property_type": "Shophouse",
+          "n": 6734,
+          "mae_mil_m2": 32.114464166499005,
+          "mape": 0.22407980806275488,
+          "r2": 0.6631509571881149
+        },
+        {
+          "property_type": "Đất",
+          "n": 90409,
+          "mae_mil_m2": 13.152745192635079,
+          "mape": 0.27280967541599216,
+          "r2": 0.8582941332119667
+        }
+      ],
+      "by_province_top10": [
+        {
+          "province": "Hồ Chí Minh",
+          "n": 176546,
+          "mae_mil_m2": 23.741239464850878,
+          "mape": 0.17657774511700955,
+          "r2": 0.7892221662898568
+        },
+        {
+          "province": "Hà Nội",
+          "n": 104584,
+          "mae_mil_m2": 37.386631549572556,
+          "mape": 0.16068704965269945,
+          "r2": 0.8027242866719086
+        },
+        {
+          "province": "Đà Nẵng",
+          "n": 22549,
+          "mae_mil_m2": 18.39488190659279,
+          "mape": 0.16542711023999568,
+          "r2": 0.799855499823749
+        },
+        {
+          "province": "Bình Dương",
+          "n": 18192,
+          "mae_mil_m2": 9.76483449760203,
+          "mape": 0.23302489443538107,
+          "r2": 0.5994403474445462
+        },
+        {
+          "province": "Khánh Hòa",
+          "n": 12534,
+          "mae_mil_m2": 15.800086160847913,
+          "mape": 0.22604120486482088,
+          "r2": 0.7998463014191453
+        },
+        {
+          "province": "Hải Phòng",
+          "n": 7944,
+          "mae_mil_m2": 12.810331896271142,
+          "mape": 0.19646494247659949,
+          "r2": 0.8360124162606142
+        },
+        {
+          "province": "Đồng Nai",
+          "n": 7383,
+          "mae_mil_m2": 6.9140448596662765,
+          "mape": 0.26386126809850313,
+          "r2": 0.782469785775801
+        },
+        {
+          "province": "Hưng Yên",
+          "n": 7266,
+          "mae_mil_m2": 11.424198258895355,
+          "mape": 0.1231499391201278,
+          "r2": 0.8969222571375483
+        },
+        {
+          "province": "Long An",
+          "n": 5343,
+          "mae_mil_m2": 4.670540370966749,
+          "mape": 0.2940786194200488,
+          "r2": 0.8668910087293814
+        },
+        {
+          "province": "Bà Rịa - Vũng Tàu",
+          "n": 5304,
+          "mae_mil_m2": 13.386092463323052,
+          "mape": 0.2816574321531057,
+          "r2": 0.7847238539100437
+        }
+      ],
+      "train_seconds": 1758.0,
+      "shap_top": [
+        {
+          "feature": "property_type",
+          "mean_abs_contribution": 0.2486809343099594
+        },
+        {
+          "feature": "te_district_key",
+          "mean_abs_contribution": 0.2252413034439087
+        },
+        {
+          "feature": "te_ward_key",
+          "mean_abs_contribution": 0.14495523273944855
+        },
+        {
+          "feature": "area_m2",
+          "mean_abs_contribution": 0.1142413541674614
+        },
+        {
+          "feature": "te_province",
+          "mean_abs_contribution": 0.06942304968833923
+        },
+        {
+          "feature": "pca_06",
+          "mean_abs_contribution": 0.06814564019441605
+        },
+        {
+          "feature": "te_street_key",
+          "mean_abs_contribution": 0.05970262363553047
+        },
+        {
+          "feature": "pca_03",
+          "mean_abs_contribution": 0.04802723228931427
+        },
+        {
+          "feature": "te_project_key",
+          "mean_abs_contribution": 0.04452504217624664
+        },
+        {
+          "feature": "pca_00",
+          "mean_abs_contribution": 0.04164225608110428
+        },
+        {
+          "feature": "month_idx",
+          "mean_abs_contribution": 0.037571147084236145
+        },
+        {
+          "feature": "pca_09",
+          "mean_abs_contribution": 0.03663330897688866
+        },
+        {
+          "feature": "pca_05",
+          "mean_abs_contribution": 0.03546109050512314
+        },
+        {
+          "feature": "pca_02",
+          "mean_abs_contribution": 0.029272327199578285
+        },
+        {
+          "feature": "pca_01",
+          "mean_abs_contribution": 0.02763456664979458
+        },
+        {
+          "feature": "house_direction",
+          "mean_abs_contribution": 0.02722020633518696
+        },
+        {
+          "feature": "pca_07",
+          "mean_abs_contribution": 0.025769947096705437
+        },
+        {
+          "feature": "bathrooms",
+          "mean_abs_contribution": 0.0254822988063097
+        },
+        {
+          "feature": "am_mat_tien",
+          "mean_abs_contribution": 0.023128649219870567
+        },
+        {
+          "feature": "pca_08",
+          "mean_abs_contribution": 0.021756142377853394
+        },
+        {
+          "feature": "pca_10",
+          "mean_abs_contribution": 0.020716387778520584
+        },
+        {
+          "feature": "pca_27",
+          "mean_abs_contribution": 0.0174765232950449
+        },
+        {
+          "feature": "pca_24",
+          "mean_abs_contribution": 0.016608258709311485
+        },
+        {
+          "feature": "pca_04",
+          "mean_abs_contribution": 0.016321226954460144
+        },
+        {
+          "feature": "pca_14",
+          "mean_abs_contribution": 0.013612634502351284
+        },
+        {
+          "feature": "frontage_m",
+          "mean_abs_contribution": 0.012887074612081051
+        },
+        {
+          "feature": "pca_21",
+          "mean_abs_contribution": 0.012652470730245113
+        },
+        {
+          "feature": "am_thang_may",
+          "mean_abs_contribution": 0.012311380356550217
+        },
+        {
+          "feature": "floors",
+          "mean_abs_contribution": 0.011866346932947636
+        },
+        {
+          "feature": "pca_12",
+          "mean_abs_contribution": 0.01150720939040184
+        },
+        {
+          "feature": "road_width_m",
+          "mean_abs_contribution": 0.011344144120812416
+        },
+        {
+          "feature": "bedrooms",
+          "mean_abs_contribution": 0.011050920002162457
+        },
+        {
+          "feature": "pca_17",
+          "mean_abs_contribution": 0.011039208620786667
+        },
+        {
+          "feature": "pca_15",
+          "mean_abs_contribution": 0.010965578258037567
+        },
+        {
+          "feature": "pca_25",
+          "mean_abs_contribution": 0.010934684425592422
+        },
+        {
+          "feature": "pca_16",
+          "mean_abs_contribution": 0.010696948505938053
+        },
+        {
+          "feature": "pca_30",
+          "mean_abs_contribution": 0.010538075119256973
+        },
+        {
+          "feature": "pca_13",
+          "mean_abs_contribution": 0.009008177556097507
+        },
+        {
+          "feature": "pca_31",
+          "mean_abs_contribution": 0.008239545859396458
+        },
+        {
+          "feature": "pca_28",
+          "mean_abs_contribution": 0.00811105314642191
+        },
+        {
+          "feature": "pca_22",
+          "mean_abs_contribution": 0.008104205131530762
+        },
+        {
+          "feature": "pca_26",
+          "mean_abs_contribution": 0.00809053797274828
+        },
+        {
+          "feature": "pca_11",
+          "mean_abs_contribution": 0.007575267925858498
+        },
+        {
+          "feature": "pca_18",
+          "mean_abs_contribution": 0.007162035908550024
+        },
+        {
+          "feature": "pca_23",
+          "mean_abs_contribution": 0.006998639088124037
+        },
+        {
+          "feature": "pca_29",
+          "mean_abs_contribution": 0.0068711466155946255
+        },
+        {
+          "feature": "pca_19",
+          "mean_abs_contribution": 0.006543061695992947
+        },
+        {
+          "feature": "pca_20",
+          "mean_abs_contribution": 0.006449576001614332
+        },
+        {
+          "feature": "am_so_hong",
+          "mean_abs_contribution": 0.0026908747386187315
+        },
+        {
+          "feature": "am_hem_xe_hoi",
+          "mean_abs_contribution": 0.002352852839976549
+        },
+        {
+          "feature": "am_noi_that",
+          "mean_abs_contribution": 0.002059220802038908
+        },
+        {
+          "feature": "am_gara",
+          "mean_abs_contribution": 0.0014594836393371224
+        },
+        {
+          "feature": "am_ho_boi",
+          "mean_abs_contribution": 0.0013846609508618712
+        },
+        {
+          "feature": "am_view_song",
+          "mean_abs_contribution": 0.000860225991345942
+        },
+        {
+          "feature": "am_gan_truong",
+          "mean_abs_contribution": 0.0006136840092949569
+        },
+        {
+          "feature": "am_an_ninh",
+          "mean_abs_contribution": 0.0004052132135257125
+        }
+      ],
+      "model_path": "models/valuation/xgb_full_sale.json"
+    },
     "baseline_ward_median": {
       "n_train": 1865193,
       "n_test": 395910,
@@ -253,8 +596,8 @@
           "property_type": "Căn hộ chung cư",
           "n": 94213,
           "mae_mil_m2": 47.84581641619897,
-          "mape": 0.66614862015917,
-          "r2": -2.473155668543295
+          "mape": 0.6661486201591699,
+          "r2": -2.4731556685432947
         },
         {
           "property_type": "Nhà",
@@ -275,7 +618,7 @@
           "n": 90409,
           "mae_mil_m2": 19.667570341766773,
           "mape": 0.538061002236099,
-          "r2": 0.7182455685847593
+          "r2": 0.7182455685847592
         }
       ],
       "by_province_top10": [
@@ -283,27 +626,27 @@
           "province": "Hồ Chí Minh",
           "n": 176546,
           "mae_mil_m2": 46.2465649581053,
-          "mape": 0.41167131887258107,
-          "r2": 0.3699425306739209
+          "mape": 0.411671318872581,
+          "r2": 0.369942530673921
         },
         {
           "province": "Hà Nội",
           "n": 104584,
           "mae_mil_m2": 88.75034253799997,
-          "mape": 0.5301662863939121,
-          "r2": 0.2762610089597045
+          "mape": 0.530166286393912,
+          "r2": 0.2762610089597043
         },
         {
           "province": "Đà Nẵng",
           "n": 22549,
-          "mae_mil_m2": 34.19635399491899,
+          "mae_mil_m2": 34.196353994918994,
           "mape": 0.2930084729460382,
           "r2": 0.37137290989416494
         },
         {
           "province": "Bình Dương",
           "n": 18192,
-          "mae_mil_m2": 11.375488992917608,
+          "mae_mil_m2": 11.375488992917607,
           "mape": 0.32106406987353286,
           "r2": 0.2904651653923157
         },
@@ -312,13 +655,13 @@
           "n": 12534,
           "mae_mil_m2": 33.05374086610996,
           "mape": 0.4900708136721454,
-          "r2": 0.28645061590730003
+          "r2": 0.28645061590730014
         },
         {
           "province": "Hải Phòng",
           "n": 7944,
           "mae_mil_m2": 27.12688168370828,
-          "mape": 0.4481836583467777,
+          "mape": 0.44818365834677776,
           "r2": 0.3333681787207897
         },
         {
@@ -326,7 +669,7 @@
           "n": 7383,
           "mae_mil_m2": 11.903367665463342,
           "mape": 0.5842331205641833,
-          "r2": 0.42395702352586007
+          "r2": 0.4239570235258602
         },
         {
           "province": "Hưng Yên",
@@ -339,8 +682,8 @@
           "province": "Long An",
           "n": 5343,
           "mae_mil_m2": 9.602147635150162,
-          "mape": 0.5616949952597524,
-          "r2": 0.4187452984774992
+          "mape": 0.5616949952597525,
+          "r2": 0.4187452984774993
         },
         {
           "province": "Bà Rịa - Vũng Tàu",
