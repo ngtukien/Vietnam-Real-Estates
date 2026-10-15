@@ -1,0 +1,84 @@
+{
+ "n_listings": 2537920,
+ "n_raw_rows": 3500744,
+ "n_duplicates_removed": 960956,
+ "by_property_type": [
+  {
+   "property_type": "Nhà",
+   "n": 1141962,
+   "median_price_m2_mil": 162.24489795918367
+  },
+  {
+   "property_type": "Đất",
+   "n": 619426,
+   "median_price_m2_mil": 36.5
+  },
+  {
+   "property_type": "Căn hộ chung cư",
+   "n": 554699,
+   "median_price_m2_mil": 67.56756756756758
+  },
+  {
+   "property_type": "Biệt thự/Nhà liền kề",
+   "n": 181634,
+   "median_price_m2_mil": 151.0
+  },
+  {
+   "property_type": "Shophouse",
+   "n": 40199,
+   "median_price_m2_mil": 100.0
+  }
+ ],
+ "by_province_top": [
+  {
+   "province": "Hồ Chí Minh",
+   "n": 978016,
+   "median_price_m2_mil": 107.5
+  },
+  {
+   "province": "Hà Nội",
+   "n": 812703,
+   "median_price_m2_mil": 184.6153846153846
+  },
+  {
+   "province": "Đà Nẵng",
+   "n": 137727,
+   "median_price_m2_mil": 78.42857142857143
+  },
+  {
+   "province": "Bình Dương",
+   "n": 110335,
+   "median_price_m2_mil": 37.13719127456283
+  },
+  {
+   "province": "Khánh Hòa",
+   "n": 72713,
+   "median_price_m2_mil": 53.97022332506204
+  },
+  {
+   "province": "Hải Phòng",
+   "n": 51706,
+   "median_price_m2_mil": 50.0
+  },
+  {
+   "province": "Hưng Yên",
+   "n": 45749,
+   "median_price_m2_mil": 80.57851239669421
+  },
+  {
+   "province": "Đồng Nai",
+   "n": 43698,
+   "median_price_m2_mil": 20.0
+  },
+  {
+   "province": "Long An",
+   "n": 35883,
+   "median_price_m2_mil": 20.53571428571429
+  },
+  {
+   "province": "Bà Rịa - Vũng Tàu",
+   "n": 34843,
+   "median_price_m2_mil": 26.666666666666668
+  }
+ ]
+}

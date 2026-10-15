@@ -1,0 +1,22 @@
+[
+ [
+  "meta",
+  {
+   "question": "",
+   "started_at": "2026-10-15T07:14:00Z"
+  }
+ ],
+ [
+  "error",
+  {
+   "code": "upstream_llm_error",
+   "message": "LLM tạm thời không phản hồi, thử lại sau"
+  }
+ ],
+ [
+  "done",
+  {
+   "status": "error"
+  }
+ ]
+]

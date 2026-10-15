@@ -1,5 +1,4 @@
 # Thư viện chung của package vre (src/vre): dữ liệu, chỉ mục, đồ thị, LLM, định giá.
-# Phase 3 thêm fastapi, uvicorn, sse-starlette, httpx.
 pandas>=2.2
 pyarrow>=15
 numpy>=2.0  # np.bitwise_count (SimHash)
@@ -22,3 +21,8 @@ leidenalg>=0.10
 scikit-learn>=1.4
 scipy>=1.11  # connected_components cho cụm SimHash
 matplotlib>=3.8
+# API Phase 3 (api/)
+fastapi>=0.140,<1
+uvicorn[standard]>=0.50
+sse-starlette>=3.5,<4
+httpx>=0.28,<1

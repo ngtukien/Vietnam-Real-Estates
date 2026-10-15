@@ -1,0 +1,43 @@
+{
+ "systems": [
+  {
+   "id": "llm_only",
+   "name": "LLM thuần (không truy xuất)",
+   "available": true,
+   "unavailable_reason": null
+  },
+  {
+   "id": "basic_rag",
+   "name": "Basic RAG",
+   "available": true,
+   "unavailable_reason": null
+  },
+  {
+   "id": "graph",
+   "name": "Graph (Text2Cypher)",
+   "available": true,
+   "unavailable_reason": null
+  },
+  {
+   "id": "hybrid",
+   "name": "Hybrid (tự động)",
+   "available": true,
+   "unavailable_reason": null
+  }
+ ],
+ "index": {
+  "collection": "vre_chunks_e5_large",
+  "model_slug": "e5_large",
+  "n_listings": 2537920,
+  "n_points": 2685246
+ },
+ "graph_ok": true,
+ "data_period": {
+  "min_month": "2025-06",
+  "max_month": "2026-03"
+ },
+ "limits": {
+  "max_question_chars": 500,
+  "rate_per_min": 20
+ }
+}

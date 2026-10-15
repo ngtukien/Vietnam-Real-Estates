@@ -1,0 +1,23 @@
+{
+ "province": "Hồ Chí Minh",
+ "level": "district",
+ "items": [
+  {
+   "key": "Hồ Chí Minh|Bình Thạnh",
+   "name": "Bình Thạnh",
+   "lat": 10.812,
+   "lon": 106.709,
+   "n_listings": 64492,
+   "median_price_m2_mil": 153.33
+  },
+  {
+   "key": "Hồ Chí Minh|Quận 7",
+   "name": "Quận 7",
+   "lat": 10.734,
+   "lon": 106.722,
+   "n_listings": 44510,
+   "median_price_m2_mil": 66.4
+  }
+ ],
+ "coverage": 1.0
+}
