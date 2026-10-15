@@ -169,6 +169,17 @@ def with_backoff(fn: Callable[[], Any], *, sleep: Callable[[float], None] = time
 
 # ---- chạy hệ thống
 
+def subset_per_category(questions: list[Question], n: int) -> list[Question]:
+    """N câu đầu mỗi nhóm theo thứ tự trong file (benchmark rút gọn, tất định)."""
+    taken: dict[str, int] = {}
+    out = []
+    for q in questions:
+        if taken.get(q.category, 0) < n:
+            taken[q.category] = taken.get(q.category, 0) + 1
+            out.append(q)
+    return out
+
+
 def select_questions(questions: list[Question], limit: int | None) -> list[Question]:
     """`limit` câu xen kẽ theo nhóm (lookup, constraint, …) để lượt thử nhỏ vẫn phủ nhiều nhóm; None ⇒ tất cả."""
     if limit is None or limit >= len(questions):
@@ -220,9 +231,11 @@ def _cache_entries() -> int:
 
 def run_answers(settings: Settings, *, limit: int | None = None, systems: Iterable[str] | None = None,
                 workers: int = WORKERS, answer_fn: Callable[..., dict] | None = None,
-                sleep: Callable[[float], None] = time.sleep) -> dict:
-    """`eval run`: hỏi mọi (câu, hệ thống) chưa có trong answers.jsonl, ghi từng dòng. Trả thống kê lượt chạy."""
-    llm = J.check_judge_config(settings)  # B2: từ chối trước khi tốn lời gọi nào
+                sleep: Callable[[float], None] = time.sleep, per_category: int | None = None,
+                llm_judge: bool = True) -> dict:
+    """`eval run`: hỏi mọi (câu, hệ thống) chưa có trong answers.jsonl, ghi từng dòng. Trả thống kê lượt chạy.
+    `per_category`: chỉ N câu đầu mỗi nhóm. `llm_judge=False` (chấm theo luật) ⇒ B2 không áp dụng vì không có giám khảo."""
+    llm = J.check_judge_config(settings, judge_used=llm_judge)  # B2: từ chối trước khi tốn lời gọi nào
     chosen = tuple(systems or SYSTEMS)
     unknown = set(chosen) - set(SYSTEMS)
     if unknown:
@@ -230,7 +243,8 @@ def run_answers(settings: Settings, *, limit: int | None = None, systems: Iterab
     if answer_fn is None:
         from vre.qa import answer as qa_answer
         answer_fn = qa_answer
-    questions = select_questions(load_questions(), limit)
+    candidates = subset_per_category(load_questions(), per_category) if per_category else load_questions()
+    questions = select_questions(candidates, limit)
     path = answers_path(settings)
     done = {k for k, r in read_jsonl(path).items() if not is_rate_limited(r.get("error"))}
     tasks = [(q, s) for q in questions for s in chosen if (q.id, s) not in done]
@@ -239,6 +253,11 @@ def run_answers(settings: Settings, *, limit: int | None = None, systems: Iterab
     stats: dict[str, Any] = {"n_questions": len(questions), "systems": list(chosen),
                              "skipped": len(questions) * len(chosen) - len(tasks), "written": 0, "errors": 0,
                              "rate_limited": 0, "input_tokens": 0, "output_tokens": 0, "cached_rows": 0, "llm": llm}
+    from vre.common import write_json_atomic
+
+    write_json_atomic(path.with_name("run_meta.json"), {"llm": {k: v for k, v in llm.items() if k != "judge"},
+                                                        "per_category": per_category, "limit": limit,
+                                                        "question_ids": [q.id for q in questions]})
     writer = JsonlWriter(path)
     try:
         with ThreadPoolExecutor(max_workers=workers) as pool:
@@ -323,11 +342,14 @@ def score_one(q: Question, gt: dict, row: dict, cluster_of: dict[int, int], *, r
     return out
 
 
-def run_scores(settings: Settings, *, ragas: bool = True, workers: int = WORKERS) -> dict:
-    """`eval score`: chấm mọi dòng answers.jsonl chưa có điểm hợp lệ (cùng `answer_digest`, không `judge_error`)."""
+def run_scores(settings: Settings, *, ragas: bool = True, workers: int = WORKERS, offline: bool = False) -> dict:
+    """`eval score`: chấm mọi dòng answers.jsonl chưa có điểm hợp lệ (cùng `answer_digest`, không `judge_error`, cùng
+    kiểu chấm). `offline=True`: chấm theo luật (`vre.eval.rule_score`), KHÔNG gọi LLM nào."""
+    from vre.eval import rule_score
     from vre.eval.ground_truth import load_gt
 
-    llm = J.check_judge_config(settings)
+    llm = J.check_judge_config(settings, judge_used=not offline)
+    scoring = rule_score.SCORING if offline else "llm_judge"
     answers = read_jsonl(answers_path(settings))
     if not answers:
         raise FileNotFoundError(f"Chưa có {answers_path(settings)}; chạy `eval run` trước")
@@ -340,15 +362,21 @@ def run_scores(settings: Settings, *, ragas: bool = True, workers: int = WORKERS
     path = scores_path(settings)
     old = read_jsonl(path)
     todo = [r for k, r in answers.items()
-            if not (k in old and old[k].get("answer_digest") == answer_digest(r) and not old[k].get("judge_error"))]
+            if not (k in old and old[k].get("answer_digest") == answer_digest(r) and not old[k].get("judge_error")
+                    and old[k].get("scoring", "llm_judge") == scoring)]
     cluster_of = cluster_map(settings, (s for r in todo for s in r.get("sources") or []))
     cache_before = _cache_entries()
     started = perf_counter()
-    stats: dict[str, Any] = {"rows": len(answers), "scored": 0, "judge_errors": 0, "llm": llm}
+    stats: dict[str, Any] = {"rows": len(answers), "scored": 0, "judge_errors": 0, "llm": llm, "scoring": scoring}
     writer = JsonlWriter(path)
     try:
         with ThreadPoolExecutor(max_workers=workers) as pool:
-            futures = [pool.submit(score_one, questions[r["id"]], gt[r["id"]], r, cluster_of, ragas=ragas) for r in todo]
+            if offline:
+                futures = [pool.submit(rule_score.score_row, questions[r["id"]], gt[r["id"]], r, cluster_of,
+                                       answer_digest(r)) for r in todo]
+            else:
+                futures = [pool.submit(score_one, questions[r["id"]], gt[r["id"]], r, cluster_of, ragas=ragas)
+                           for r in todo]
             for future in as_completed(futures):
                 row = future.result()
                 writer.write(row)

@@ -1,8 +1,9 @@
 """A5: `results/examples.json` (data-contract §7.8) và khối kết quả trong README (giữa hai dấu `<!-- results:… -->`).
 
 Ví dụ lấy từ lần chạy eval thật, không viết tay:
-- `rag` / `graph`: chạy lại `vre.qa.stream_answer` trên câu benchmark đã được chấm đúng (LLM trúng cache của lượt eval;
-  truy xuất/Cypher chạy thật) để có bộ lọc, điểm và hàng kết quả mà answers.jsonl không lưu.
+- `rag`: truy xuất hybrid thật trên Qdrant cho câu tra cứu/ràng buộc đã chạy (bộ lọc LLM CHỈ từ cache đĩa); không sinh câu.
+- `graph`: Cypher mà hệ thống graph đã sinh trong lượt eval (answers.jsonl), chạy lại trên Neo4j.
+Không lệnh nào ở đây gọi LLM (không `stream_answer`).
 - `valuation`: `vre.valuation.predict.valuate(valuation_input)` của câu định giá trong benchmark.
 - `answers`: dòng answers.jsonl đạt 2 điểm, xen kẽ hệ thống.
 README: mọi con số sinh từ `results/*.json`; thiếu dấu mốc ⇒ lỗi (không ghi đè README).
@@ -42,36 +43,64 @@ def _pick(scores: dict, questions: dict, system: str, predicate: Any, n: int = M
     return (good + [i for i in ids if i not in good])[:n]
 
 
-def _events(system: str, question: str) -> dict[str, dict]:
-    from vre.qa import stream_answer
+def _cached_filters(question: str) -> Any:
+    """Bộ lọc LLM của câu, CHỈ từ cache đĩa (không bao giờ gọi mạng); chưa có ⇒ None (truy xuất không lọc)."""
+    from vre.llm.client import LLMCacheMiss, cache_only
+    from vre.rag.filters import parse_filters
 
-    events = stream_answer(system, question, stream_tokens=False)  # type: ignore[arg-type]  # system ∈ SYSTEMS
-    return {name: payload for name, payload in events}
+    try:
+        with cache_only():
+            filters, _ = parse_filters(question)
+    except LLMCacheMiss:
+        return None
+    return None if filters.is_empty() else filters
 
 
-def rag_examples(questions: dict, scores: dict) -> list[dict]:
+def _cell(value: Any) -> Any:
+    from vre.common import scalar
+
+    value = scalar(value)
+    return value.item() if hasattr(value, "item") else value
+
+
+def rag_examples(questions: dict, scores: dict, top_k: int = 5) -> list[dict]:
+    """Truy xuất hybrid thật trên Qdrant (không LLM) cho câu tra cứu/ràng buộc đã chạy; bộ lọc lấy từ cache LLM."""
+    from vre.rag import retrieve as rt
+
     out = []
     for qid in _pick(scores, questions, "basic_rag", lambda q: q.gt_kind == "ids"):
-        events = _events("basic_rag", questions[qid].question)
-        if "error" in events:
-            continue
-        hits = [{"listing_id": c["listing_id"], "title": c.get("title"), "score": c.get("score"),
-                 "province": c["address"].get("province"), "district": c["address"].get("district"),
-                 "price_vnd": c.get("price_vnd")} for c in events.get("sources", {}).get("sources", [])]
-        out.append({"question": questions[qid].question, "filters": events.get("filters", {}).get("filters", {}),
-                    "hits": hits})
+        filters = _cached_filters(questions[qid].question)
+        hits, _note = rt.search_relaxed(rt.search_hybrid, questions[qid].question, top_k, filters)
+        out.append({"question": questions[qid].question, "filters": filters.model_dump(exclude_none=True) if filters else {},
+                    "hits": [{"listing_id": int(h["listing_id"]), "title": _cell(h.get("title")),
+                              "score": _cell(h.get("score")), "province": _cell(h.get("province")),
+                              "district": _cell(h.get("district")), "price_vnd": _cell(h.get("price_vnd"))}
+                             for h in hits.head(top_k).to_dict("records")]})
     return out
 
 
-def graph_examples(questions: dict, scores: dict) -> list[dict]:
-    out = []
-    for qid in _pick(scores, questions, "graph", lambda q: q.route_gold == "graph" and q.category != "unanswerable"):
-        events = _events("graph", questions[qid].question)
-        cypher = events.get("cypher")
-        if not cypher or cypher.get("error"):
+def graph_examples(questions: dict, answers: dict, scores: dict) -> list[dict]:
+    """Cypher do hệ thống graph đã sinh trong lượt eval (answers.jsonl), chạy lại trên Neo4j (chỉ đọc, không LLM)."""
+    from time import perf_counter
+
+    from vre.graph.client import run_cypher
+
+    out: list[dict] = []
+    keys = sorted(k for k, a in answers.items() if k[1] == "graph" and a.get("cypher") and not a.get("error"))
+    keys.sort(key=lambda k: scores.get(k, {}).get("points") != 2)  # câu đúng trước
+    for qid, _system in keys:
+        if len(out) >= MAX_EXAMPLES:
+            break
+        started = perf_counter()
+        try:
+            rows = run_cypher(answers[(qid, "graph")]["cypher"], timeout=10, max_rows=10)
+        except Exception as error:  # Cypher cũ không chạy lại được: bỏ ví dụ, ghi log
+            log.warning("Cypher của %s không chạy lại được: %s", qid, type(error).__name__)
             continue
-        out.append({"question": questions[qid].question, "cypher": cypher["cypher"], "columns": cypher["columns"],
-                    "rows": cypher["rows"], "latency_ms": events.get("usage", {}).get("latency_ms")})
+        out.append({"question": questions[qid].question, "cypher": answers[(qid, "graph")]["cypher"],
+                    "columns": [str(c) for c in rows.columns],
+                    "rows": [{str(k): _cell(v) for k, v in r.items()} for r in rows.to_dict("records")],
+                    "latency_ms": round((perf_counter() - started) * 1000, 1)})
     return out
 
 
@@ -106,7 +135,7 @@ def examples(settings: Settings) -> dict:
     if not scores:
         raise FileNotFoundError("Chưa có scores.jsonl; chạy `eval run` + `eval score` trước")
     doc: dict[str, Any] = {**result_header(SCHEMA_VERSION), "rag": rag_examples(questions, scores),
-                           "graph": graph_examples(questions, scores), "valuation": valuation_examples(questions),
+                           "graph": graph_examples(questions, answers, scores), "valuation": valuation_examples(questions),
                            "answers": answer_examples(questions, answers, scores)}
     short = [k for k in ("rag", "graph", "valuation", "answers") if len(doc[k]) < MIN_EXAMPLES]
     if short:

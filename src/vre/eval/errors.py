@@ -71,14 +71,16 @@ def assign_cause(q: Question, answer: dict, score: dict,
     return "insufficient_context"
 
 
-def filter_checker(settings: Settings, gt: dict[str, dict]) -> Callable[[Question], bool]:
+def filter_checker(settings: Settings, gt: dict[str, dict], unknown: set[str] | None = None) -> Callable[[Question], bool]:
     """Hàm (câu) → True khi bộ lọc LLM trích từ câu hỏi (cùng prompt ⇒ trúng cache LLM của lượt eval) loại mọi tin GT.
     Kết nối DuckDB mở lười, một lần; kết quả nhớ theo id câu."""
     from vre.data.duck import connect
     from vre.eval.runner import with_backoff
+    from vre.llm.client import LLMCacheMiss
     from vre.rag.filters import parse_filters, to_sql
 
     memo: dict[str, bool] = {}
+    unknown = set() if unknown is None else unknown
     con: Any = None
 
     def check(q: Question) -> bool:
@@ -88,7 +90,12 @@ def filter_checker(settings: Settings, gt: dict[str, dict]) -> Callable[[Questio
         ids = [int(i) for i in gt.get(q.id, {}).get("gt_ids") or []]
         excluded = False
         if ids:
-            filters, _ = with_backoff(lambda: parse_filters(q.question))
+            try:
+                filters, _ = with_backoff(lambda: parse_filters(q.question))
+            except LLMCacheMiss:  # chế độ chỉ-cache, bộ lọc của câu này chưa có trong cache ⇒ không kết luận được
+                unknown.add(q.id)
+                memo[q.id] = False
+                return False
             where, params = to_sql(filters)
             if where != "TRUE":
                 if con is None:
@@ -144,8 +151,17 @@ def run(settings: Settings) -> dict:
 
     questions = {q.id: q for q in load_questions()}
     gt = load_gt(settings)
-    doc = {**result_header(SCHEMA_VERSION),
-           **build(questions, gt, read_jsonl(answers_path(settings)), read_jsonl(scores_path(settings)),
-                   filter_checker(settings, gt))}
+    scores = read_jsonl(scores_path(settings))
+    unknown: set[str] = set()
+    doc: dict[str, Any] = {**result_header(SCHEMA_VERSION),
+                           **build(questions, gt, read_jsonl(answers_path(settings)), scores,
+                                   filter_checker(settings, gt, unknown))}
+    notes = []
+    if any(r.get("scoring") == "rule_based" for r in scores.values()):
+        notes.append("chấm theo luật (không LLM): llm_hallucination chỉ từ unsupported_citations (không có faithfulness)")
+    if unknown:
+        notes.append(f"filter_wrong không kiểm được cho {sorted(unknown)} (bộ lọc chưa có trong cache LLM, chế độ chỉ-cache)")
+    if notes:
+        doc["notes"] = notes
     write_json_atomic(settings.results_dir / "error_analysis.json", doc)
     return doc
