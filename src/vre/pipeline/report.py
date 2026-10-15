@@ -3,10 +3,14 @@
 Report luôn được ghi (kể cả khi lỗi). `embed.chunks_per_s_avg` chỉ là dòng thông tin — không có quyết định, ngưỡng hay ETA nào dựa vào nó.
 """
 
+import ctypes
 import datetime as dt
 import json
+import shutil
+import sys
 import threading
 import time
+from pathlib import Path
 
 import psutil
 import pyarrow.compute as pc
@@ -17,8 +21,40 @@ from vre.config import EMBED_MODEL_SLUG
 from vre.pipeline.state import layout_for, now_iso
 
 STEPS = ("checks", "chunk", "bm25", "embed", "upload", "hnsw", "verify", "pca", "report")
+MIN_FREE_COMMIT_GB, COMMIT_WAIT_S = 4.0, 1800  # yêu cầu của p1: luôn để ≥ 4 GB commit trống
 COUNTERS = ("parts_total", "parts_embedded", "parts_uploaded", "chunks", "points_in_qdrant",
             "chunks_truncated_listings", "oom_retries", "upload_retries", "batch_size_final")
+
+
+class DiskLowError(RuntimeError):
+    """Ổ dữ liệu sắp đầy / thiếu commit memory: dừng ở checkpoint, không tự xoá gì."""
+
+
+def require_resources(settings, part: int, log=print) -> None:
+    """Trước mỗi part: ổ D đủ chỗ (không ⇒ dừng ở checkpoint) và commit memory còn ≥ MIN_FREE_COMMIT_GB.
+
+    Commit (không phải RAM vật lý) là giới hạn thật trên máy này: hai lần sập 2026-10-15 là do cạn commit. Thiếu commit ⇒
+    chờ (phiên p1 có watchdog nhường bộ nhớ) thay vì thoát, để không phải nạp lại model; quá COMMIT_WAIT_S ⇒ dừng ở checkpoint.
+    """
+    free = shutil.disk_usage(Path(settings.data_root)).free / 1e9
+    if free < settings.min_free_disk_gb_part:
+        raise DiskLowError(f"ổ dữ liệu còn {free:.1f} GB < {settings.min_free_disk_gb_part} GB trước part {part:04d}")
+    deadline = time.monotonic() + COMMIT_WAIT_S
+    while (commit := psutil.virtual_memory().available / 1e9 if sys.platform != "win32" else free_commit_gb()) < MIN_FREE_COMMIT_GB:
+        if time.monotonic() > deadline:
+            raise DiskLowError(f"commit memory còn {commit:.1f} GB < {MIN_FREE_COMMIT_GB} GB sau {COMMIT_WAIT_S}s chờ (part {part:04d})")
+        log(f"commit memory còn {commit:.1f} GB < {MIN_FREE_COMMIT_GB} GB: chờ trước part {part:04d}")
+        time.sleep(30)
+
+
+def free_commit_gb() -> float:
+    class MemoryStatus(ctypes.Structure):
+        _fields_ = [("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong), *[(n, ctypes.c_ulonglong) for n in (
+            "total_phys", "avail_phys", "total_commit", "avail_commit", "total_virtual", "avail_virtual", "avail_ext")]]
+
+    status = MemoryStatus(dwLength=ctypes.sizeof(MemoryStatus))
+    ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status))
+    return status.avail_commit / 1e9
 
 
 def _hours(run: dict, now: dt.datetime) -> float:

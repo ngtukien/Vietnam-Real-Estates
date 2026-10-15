@@ -14,7 +14,7 @@ from concurrent.futures import as_completed
 from vre.index import bm25 as bm25_mod
 from vre.index import qdrant_upload, tokenize
 from vre.pipeline import stages
-from vre.pipeline.report import Report, finish
+from vre.pipeline.report import Report, finish, require_resources
 from vre.pipeline.state import layout_for, log
 
 EXIT_OK, EXIT_NEEDS_HUMAN = 0, 20
@@ -134,7 +134,7 @@ class NightRun:
             if item is None:
                 break
             part, toks = item
-            stages.require_disk(self.settings, part)
+            require_resources(self.settings, part, log)
             t0 = time.monotonic()
             n = stages.embed_part(self.encoder, self.layout, part, toks)
             if n != self.ledger.part(part)["n_chunks"]:

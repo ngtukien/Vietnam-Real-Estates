@@ -54,13 +54,10 @@ class Encoder:
         for j, r in enumerate(rows):
             batch[j, :lengths[j]] = ids[offsets[r]:offsets[r + 1]]
         mask = (np.arange(batch.shape[1])[None, :] < lengths[:, None]).astype(np.int64)
-        pinned = self.device == "cuda"
-        input_ids = torch.from_numpy(batch)
-        attention = torch.from_numpy(mask)
-        if pinned:
-            input_ids, attention = input_ids.pin_memory(), attention.pin_memory()
-        input_ids = input_ids.to(self.device, non_blocking=pinned)
-        attention = attention.to(self.device, non_blocking=pinned)
+        # Không pin_memory: CachingHostAllocator giữ lại mọi khối pinned theo từng shape lô ⇒ commit của tiến trình tăng
+        # dần (dry-run 2026-10-15: 18 → 22 GB, góp phần làm cạn commit của máy). Lô id chỉ vài trăm KB nên copy đồng bộ rẻ.
+        input_ids = torch.from_numpy(batch).to(self.device)
+        attention = torch.from_numpy(mask).to(self.device)
         hidden = self.model(input_ids=input_ids, attention_mask=attention).last_hidden_state
         m = attention.unsqueeze(-1).to(hidden.dtype)
         pooled = (hidden * m).sum(1) / m.sum(1)

@@ -5,7 +5,6 @@ Hàm `*_task` là điểm vào của tiến trình con (pool `spawn`) nên phả
 
 import ctypes
 import os
-import shutil
 import sys
 from pathlib import Path
 
@@ -21,10 +20,6 @@ from vre.pipeline.state import STAGES, Ledger, now_iso
 ES_CONTINUOUS, ES_SYSTEM_REQUIRED = 0x80000000, 0x00000001
 SMOKE_QUERIES = ("căn hộ 2 phòng ngủ quận 7 dưới 4 tỷ", "nhà mặt tiền kinh doanh Hà Nội", "đất nền sổ đỏ Bình Dương")
 SMOKE_MIN_HITS = 5
-
-
-class DiskLowError(RuntimeError):
-    """Ổ dữ liệu sắp đầy: dừng ở checkpoint, không tự xoá gì."""
 
 
 def offline_env() -> None:
@@ -44,12 +39,6 @@ def keep_awake(on: bool) -> None:
     if sys.platform == "win32":
         flags = ES_CONTINUOUS | (ES_SYSTEM_REQUIRED if on else 0)
         ctypes.windll.kernel32.SetThreadExecutionState(ctypes.c_uint(flags))
-
-
-def require_disk(settings, part: int) -> None:
-    free = shutil.disk_usage(Path(settings.data_root)).free / 1e9
-    if free < settings.min_free_disk_gb_part:
-        raise DiskLowError(f"ổ dữ liệu còn {free:.1f} GB < {settings.min_free_disk_gb_part} GB trước part {part:04d}")
 
 
 def chunk_task(args) -> dict:
