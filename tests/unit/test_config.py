@@ -11,7 +11,7 @@ EXPECTED_DEFAULTS = {
     "duckdb_threads": 12, "duckdb_memory_gb": 12, "ingest_workers": 8,
     "chunk_size": 400, "chunk_overlap": 100, "max_chunks_per_listing": 64, "header_max_tokens": 96, "part_size": 50000,
     "embed_max_length": 512, "embed_token_budget": 32768, "embed_max_batch": 256, "embed_min_token_budget": 4096,
-    "tokenize_workers": 6, "tokenize_prefetch_parts": 3, "bm25_workers": 10,
+    "tokenize_workers": 2, "tokenize_prefetch_parts": 3, "bm25_workers": 4,
     "qdrant_url": "http://127.0.0.1:6333", "qdrant_grpc_port": 6334, "qdrant_upload_parallel": 1, "qdrant_upload_batch": 256,
     "qdrant_max_indexing_threads": 12, "qdrant_indexing_threshold": 20000, "qdrant_green_timeout_s": 10800,
     "collection": "vre_chunks_e5_large", "collection_alias": "vre_chunks", "dryrun_collection": "vre_dryrun", "dryrun_parts": 2,

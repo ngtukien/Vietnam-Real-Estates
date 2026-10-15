@@ -123,7 +123,7 @@ Bảng dưới chỉ chia máy đó giữa hai phiên để không tranh nhau.
 | Tài nguyên | p1 | p2 |
 |---|---|---|
 | GPU (RTX 4060 8GB) | **không dùng** (XGBoost tabular `device="cpu"`; không chạy test `-m gpu`) | toàn quyền: embed, test parity, định giá `full` |
-| CPU (32 luồng) | DuckDB `duckdb_threads=12`; XGBoost `xgb_nthread=12`; ingest `ingest_workers=8` (chỉ lúc ingest, trước khi p2 chạy dài) | tokenize `tokenize_workers=6`; BM25 `bm25_workers=10`; Qdrant indexing `qdrant_max_indexing_threads=12` |
+| CPU (32 luồng) | DuckDB `duckdb_threads=12`; XGBoost `xgb_nthread=12`; ingest `ingest_workers=8` (chỉ lúc ingest, trước khi p2 chạy dài) | tokenize `tokenize_workers=2`; BM25 `bm25_workers=4` (CR-04); Qdrant indexing `qdrant_max_indexing_threads=12` |
 | RAM | DuckDB `duckdb_memory_gb=12`; Neo4j heap 4G + pagecache 4G | tối đa 3 part đi trước GPU |
 | Dịch vụ | Neo4j (chỉ p1 dùng; import dừng/khởi động lại Neo4j) | Qdrant (chỉ p2 dùng) |
 

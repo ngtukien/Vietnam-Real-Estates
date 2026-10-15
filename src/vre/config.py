@@ -55,9 +55,9 @@ class Settings(BaseSettings):
     embed_max_batch: int = 256
     embed_min_token_budget: int = 4096
 
-    tokenize_workers: int = 6
+    tokenize_workers: int = 2  # commit là giới hạn; GPU vẫn là nút cổ chai (CR-04)
     tokenize_prefetch_parts: int = 3
-    bm25_workers: int = 10
+    bm25_workers: int = 4  # CR-04
 
     qdrant_url: str = Field("http://127.0.0.1:6333", validation_alias=_env("QDRANT_URL"))
     qdrant_grpc_port: int = 6334
