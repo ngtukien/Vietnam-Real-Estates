@@ -12,7 +12,7 @@ from pydantic import BaseModel
 
 from vre.graph.text2cypher import text2cypher
 from vre.llm.client import ask_llm
-from vre.rag.generate import ANSWER_SYSTEM
+from vre.rag.generate import ANSWER_SYSTEM, NO_ECHO_RULE
 
 ROUTES = ("basic_rag", "graph", "hybrid", "valuation")
 RouteName = Literal["basic_rag", "graph", "hybrid", "valuation"]
@@ -24,7 +24,8 @@ GRAPH_CONTEXT_SYSTEM = ANSWER_SYSTEM.replace(_TIN_RULE, "Nhận định lấy t�
                                              "(chép nguyên ID); số liệu tổng hợp kèm nguồn [Cypher].") + """
 Phần KẾT QUẢ TRUY VẤN là số liệu Neo4j tính trên toàn bộ dữ liệu: dùng trực tiếp và ghi nguồn [Cypher].
 Chỉ ghi [Tin#ID] với ID có thật trong ngữ cảnh (cột listing_id hoặc dòng [Tin#ID]); không tự đánh số tin.
-Đơn vị: price_vnd theo VND, *_m2_mil theo triệu đồng/m², area_m2 theo m²."""
+Đơn vị: price_vnd theo VND, *_m2_mil theo triệu đồng/m², area_m2 theo m².
+""" + NO_ECHO_RULE
 log = logging.getLogger(__name__)
 
 
@@ -34,21 +35,30 @@ class Route(BaseModel):
 
 
 ROUTER_SYSTEM = """Phân loại câu hỏi về bất động sản vào đúng một nguồn trả lời:
-- basic_rag: tìm tin theo mô tả tự do (tiện ích, vị trí 'gần...', đặc điểm trong bài đăng), không cần tính toán.
-- graph: câu hỏi tổng hợp hoặc đa chặng trên dữ liệu có cấu trúc: đếm, trung vị, xếp hạng, xu hướng theo tháng,
-  so sánh quận/phường/tỉnh/dự án/đường, khu vực tương tự, hoặc lọc thuần theo cột (loại hình, quận, giá, diện tích, số phòng).
-- hybrid: vừa có điều kiện cấu trúc (giá, quận, loại hình, số phòng) vừa có yêu cầu nằm trong mô tả tự do.
-- valuation: hỏi định giá / giá hợp lý / "đáng bao nhiêu" cho MỘT bất động sản được mô tả (loại, khu vực, diện tích),
-  hoặc hỏi một giá chào cụ thể có đắt không.
+- basic_rag: TÌM TIN — một tin cụ thể hoặc danh sách tin theo điều kiện (loại hình, tỉnh/quận/phường, giá,
+  diện tích, số phòng, tháng đăng) và/hoặc theo mô tả tự do (tiện ích, 'gần…', hướng, pháp lý); hoặc hỏi chi
+  tiết của MỘT tin đã nêu (số WC, mặt tiền, hướng…), kể cả khi câu nhắc tên dự án/đường để mô tả căn đó.
+  Lọc theo cột rồi liệt kê tin vẫn là basic_rag, không phải graph.
+- graph: THỐNG KÊ trên nhiều tin: đếm số tin, trung bình/trung vị giá hay giá/m², xếp hạng khu vực, xu hướng
+  theo tháng, so sánh quận/phường/tỉnh/loại hình/dự án/đường, câu nhiều bước (quận đắt nhất rồi phường đắt nhất
+  trong quận đó), khu vực tương tự.
+- hybrid: TÌM CÁC TIN NẰM TRONG một dự án có tên hoặc TRÊN một con đường có tên (thường kèm giá/số phòng):
+  cần đồ thị dự án/đường để khoanh tin rồi mới tìm tin.
+- valuation: hỏi định giá / giá hợp lý / "đáng bao nhiêu" / "nên rao bao nhiêu" cho MỘT bất động sản được mô tả
+  (loại, khu vực, diện tích), hoặc hỏi một giá chào cụ thể có đắt không.
 
 Ví dụ:
-- "Căn hộ nào có view sông và hồ bơi?" -> basic_rag
+- "Mình thấy tin bán nhà 4 tầng ở Hoàng Mai giá 9 tỷ, nhà đó hướng gì?" -> basic_rag
+- "Liệt kê nhà ở Gò Vấp 50-70m2 giá dưới 6 tỷ đăng tháng 2/2026" -> basic_rag
+- "Căn hộ 2PN ở Quận 7 dưới 4 tỷ có hồ bơi" -> basic_rag
 - "Nhà gần trường học, hẻm xe hơi ở Gò Vấp" -> basic_rag
 - "Quận nào ở Hà Nội có giá/m² trung vị cao nhất?" -> graph
+- "Có bao nhiêu tin bán căn hộ ở Hải Phòng tháng 1/2026?" -> graph
 - "Giá đất Thủ Đức thay đổi thế nào qua các tháng?" -> graph
-- "Liệt kê căn hộ 2 phòng ngủ ở Quận 7 dưới 4 tỷ" -> graph
-- "Căn hộ 2PN dưới 3 tỷ ở Quận 7 có hồ bơi" -> hybrid
-- "Nhà ở Cầu Giấy dưới 10 tỷ có thang máy" -> hybrid
+- "Ở Hà Đông, nhà phố hay căn hộ đắt hơn tính theo m²?" -> graph
+- "Giá/m² trung vị căn hộ ở dự án Masteri Thảo Điền là bao nhiêu?" -> graph
+- "Tìm căn hộ 2PN ở dự án The Sun Avenue dưới 4 tỷ" -> hybrid
+- "Có nhà mặt tiền nào trên đường Lê Văn Lương giá dưới 15 tỷ không?" -> hybrid
 - "Nhà 60m² 3 phòng ngủ ở Gò Vấp đáng giá bao nhiêu?" -> valuation
 - "Căn hộ 70m2 ở Quận 7 chào 4,5 tỷ có đắt không?" -> valuation"""
 

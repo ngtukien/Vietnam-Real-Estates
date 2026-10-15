@@ -33,6 +33,22 @@ FILTER_RELAXED_PROMPT = ("LƯU Ý: không có tin khớp đúng mọi điều ki
 
 _FAKE_TAG = re.compile(r"<\s*(/?)\s*tai_lieu\s*>", re.I)
 
+# Câu trả lời đồ thị từng chép nguyên khung ngữ cảnh (`<tai_lieu> KẾT QUẢ TRUY VẤN: …`, đơn vị `*_m2_mil`):
+# luật trong system prompt + `strip_context_echo` trên câu trả lời cuối.
+NO_ECHO_RULE = ("Viết câu trả lời bằng câu văn tiếng Việt cho người đọc; KHÔNG chép lại thẻ <tai_lieu>, tiêu đề "
+                "'KẾT QUẢ TRUY VẤN', câu Cypher, JSON thô hay tên cột kỹ thuật (price_vnd, *_m2_mil, area_m2) — đổi "
+                "sang đơn vị đọc được (tỷ / triệu đồng, triệu đồng/m², m²).")
+_ECHO_TAG = re.compile(r"[<\[]\s*/?\s*tai_lieu\s*[>\]]", re.I)
+_ECHO_HEADER = re.compile(r"^[ \t]*(?:KẾT QUẢ TRUY VẤN|Cypher)\b[^\n]*:[ \t]*$\n?", re.I | re.M)
+_ECHO_UNIT = re.compile(r"\s*\*_m2_mil\b")
+
+
+def strip_context_echo(text: str) -> str:
+    """Bỏ phần khung ngữ cảnh bị chép vào câu trả lời: thẻ <tai_lieu>/[tai_lieu], dòng tiêu đề 'KẾT QUẢ TRUY VẤN…:'
+    / 'Cypher:', đơn vị kỹ thuật '*_m2_mil' (→ ' triệu đồng/m²'). Nội dung số liệu giữ nguyên."""
+    out = _ECHO_UNIT.sub(" triệu đồng/m²", _ECHO_HEADER.sub("", _ECHO_TAG.sub("", text)))
+    return re.sub(r"\n{3,}", "\n\n", out).strip()
+
 
 def format_context(hits: pd.DataFrame) -> list[str]:
     return [f"[Tin#{int(lid)}] {text}" for lid, text in zip(hits["listing_id"], hits["text"], strict=True)]
@@ -57,7 +73,7 @@ def build_prompt(question: str, contexts: list[str], note: str | None = None) ->
 
 def generate(question: str, contexts: list[str], note: str | None = None, system: str = ANSWER_SYSTEM) -> LLMResult:
     result = ask_llm(build_prompt(question, contexts, note), system=system)
-    return replace(result, text=normalize_citations(result.text))
+    return replace(result, text=normalize_citations(strip_context_echo(result.text)))
 
 
 def ask_llm_only(question: str) -> dict:
@@ -66,3 +82,4 @@ def ask_llm_only(question: str) -> dict:
     answer = ask_llm(f"CÂU HỎI: {question}", system=LLM_ONLY_SYSTEM)
     return dict(system="llm_only", question=question, answer=answer.text, sources=[], contexts=[],
                 latency=perf_counter() - start, input_tokens=answer.input_tokens, output_tokens=answer.output_tokens)
+
