@@ -4,8 +4,6 @@
 $ErrorActionPreference = 'Continue'
 . 'D:\Vietnam-Real-Estates\scripts\vre_env.ps1'
 $env:PYTHONUNBUFFERED = '1'
-# CR-02 (chờ p1 đổi mặc định trong vre.config): upload 1 luồng gRPC trong tiến trình riêng, wait=True.
-$env:VRE_QDRANT_UPLOAD_PARALLEL = '1'
 
 $Root = 'D:\Vietnam-Real-Estates'
 $Compose = Join-Path $Root 'docker-compose.yaml'
