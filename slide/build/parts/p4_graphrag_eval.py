@@ -172,7 +172,7 @@ def ablation(d: Deck) -> None:
         "BM25 và hybrid, mỗi cách có và không có lọc trước. Rerank không có trong lượt đo vì model cross-encoder không có "
         f"trong cache. Số câu có tập tin đúng: {d.N('ablation.json:runs[0].n_questions')}. Bước nhảy lớn nhất đến từ bộ lọc, "
         "vì câu tìm tin có điều kiện cứng mà embedding không đảm bảo. Trên dữ liệu này BM25 có lọc ngang hoặc hơn hybrid "
-        "có lọc, vì đề bài chứa tên dự án và con số khớp đúng từ. Đọc trung thực: hybrid không tự động thắng; cần đo. So "
+        "có lọc, vì đề bài chứa tên dự án và con số khớp đúng từ. Hybrid không tự động thắng; phải đo mới biết. So "
         "sánh model embedding nằm ở chặng 1. Slide sau: kết quả câu trả lời theo nhóm câu hỏi."))
     s.chart(MX, 1.9, 8.2, 4.5, "column", labels or ["⟨?⟩"],
             [("Recall@5", "ablation.json:runs[*].recall_at_5", "teal"), ("MRR", "ablation.json:runs[*].mrr", "blue")],
@@ -208,7 +208,7 @@ def pairwise(d: Deck) -> None:
         "Bảng so ba cặp trên cùng câu hỏi: Basic RAG với LLM thuần, Hybrid với Basic RAG, và Hybrid với Graph, ở toàn tập "
         "và ở nhóm tổng hợp. Chênh lệch là hiệu độ chính xác tính bằng điểm phần trăm; khoảng tin cậy chín mươi "
         "lăm phần trăm lấy bằng bootstrap mười nghìn mẫu theo câu hỏi, ghép cặp giữa hai hệ. Khoảng nào chứa số không thì "
-        "chưa đủ bằng chứng nói hệ này hơn hệ kia trên tập con này. Đó là cách đọc trung thực với cỡ mẫu nhỏ. "
+        "chưa đủ bằng chứng nói hệ này hơn hệ kia trên tập con này. Với bốn câu mỗi nhóm, phần lớn khoảng tin cậy rất rộng. "
         "Slide sau: chi phí và độ trễ."))
     rows = [["So sánh", "Phạm vi", "Chênh lệch", "CI95", "p"]]
     for i in keep:
@@ -225,10 +225,18 @@ def pairwise(d: Deck) -> None:
 def cost(d: Deck) -> None:
     syss = systems(d)
     c = f"{ES}:cost"
-    s = d.slide("ev-cost", SEC_E, "Chi phí và độ trễ: thêm router và Cypher thì thêm thời gian và token", notes=(
+    lat = {x: d.V(f"{c}.{x}.latency_ms_p50") for x in syss}
+    tok = {x: d.V(f"{c}.{x}.input_tokens_mean") for x in syss}
+    known = [x for x in syss if lat.get(x) is not None]
+    slowest = max(known, key=lambda x: lat[x]) if known else None
+    heavy = max((x for x in syss if tok.get(x) is not None), key=lambda x: tok[x], default=None)
+    title = (f"Chi phí và độ trễ: {SYSTEM[heavy][0]} tốn token nhất, {SYSTEM[slowest][0]} chậm nhất ở trung vị"
+             if slowest and heavy else "Chi phí và độ trễ của bốn hệ")
+    s = d.slide("ev-cost", SEC_E, title, notes=(
         "Độ trễ đo trên từng câu trong lượt eval, gồm router và Cypher nếu có. "
         + ", ".join(f"{SYSTEM[x][0]} trung vị {d.N(f'{c}.{x}.latency_ms_p50', 'k1')} giây" for x in syss)
-        + ". Graph và Hybrid tốn thêm lượt sinh Cypher và lượt router. Các rủi ro triển khai đều có biện pháp trong code: "
+        + ". Token vào phản ánh lượng ngữ cảnh: Graph và Hybrid nhận thêm kết quả Cypher và lượt router. Độ trễ còn phụ "
+        "thuộc API miễn phí và số lượt thử lại, nên chỉ so tương đối. Các rủi ro triển khai đều có biện pháp trong code: "
         "giá là giá rao chứ không phải giá giao dịch, nên luôn kèm nguồn; số điện thoại bị ẩn trước khi lưu; Cypher chỉ đọc; "
         "API có giới hạn tần suất và cache. Slide sau: hệ thống sai vì đâu."))
     s.chart(MX, 1.9, 6.0, 3.9, "column", [SYSTEM[x][0] for x in syss],
@@ -248,8 +256,8 @@ def errors(d: Deck) -> None:
     s = d.slide("ev-errors", SEC_E, "Hệ thống sai vì đâu: phân loại từng câu sai theo nguyên nhân", notes=(
         "Mỗi câu sai được gán đúng một nguyên nhân theo thứ tự ưu tiên: lỗi chạy, không từ chối khi phải từ chối, router chọn "
         "sai, Cypher lỗi, lọc sai, truy xuất trượt, bịa ngoài nguồn, Cypher chạy được nhưng ra sai, và còn lại là thiếu ngữ "
-        "cảnh. Bảng đếm theo hệ. Hai ví dụ bên phải là câu sai thật trong lượt eval. Điều đáng chú ý là nguyên nhân phổ biến "
-        "nhất của từng hệ, vì đó là chỗ nên sửa trước. Slide sau sang phần mở rộng."))
+        "cảnh. Bảng đếm theo hệ. Hai ví dụ bên phải là câu sai thật trong lượt eval. Nguyên nhân phổ biến nhất của từng hệ "
+        "là chỗ nên sửa trước. Slide sau sang phần mở rộng."))
     rows = [["Nguyên nhân"] + [SYSTEM[x][0] for x in syss]]
     for k in causes:
         rows.append([CAUSE[k]] + [d.N(f"error_analysis.json:counts.{x}.{k}") if k in counts.get(x, {}) else "–"

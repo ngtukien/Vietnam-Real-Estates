@@ -219,7 +219,7 @@ def basic_fails(d: Deck) -> None:
     k = f"error_analysis.json:examples[{idx}]" if idx is not None else None
     s = d.slide("ret-basic-fails", SEC, "Basic RAG hụt ở câu tổng hợp: vài tin trong top-k không thay được toàn bộ dữ liệu",
                 notes=(
-        "Đây là slide cầu nối. Câu tổng hợp không có đáp án nằm trong một tin nào; muốn trả lời phải gom mọi tin theo quận "
+        "Câu tổng hợp không có đáp án nằm trong một tin nào; muốn trả lời phải gom mọi tin theo quận "
         "hoặc theo dự án rồi tính. Basic RAG chỉ đưa vài tin vào prompt, nên mô hình hoặc nói không đủ dữ liệu, hoặc suy "
         "từ vài tin. Ví dụ trên slide là một thất bại thật trong lượt eval, kèm đáp án chuẩn tính bằng SQL. Cần một cấu trúc "
         "cho phép gom và tính trên toàn bộ dữ liệu: đó là Knowledge Graph ở chặng 3. Slide sau: tổng kết Basic RAG theo nhóm "

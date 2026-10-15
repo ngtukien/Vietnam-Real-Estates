@@ -163,7 +163,7 @@ def models(d: Deck) -> None:
         "Có ba cách lưu cùng một tri thức. Property graph, như Neo4j, cho node và cạnh mang thuộc tính, nên giá và "
         "diện tích nằm ngay trên node tin đăng, truy vấn bằng Cypher dễ đọc. RDF là chuẩn bộ ba của W3C, mạnh khi "
         "trao đổi và liên kết dữ liệu mở, nhưng mỗi thuộc tính lại là một bộ ba nên mô hình phình ra. SQL là bảng, "
-        "dòng, cột. Nói trung thực: với phép tổng hợp trên bảng phẳng thì SQL hay pandas là đủ và nhanh. Chính đáp án "
+        "dòng, cột. Với phép tổng hợp trên bảng phẳng thì SQL hay pandas là đủ và nhanh. Chính đáp án "
         "chuẩn của benchmark được tính bằng SQL trên DuckDB. Đồ thị có lợi khi câu hỏi đi nhiều chặng qua quan hệ. "
         "Slide sau là nguyên tắc chọn node, thuộc tính và cạnh."))
     rows = [["Tiêu chí", "Property graph (nhóm chọn)", "RDF", "SQL"],
@@ -337,7 +337,7 @@ def communities(d: Deck) -> None:
                 notes=(
         "Hai khái niệm. Centrality đo mức quan trọng của một node theo vị trí, dạng đơn giản nhất là bậc chia cho số "
         "node còn lại; ở đây chỉ để hiểu, pipeline không dùng nó. Modularity đo các cụm dày cạnh hơn ngẫu nhiên bao "
-        "nhiêu. Điểm quan trọng: không chạy Leiden trên cây tỉnh, quận, phường, vì cây không có cạnh chéo nên không "
+        "nhiêu. Không chạy Leiden trên cây tỉnh, quận, phường, vì cây không có cạnh chéo nên không "
         "có cụm. Code dựng đồ thị tương đồng: mỗi phường đủ số tin là một hồ sơ gồm log giá trên mét vuông trung vị, "
         "log số tin và tỷ lệ từng loại hình, chuẩn hoá rồi nối với "
         f"{d.N(c + '.k')} phường gần nhất. Leiden với seed {d.N(c + '.seed')} chia {d.N(c + '.n_wards')} phường "

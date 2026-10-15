@@ -149,7 +149,7 @@ def eda_price(d: Deck) -> None:
         f"{d.N(house + '.median_price_m2_mil', 'dec1')} triệu, căn hộ chung cư {d.N(apt + '.median_price_m2_mil', 'dec1')} "
         f"triệu, đất {d.N(land + '.median_price_m2_mil', 'dec1')} triệu. Dùng trung vị chứ không dùng trung bình vì giá "
         "lệch phải rất mạnh: vài tin rao hàng trăm tỷ kéo trung bình lên xa. Nhà chiếm nhiều tin nhất với "
-        f"{d.N(house + '.n')} tin. Điều này quan trọng cho trợ lý: câu hỏi giá phải lọc đúng loại hình trước, nếu không "
+        f"{d.N(house + '.n')} tin. Với trợ lý, câu hỏi giá phải lọc đúng loại hình trước, nếu không "
         "con số trộn nhà với đất sẽ vô nghĩa. Chuyển sang slide sau: tin tập trung ở đâu."))
     s.chart(MX, 1.85, 7.6, 4.55, "column", f"{pt}[*].property_type",
             [("Giá/m² trung vị (triệu đồng)", f"{pt}[*].median_price_m2_mil", "blue")], number_format="0")
@@ -243,7 +243,7 @@ def eda_quality(d: Deck) -> None:
 
 def rag_two_kinds(d: Deck) -> None:
     s = d.slide("rag-two-kinds", SEC, "Mỗi tin đăng mang hai loại tri thức, nên cần cả RAG lẫn đồ thị", notes=(
-        "Từ phần khảo sát có một nhận xét quan trọng. Phần phi cấu trúc là tiêu đề và mô tả viết tự do, nơi có những ý "
+        "Phần phi cấu trúc là tiêu đề và mô tả viết tự do, nơi có những ý "
         "như thang máy, ô tô đỗ cửa, có thương lượng; muốn tìm chúng phải tìm theo nghĩa, đó là việc của embedding và "
         "RAG. Phần có cấu trúc là các cột loại hình, phường, giá, diện tích; câu hỏi như quận nào có giá trên mét vuông "
         "thấp nhất phải đếm và tính trên cột, không đọc ra từ vài đoạn văn. Hai nguồn bù cho nhau: cột thiếu thì mô tả "

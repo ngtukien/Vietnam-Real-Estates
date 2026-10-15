@@ -187,12 +187,12 @@ def limits(d: Deck) -> None:
     planned = d.A("gpt-oss-120b", "tên model sinh dự kiến ban đầu trong plan")
     s = d.slide("end-limits", SEC_E, "Hạn chế: đánh giá mới trên tập con và dữ liệu là giá rao; hướng tiếp theo đã rõ",
                 notes=(
-        f"Nói thẳng các giới hạn. Về đánh giá, benchmark có {n_b} câu nhưng lượt chạy chỉ dùng tập con {n_q} câu vì hạn "
+        f"Về đánh giá, benchmark có {n_b} câu nhưng lượt chạy chỉ dùng tập con {n_q} câu vì hạn "
         "mức API miễn phí, chấm bằng luật so với đáp án SQL và chưa đo faithfulness bằng mô hình giám khảo. Mô hình sinh "
         f"là {gen}, khác {planned} dự kiến ban đầu. Về dữ liệu, giá là giá rao, không phải giá giao dịch; địa giới có cả "
         "tên cũ và tên sau sáp nhập năm 2025; tin không có toạ độ; nhiều cột thiếu, ví dụ đường thiếu "
         f"{d.N(mp + '.street', 'dec0')}% và dự án thiếu {d.N(mp + '.project', 'dec0')}%. Giấy phép dữ liệu chỉ cho "
-        "phép dùng phi thương mại. Cột bên phải là việc làm tiếp. Để kết lại, slide sau là những điều cần nhớ."))
+        "phép dùng phi thương mại. Cột bên phải là việc làm tiếp. Slide sau: những điều cần nhớ."))
     cols = [
         ("Đánh giá", "coral", [
             f"Tập con {n_q} câu trên {n_b} câu benchmark",
