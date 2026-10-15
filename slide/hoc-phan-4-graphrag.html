@@ -1,0 +1,1842 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Học Phần 4 · GraphRAG</title>
+<link rel="icon" href="data:,">
+<style>
+:root{
+  --bg:#fbf8f3; --surface:#ffffff; --surface2:#f4efe6; --ink:#1f2430; --muted:#5d6475; --line:#e6dfd2;
+  --accent:#6d4bd8; --accent-soft:#efeaff;
+  --rag:#4C78A8; --graph:#F58518; --hybrid:#54A24B; --llm:#9D9D9D;
+  --good:#2e9d5b; --good-soft:#e3f5ea; --bad:#d64545; --bad-soft:#fde7e7; --warn:#b97800; --warn-soft:#fff3d6;
+  --kid:#fff6d9; --kid-line:#f1d27a; --say:#efeaff; --say-line:#c9b9ff; --key:#e3f2ff; --key-line:#9cc9f5;
+  --code-bg:#1e2230; --code-ink:#e8ecf5; --shadow:0 2px 10px rgba(40,30,10,.07);
+  --rag-ink:#3b6591; --graph-ink:#b35c00; --hybrid-ink:#3b7d34;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14161b; --surface:#1d2027; --surface2:#252932; --ink:#e9ebf0; --muted:#a3a9b7; --line:#323745;
+    --accent:#a78bfa; --accent-soft:#2b2447;
+    --good:#4cc380; --good-soft:#173826; --bad:#ff7b7b; --bad-soft:#3d1d1d; --warn:#f0b43c; --warn-soft:#3a2f12;
+    --kid:#33301f; --kid-line:#6e5f2a; --say:#2b2447; --say-line:#5a4a9a; --key:#1b2c3d; --key-line:#3b6690;
+    --code-bg:#0f1117; --code-ink:#e8ecf5; --shadow:0 2px 12px rgba(0,0,0,.35);
+    --rag-ink:#8fb3e0; --graph-ink:#ffad5c; --hybrid-ink:#86cf7e;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14161b; --surface:#1d2027; --surface2:#252932; --ink:#e9ebf0; --muted:#a3a9b7; --line:#323745;
+  --accent:#a78bfa; --accent-soft:#2b2447;
+  --good:#4cc380; --good-soft:#173826; --bad:#ff7b7b; --bad-soft:#3d1d1d; --warn:#f0b43c; --warn-soft:#3a2f12;
+  --kid:#33301f; --kid-line:#6e5f2a; --say:#2b2447; --say-line:#5a4a9a; --key:#1b2c3d; --key-line:#3b6690;
+  --code-bg:#0f1117; --code-ink:#e8ecf5; --shadow:0 2px 12px rgba(0,0,0,.35);
+  --rag-ink:#8fb3e0; --graph-ink:#ffad5c; --hybrid-ink:#86cf7e;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Segoe UI","Be Vietnam Pro",system-ui,-apple-system,Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+code,.mono{font-family:Consolas,"Cascadia Code","JetBrains Mono",monospace;font-size:.92em}
+p code,li code,td code{background:var(--surface2);padding:1px 5px;border-radius:5px}
+h1,h2,h3{line-height:1.25}
+h2{font-size:1.6rem;margin:.2em 0 .5em}
+h3{font-size:1.15rem;margin:1.4em 0 .5em}
+
+/* ---------- khung ---------- */
+#progress{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--rag),var(--graph),var(--hybrid));width:0;z-index:50;transition:width .4s}
+.topbar{display:none;position:sticky;top:0;z-index:40;background:var(--surface);border-bottom:1px solid var(--line);padding:10px 16px;align-items:center;gap:10px}
+.topbar b{flex:1;font-size:.95rem}
+nav#side{position:fixed;top:0;left:0;bottom:0;width:270px;overflow-y:auto;background:var(--surface);border-right:1px solid var(--line);padding:22px 14px 30px;z-index:45}
+nav#side .brand{font-weight:700;font-size:1.05rem;margin:0 8px 4px}
+nav#side .sub{color:var(--muted);font-size:.8rem;margin:0 8px 14px}
+nav#side a{display:flex;gap:8px;align-items:flex-start;padding:7px 9px;border-radius:9px;color:var(--ink);text-decoration:none;font-size:.9rem;line-height:1.35}
+nav#side a:hover{background:var(--surface2)}
+nav#side a.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+nav#side a .tick{width:18px;flex:none;color:var(--muted)}
+nav#side a.done .tick{color:var(--good)}
+nav#side .meter{margin:16px 8px 0;font-size:.82rem;color:var(--muted)}
+main{margin-left:270px;padding:28px 40px 120px}
+.wrap{max-width:900px;margin:0 auto}
+@media (max-width:1000px){
+  .topbar{display:flex}
+  nav#side{transform:translateX(-100%);transition:transform .25s;box-shadow:var(--shadow)}
+  nav#side.open{transform:none}
+  main{margin-left:0;padding:16px 16px 100px}
+}
+
+/* ---------- section ---------- */
+section.sec{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:28px 30px;margin:0 0 28px;box-shadow:var(--shadow);scroll-margin-top:70px}
+@media (max-width:640px){section.sec{padding:20px 16px;border-radius:14px}}
+.sec-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.num{width:38px;height:38px;border-radius:12px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:700;flex:none}
+.slidetag{font-size:.78rem;padding:3px 10px;border-radius:99px;background:var(--surface2);color:var(--muted);border:1px solid var(--line)}
+.lead{font-size:1.08rem;color:var(--muted)}
+.box{border-radius:14px;padding:14px 18px;margin:16px 0;border:1px solid}
+.box > .lbl{font-weight:700;display:block;margin-bottom:4px}
+.box p:last-child{margin-bottom:0}
+.kid{background:var(--kid);border-color:var(--kid-line)}
+.say{background:var(--say);border-color:var(--say-line)}
+.key{background:var(--key);border-color:var(--key-line)}
+.warn{background:var(--warn-soft);border-color:var(--warn)}
+.done-row{display:flex;justify-content:flex-end;margin-top:18px}
+
+/* ---------- controls ---------- */
+.btn{font:inherit;font-size:.92rem;border:1px solid var(--line);background:var(--surface2);color:var(--ink);padding:8px 14px;border-radius:10px;cursor:pointer;transition:transform .1s,background .2s}
+.btn:hover{border-color:var(--accent)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.ok{background:var(--good);border-color:var(--good);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface2)}
+.seg button{font:inherit;font-size:.9rem;border:0;background:transparent;color:var(--ink);padding:8px 14px;cursor:pointer}
+.seg button.on{background:var(--accent);color:#fff}
+.chip{display:inline-block;padding:2px 10px;border-radius:99px;font-size:.82rem;font-weight:600;color:#fff}
+.c-rag{background:var(--rag)}.c-graph{background:var(--graph)}.c-hybrid{background:var(--hybrid)}.c-llm{background:var(--llm)}
+.t-rag{color:var(--rag-ink)}.t-graph{color:var(--graph-ink)}.t-hybrid{color:var(--hybrid-ink)}
+
+/* ---------- grids & cards ---------- */
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:760px){.g2,.g3{grid-template-columns:1fr}}
+.card{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.card h4{margin:0 0 6px;font-size:1rem}
+.card p{margin:.3em 0}
+.emoji{font-size:1.6rem;line-height:1}
+
+/* flip card */
+.flip{perspective:900px;cursor:pointer}
+.flip-in{display:grid;position:relative;width:100%;height:100%;transition:transform .55s;transform-style:preserve-3d}
+.flip.on .flip-in{transform:rotateY(180deg)}
+.flip-f,.flip-b{grid-area:1/1;position:relative;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;padding:16px;border:1px solid var(--line)}
+.flip-f{background:var(--surface2)}
+.flip-b{background:var(--accent-soft);transform:rotateY(180deg)}
+.flip .hint{font-size:.78rem;color:var(--muted)}
+
+/* code */
+pre.code{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:14px 16px;overflow-x:auto;font-size:.86rem;line-height:1.55;margin:12px 0}
+.kw{color:#ff9e64}.str{color:#9ece6a}.cm{color:#7f8aa3}.num-c{color:#7dcfff}
+
+/* tables */
+.tbl{width:100%;border-collapse:collapse;font-size:.92rem;margin:10px 0}
+.tbl th,.tbl td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{background:var(--surface2);font-weight:600}
+.tbl td.c,.tbl th.c{text-align:center}
+.scroll-x{overflow-x:auto}
+
+/* reveal */
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .6s,transform .6s}
+.reveal.in{opacity:1;transform:none}
+
+/* glossary tooltip */
+.term{border-bottom:2px dotted var(--accent);cursor:help;white-space:nowrap}
+#tip{position:fixed;z-index:100;max-width:300px;background:var(--ink);color:var(--bg);padding:10px 12px;border-radius:10px;font-size:.86rem;line-height:1.45;pointer-events:none;opacity:0;transition:opacity .15s;box-shadow:var(--shadow)}
+#tip.show{opacity:1}
+#tip b{display:block;margin-bottom:2px}
+
+/* flow */
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin:12px 0}
+.flow .st{flex:1 1 110px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;font-size:.88rem;position:relative;transition:all .3s}
+.flow .st b{display:block;font-size:.92rem}
+.flow .ar{align-self:center;color:var(--muted);font-weight:700}
+.flow .st.hot{border-color:var(--graph);background:color-mix(in srgb,var(--graph) 14%,var(--surface2));transform:translateY(-3px)}
+.flow .st.lit{box-shadow:0 0 0 3px var(--accent)}
+@media (max-width:640px){.flow{flex-direction:column}.flow .ar{transform:rotate(90deg);text-align:center}}
+
+/* bars */
+.bars{display:grid;gap:10px;margin:12px 0}
+.bar-row{display:grid;grid-template-columns:120px minmax(0,1fr) 64px;gap:10px;align-items:center;font-size:.9rem}
+.bar-row select{width:100%;min-width:0}
+.bar-track{background:var(--surface2);border-radius:8px;height:24px;overflow:hidden;border:1px solid var(--line)}
+.bar-fill{height:100%;width:0;border-radius:7px;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.bar-val{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+@media (max-width:520px){.bar-row{grid-template-columns:86px minmax(0,1fr) 52px;font-size:.84rem}}
+
+/* misc */
+.big-num{font-size:2.2rem;font-weight:800;line-height:1.1}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat small{color:var(--muted)}
+.fb{margin-top:8px;padding:8px 12px;border-radius:10px;font-size:.92rem;display:none}
+.fb.show{display:block}
+.fb.ok{background:var(--good-soft);color:var(--good)}
+.fb.no{background:var(--bad-soft);color:var(--bad)}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+.center{text-align:center}
+.pill-ok{color:var(--good);font-weight:700}.pill-no{color:var(--bad);font-weight:700}
+details.acc{border:1px solid var(--line);border-radius:12px;margin:10px 0;background:var(--surface2)}
+details.acc summary{cursor:pointer;padding:12px 16px;font-weight:600;list-style:none}
+details.acc summary::-webkit-details-marker{display:none}
+details.acc summary::before{content:"▸ ";color:var(--accent)}
+details.acc[open] summary::before{content:"▾ "}
+details.acc .in{padding:0 16px 14px}
+svg text{font-family:inherit}
+.hero{background:linear-gradient(135deg,var(--accent-soft),var(--surface));}
+.road{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:18px 0}
+.road div{border-radius:14px;padding:12px;background:var(--surface2);border:1px solid var(--line);font-size:.88rem;opacity:.65}
+.road div.me{opacity:1;border:2px solid var(--accent);background:var(--surface);box-shadow:0 0 0 4px var(--accent-soft);animation:pulse 2.2s infinite}
+.road b{display:block;font-size:1.3rem}
+@keyframes pulse{50%{box-shadow:0 0 0 9px var(--accent-soft)}}
+@media (max-width:640px){.road{grid-template-columns:repeat(2,1fr)}}
+.themebtn{position:fixed;right:16px;bottom:16px;z-index:60;border-radius:99px}
+</style>
+<script>
+/* ===== SỐ LIỆU: mọi con số dữ liệu trên trang đọc từ khối V dưới đây. Mỗi giá trị có một mục trong
+   slide/numbers_map.d/html.yaml trỏ về results/*.json; sửa số bằng `scripts/slide_numbers.py html … --apply`,
+   không gõ tay. Chuỗi giữ định dạng Việt Nam (dấu chấm nghìn, dấu phẩy thập phân); num() đổi sang số JS. ===== */
+/*V-BEGIN*/
+const V={
+rawRows:'3.500.744',
+kept:'2.537.920',
+dupDropped:'960.956',
+fixedThousand:'1.178',
+wardMissing:'14,8',
+chunks:'2.685.246',
+dim:'1.024',
+chunkSize:'400',
+topK:'5',
+nodes:'2.695.799',
+rels:'13.430.582',
+provinces:'63',
+districts:'648',
+wards:'6.258',
+streets:'21.864',
+projects:'5.056',
+marketStats:'123.936',
+clusters:'29',
+clusterWards:'3.391',
+modularity:'0,88',
+nBench:'100',
+nCat:'9',
+nSub:'36',
+perCat:'4',
+nSys:'4',
+usd:'0',
+ragasN:'0',
+accLlm:'11',
+okLlm:'4',
+accRag:'22',
+okRag:'8',
+accGraph:'78',
+okGraph:'28',
+accHybrid:'67',
+okHybrid:'24',
+routerAcc:'92',
+routerN:'36',
+routerExcl:'94',
+routerNExcl:'32',
+routerRagToHybrid:'3',
+routerLookupWrong:'2',
+routerUnansWrong:'1',
+routerGraphOk:'22',
+routerValOk:'4',
+nBoot:'10.000',
+retN:'8',
+retRagR5:'0,58',
+retRagMrr:'0,75',
+retGraphR5:'1,00',
+retGraphMrr:'0,92',
+abQ:'27',
+abGt:'3.393',
+ab_dense:['0,29','0,28','475,8'],
+ab_dense_prefilter:['0,50','0,60','395,2'],
+ab_bm25:['0,27','0,30','38,7'],
+ab_bm25_prefilter:['0,58','0,68','18,7'],
+ab_hybrid:['0,36','0,30','468,1'],
+ab_hybrid_prefilter:['0,53','0,65','385,2'],
+costLlm:['4,0','11,8','82','158'],
+costRag:['10,5','37,0','1.942','260'],
+costGraph:['8,9','23,0','3.843','308'],
+costHybrid:['9,0','21,7','4.063','398'],
+pwHR:['+44','+28','+61','0,00'],
+pwRL:['+11','−6','+28','0,13'],
+pwHG:['−11','−22','−3','0,01'],
+catLlm:['0','0','25','0','0','50','0','0','25'],
+catRag:['100','0','0','0','0','25','0','0','75'],
+catGraph:['100','100','100','75','50','100','100','0','75'],
+catHybrid:['100','0','100','75','50','100','100','0','75'],
+errLlm:{insufficient_context:'29',refusal_missing:'3'},
+errRag:{insufficient_context:'23',retrieval_miss:'4',refusal_missing:'1'},
+errGraph:{cypher_wrong_result:'6',refusal_missing:'1',insufficient_context:'1'},
+errHybrid:{retrieval_miss:'4',cypher_wrong_result:'3',refusal_missing:'1',insufficient_context:'4'},
+ag01Gt:'91,26',
+ag01N:'22.783',
+ag01Seen:'0,02',
+ag03Gt:'71.318',
+lk03Ids:'1',
+cs01Ids:'440',
+cs01Naive:'0,01',
+mh01Gt:'15,15',
+mh04Gt:'1,36',
+mh04Proj:'125,0',
+mh04Dist:'92,21',
+tm02N:'9.171',
+va01Gt:'7,33',
+hybridValPts:'0,75',
+ragConstrPts:'0,50',
+abDenseLat:'476',
+exAg01Ms:'4,1',
+exAg03Ms:'4.573',
+exAg03Gt:'71.318',
+exLk01Hits:'1',
+exAg04Gt:'107,14',
+exAg04N:'6.379',
+cfgTimeout:'10',
+cfgMaxRows:'50',
+cfgRetries:'2',
+cfgRrfK:'60'
+};
+/*V-END*/
+const num=s=>+String(s).replace(/\./g,'').replace(',','.').replace('−','-').replace('+','');
+const SYS=[['llm_only','LLM thuần','llm','Llm'],['basic_rag','Basic RAG','rag','Rag'],['graph','Graph','graph','Graph'],['hybrid','Hybrid','hybrid','Hybrid']];
+const CATS=[['lookup','Tra cứu'],['constraint','Ràng buộc'],['aggregate','Tổng hợp'],['multihop','Đa chặng'],['temporal','Thời gian'],['comparison','So sánh'],['project_street','Dự án, đường'],['valuation','Định giá'],['unanswerable','Phải từ chối']];
+/* ===== từ điển thuật ngữ: rê chuột (hoặc chạm) vào chữ gạch chấm để xem ===== */
+const GLOSS = {
+  "LLM":`Mô hình ngôn ngữ lớn. Giỏi viết câu, nhưng chỉ biết những gì đã học; không tự biết kho tin đăng của nhóm. Lượt đánh giá dùng gemini-flash-lite-latest (gói miễn phí).`,
+  "prompt":"Tờ giấy dặn dò gửi cho LLM: gồm chỉ thị + ngữ cảnh + câu hỏi.",
+  "token":"Mẩu chữ nhỏ mà LLM đọc/viết (khoảng một âm tiết hoặc một phần từ). Càng nhiều token càng tốn tiền và thời gian.",
+  "chunk":`Một đoạn văn bản cắt ra từ tin đăng (tối đa ${V.chunkSize} token) để lưu và tìm kiếm. Toàn kho có ${V.chunks} chunk.`,
+  "embedding":`Biến một câu thành một dãy số (vector ${V.dim} chiều của multilingual-e5-large). Hai câu cùng nghĩa thì hai dãy số nằm gần nhau.`,
+  "top-k":`Lấy k kết quả đứng đầu. Nhóm dùng k = ${V.topK}: đưa ${V.topK} tin tốt nhất vào prompt.`,
+  "RAG":"Retrieval-Augmented Generation: tìm bằng chứng trong kho trước, rồi mới để LLM viết câu trả lời dựa trên bằng chứng đó.",
+  "Basic RAG":"Hệ thống của chặng 1–2: LLM trích bộ lọc → lọc trước trong Qdrant → tìm dense + BM25 → gộp bằng RRF → top-k tin vào prompt → LLM trả lời kèm [Tin#ID].",
+  "GraphRAG":"RAG mà phần ‘tìm bằng chứng’ chạy trên đồ thị (thực thể, quan hệ, phép tính) thay vì chỉ lấy đoạn văn.",
+  "Knowledge Graph":"Đồ thị tri thức: các ‘chấm’ (thực thể) nối với nhau bằng ‘dây’ có tên (quan hệ).",
+  "node":"Một ‘chấm’ trong đồ thị: một tin, một phường, một quận, một tỉnh, một dự án, một con đường, một bảng thống kê.",
+  "cạnh":"Một ‘sợi dây’ có hướng và có tên nối hai node, ví dụ (Tin)-[:IN_WARD]->(Phường).",
+  "Neo4j":`Phần mềm cơ sở dữ liệu đồ thị mà nhóm dùng để lưu ${V.nodes} node và ${V.rels} cạnh.`,
+  "MarketStat":`Node thống kê tính sẵn: trung vị giá/m², số tin… cho từng tỉnh, quận, phường, dự án, theo tháng và loại hình. Có ${V.marketStats} node như vậy, nên câu tổng hợp không phải quét cả triệu tin.`,
+  "Cypher":"Ngôn ngữ hỏi Neo4j. Bạn ‘vẽ’ hình dạng cần tìm bằng chữ: (tin)-[:IN_WARD]->(phường).",
+  "Text2Cypher":"Cho LLM đọc câu hỏi tiếng Việt rồi viết ra câu Cypher; Neo4j chạy câu đó và tính chính xác.",
+  "Qdrant":`Cơ sở dữ liệu vector: nơi lưu ${V.chunks} chunk để tìm theo nghĩa (dense) và theo từ khoá (BM25), có lọc trước theo cột.`,
+  "BM25":"Cách tìm theo từ khoá: đếm từ trùng, từ hiếm (như ‘sổ hồng’) được tính nặng hơn.",
+  "dense":"Tìm theo nghĩa bằng embedding: ‘cạnh trường’ vẫn khớp ‘gần trường’.",
+  "RRF":`Reciprocal Rank Fusion: gộp hai bảng xếp hạng, mỗi tin được cộng 1/(${V.cfgRrfK} + hạng) từ mỗi bảng.`,
+  "router":"‘Lễ tân’: một lượt LLM đọc câu hỏi và chọn một trong bốn nhãn: basic_rag, graph, hybrid hoặc valuation.",
+  "đường lui":"Fallback: nếu đồ thị lỗi, trả về rỗng hoặc mất kết nối thì quay về dùng Basic RAG.",
+  "Hybrid":"Hệ thống của chặng 4: router chọn Basic RAG, Graph, gộp ngữ cảnh cả hai, hoặc gọi mô hình định giá; đồ thị hỏng thì lui về Basic RAG.",
+  "LLM thuần":"Baseline ‘LLM only’: cùng mô hình, không có ngữ cảnh nào. Dùng làm mốc để thấy truy xuất giúp được bao nhiêu.",
+  "bộ lọc":"Điều kiện cứng trích từ câu hỏi (quận, giá, số phòng, dự án…) để lọc tin trên các cột (metadata).",
+  "lọc trước":"Pre-filter: áp bộ lọc ngay trong Qdrant trước khi xếp hạng, nên top-k chỉ gồm tin thoả điều kiện cứng.",
+  "metadata":"Các cột có cấu trúc đi kèm tin: loại hình, tỉnh, quận, phường, đường, dự án, giá, diện tích, số phòng, tháng đăng.",
+  "đáp án chuẩn":"Ground truth: đáp án đúng tính bằng một câu SQL (DuckDB) trên toàn bộ bảng sạch, không gõ tay, không nhờ LLM.",
+  "benchmark":`Bộ đề thi chung: ${V.nBench} câu thuộc ${V.nCat} nhóm. Lượt đánh giá hiện có chạy tập con ${V.nSub} câu (${V.perCat} câu mỗi nhóm) cho cả ${V.nSys} hệ.`,
+  "chấm bằng luật":"Rule-based scoring: so câu trả lời với đáp án chuẩn bằng luật cố định (Recall theo cụm tin, sai số cho phép, câu từ chối), không dùng LLM làm giám khảo.",
+  "Recall@k":"Trong các tin ĐÚNG, tìm được bao nhiêu tin trong top-k? (đo ‘tìm có đủ không’).",
+  "MRR":"Mean Reciprocal Rank: tin đúng đầu tiên đứng hạng mấy? Hạng nhất được trọn điểm, hạng nhì nửa điểm, hạng ba một phần ba… rồi lấy trung bình.",
+  "nDCG":"Giống MRR nhưng tính cả mọi tin đúng trong danh sách, tin đúng càng đứng cao càng được nhiều điểm.",
+  "Precision@k":"Trong k tin lấy về, bao nhiêu tin đúng? (đo ‘lấy về có sạch không’).",
+  "RAGAS":"Bộ chỉ số chấm câu trả lời của RAG (Es và cộng sự, 2024): Faithfulness, Answer Relevancy, Context Precision. Cần một LLM giám khảo.",
+  "Faithfulness":"Độ trung thành: bao nhiêu phần nhận định trong câu trả lời có căn cứ trong ngữ cảnh. Lượt đánh giá này để trống vì không có LLM giám khảo.",
+  "Answer Relevancy":"Câu trả lời có đúng trọng tâm câu hỏi không? Cách đo: từ câu trả lời đoán ngược vài câu hỏi, so độ giống với câu hỏi gốc.",
+  "Context Precision":"Ngữ cảnh hữu ích có được xếp lên đầu không? Đồ tốt nằm trên cùng thì điểm cao.",
+  "LLM giám khảo":"LLM-as-judge: dùng một LLM để chấm câu trả lời. Lượt đánh giá này KHÔNG dùng (llm.judge = null), nên chấm bằng luật.",
+  "khoảng tin cậy":"CI95: khoảng mà con số thật có khả năng cao nằm trong đó. Tính bằng bootstrap: lấy mẫu lại các câu hỏi hàng nghìn lần.",
+  "bootstrap":"Lấy mẫu lại có hoàn lại trên chính tập câu hỏi để xem con số dao động bao nhiêu. So hai hệ thì lấy cùng câu cho cả hai (ghép cặp).",
+  "Leiden":`Thuật toán chia đồ thị thành các ‘cộng đồng’. Nhóm chia ${V.clusterWards} phường thành ${V.clusters} cụm có hồ sơ giá giống nhau (modularity ${V.modularity}).`,
+  "regex":"Mẫu tìm chữ. Ở đây dùng để phát hiện từ nguy hiểm như DELETE, SET, CREATE trong câu Cypher.",
+  "LIMIT":"Từ khoá Cypher giới hạn số dòng trả về, để không lỡ kéo về cả triệu dòng.",
+  "giao dịch chỉ đọc":"Read-only transaction: Neo4j mở phiên ‘chỉ được nhìn, không được sửa’. Lệnh ghi bị từ chối ngay ở cơ sở dữ liệu.",
+  "timeout":`Đồng hồ hẹn giờ: quá ${V.cfgTimeout} giây mà chưa chạy xong thì Neo4j huỷ câu truy vấn.`,
+  "độ trễ":"Latency: thời gian từ lúc hỏi đến lúc có câu trả lời. p50 là trung vị, p95 là mức mà chỉ một phần nhỏ câu chậm hơn.",
+  "ảo giác":"Hallucination: LLM bịa ra thông tin nghe rất thật nhưng sai.",
+  "structured output":"Bắt LLM trả lời đúng khuôn JSON định sẵn (ví dụ {route, reason}) để code đọc được.",
+  "schema":"Bản thiết kế đồ thị: có những loại node nào, cạnh nào, thuộc tính nào và đơn vị gì.",
+  "đa chặng":"Multi-hop: phải đi qua nhiều bước liên tiếp, ví dụ Dự án → Quận → so với cả Tỉnh.",
+  "tổng hợp":"Aggregate: đếm, trung vị, xếp hạng trên rất nhiều tin cùng lúc.",
+  "cosine":"Cách đo hai vector có ‘cùng hướng’ không. Càng gần trọn vẹn thì càng giống nghĩa."
+};
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
+function glossFor(word){
+  if(GLOSS[word])return [word,GLOSS[word]];
+  const k=Object.keys(GLOSS).find(x=>x.toLowerCase()===word.toLowerCase());
+  return k?[k,GLOSS[k]]:null;
+}
+function bindTerms(root){
+  const tip=document.getElementById('tip');if(!tip)return;
+  (root||document).querySelectorAll('.term:not([data-b])').forEach(el=>{
+    const g=glossFor(el.dataset.term||el.textContent.trim());el.dataset.b=1;if(!g)return;
+    el.tabIndex=0;
+    const show=()=>{tip.innerHTML='<b>'+esc(g[0])+'</b>'+esc(g[1]);tip.classList.add('show');
+      const r=el.getBoundingClientRect(),w=Math.min(300,innerWidth-24);tip.style.maxWidth=w+'px';
+      let x=Math.max(12,Math.min(r.left,innerWidth-w-12)),y=r.bottom+8;
+      tip.style.left=x+'px';tip.style.top=y+'px';
+      requestAnimationFrame(()=>{if(y+tip.offsetHeight>innerHeight-8)tip.style.top=(r.top-tip.offsetHeight-8)+'px'})};
+    const hide=()=>tip.classList.remove('show');
+    el.addEventListener('mouseenter',show);el.addEventListener('mouseleave',hide);
+    el.addEventListener('focus',show);el.addEventListener('blur',hide);
+    el.addEventListener('click',e=>{e.stopPropagation();tip.classList.contains('show')?hide():show()});
+  });
+}
+/* điền số vào mọi phần tử <… data-v="khoá"> (khoá mảng: data-v="khoá.chỉ_số") */
+function fillV(root){(root||document).querySelectorAll('[data-v]').forEach(el=>{const [k,i]=el.dataset.v.split('.');const v=V[k];el.textContent=i===undefined?v:(Array.isArray(v)?v[+i]:v[i])})}
+document.addEventListener('click',()=>{const t=document.getElementById('tip');if(t)t.classList.remove('show')});
+addEventListener('scroll',()=>{const t=document.getElementById('tip');if(t)t.classList.remove('show')},{passive:true});
+</script>
+</head>
+<body>
+<div id="progress"></div>
+<div id="tip"></div>
+<div class="topbar"><button class="btn" id="menuBtn" aria-label="Mở mục lục">☰</button><b>Chặng 4 · GraphRAG & Đánh giá</b></div>
+
+<nav id="side" aria-label="Mục lục">
+  <div class="brand">🧭 Chặng 4 · GraphRAG</div>
+  <div class="sub">Bấm “Mình hiểu rồi” cuối mỗi mục để đánh dấu tiến độ</div>
+  <a href="#mo-dau"><span class="tick">○</span>Bắt đầu ở đây</a>
+  <a href="#tong-quan"><span class="tick">○</span>0. Đề tài này là gì?</a>
+  <a href="#on-bai"><span class="tick">○</span>1. Ôn ba chặng trước</a>
+  <a href="#vi-sao"><span class="tick">○</span>2. Vì sao cần đồ thị</a>
+  <a href="#graphrag"><span class="tick">○</span>3. GraphRAG là gì · gr-theory, gr-compare</a>
+  <a href="#ba-mau"><span class="tick">○</span>4. Text2Cypher an toàn · gr-patterns</a>
+  <a href="#router"><span class="tick">○</span>5. Router & đường lui · gr-router</a>
+  <a href="#hai-tang"><span class="tick">○</span>6. Đánh giá hai tầng · ev-layers, ev-setup</a>
+  <a href="#recall"><span class="tick">○</span>7. Recall@k, MRR, ablation · ev-ablation</a>
+  <a href="#ragas"><span class="tick">○</span>8. Faithfulness · vì sao để trống</a>
+  <a href="#chi-phi"><span class="tick">○</span>9. Chi phí & rủi ro · ev-cost</a>
+  <a href="#ket-qua"><span class="tick">○</span>10. Kết quả · ev-results, ev-pairwise, ev-errors</a>
+  <a href="#kich-ban"><span class="tick">○</span>11. Kịch bản nói chi tiết</a>
+  <a href="#bay"><span class="tick">○</span>12. Chỗ dễ bị hỏi vặn</a>
+  <a href="#hoi-dap"><span class="tick">○</span>13. Luyện hỏi đáp</a>
+  <a href="#quiz"><span class="tick">○</span>14. Kiểm tra cuối</a>
+  <div class="meter" id="meter"></div>
+</nav>
+
+<main><div class="wrap">
+
+<section class="sec hero" id="mo-dau" data-sec>
+  <div class="sec-head"><span class="num">★</span><span class="slidetag">Chặng 4 · từ slide gr-theory đến ev-errors</span></div>
+  <h1 style="margin:.2em 0 .3em;font-size:2.1rem">Chặng 4: GraphRAG và Đánh giá<br><span class="muted" style="font-size:1.2rem;font-weight:500">học từ số không, giải thích như cho bé năm tuổi</span></h1>
+  <p class="lead">Cả nhóm làm một “trợ lý hỏi đáp nhà đất” trên <b><span data-v="kept"></span> tin</b> đăng bán. Ba chặng trước đã xây hai công cụ: một cái <b>tìm theo chữ</b> (RAG) và một cái <b>bản đồ có dây nối</b> (Knowledge Graph). Chặng của bạn trả lời hai câu: <b>ghép hai công cụ lại thế nào?</b> và <b>đo xem cái nào giỏi hơn ra sao?</b></p>
+  <div class="road">
+    <div><b>①</b>Nền tảng RAG<br><span class="muted">Nạp dữ liệu</span></div>
+    <div><b>②</b>Truy xuất & sinh<br><span class="muted">Tìm và trả lời</span></div>
+    <div><b>③</b>Knowledge Graph<br><span class="muted">Biểu diễn quan hệ</span></div>
+    <div class="me"><b>④</b>GraphRAG & đánh giá<br><span style="color:var(--accent);font-weight:600">← bạn ở đây</span></div>
+  </div>
+  <div class="box kid"><span class="lbl">🧸 Cả chặng 4 trong bốn câu</span>
+    <p>• Có hai “người giúp việc”: <b class="t-rag">bạn Thủ Thư</b> (Basic RAG) giỏi tìm tin theo mô tả, và <b class="t-graph">bạn Kế Toán</b> (Graph) giỏi đếm, tính trung vị trên cả kho.</p>
+    <p>• Bạn Kế Toán nhận câu hỏi tiếng Việt, tự viết “lệnh tra bản đồ” (Cypher), nhưng bị khoá tay để không thể xoá hay sửa dữ liệu.</p>
+    <p>• Một <b class="t-hybrid">bạn Lễ Tân</b> (router) đọc câu hỏi rồi giao cho đúng người; nếu bạn Kế Toán bó tay thì giao lại cho bạn Thủ Thư. Cả đội này gọi là <b>Hybrid</b>.</p>
+    <p>• Cho cả bốn (thêm <span class="term">LLM thuần</span> làm mốc) làm chung <b><span data-v="nSub"></span> câu</b> lấy từ đề <span data-v="nBench"></span> câu, <span class="term">chấm bằng luật</span>: <b class="t-graph">Graph đúng <span data-v="accGraph"></span>%</b>, Hybrid <span data-v="accHybrid"></span>%, Basic RAG <span data-v="accRag"></span>%, LLM thuần <span data-v="accLlm"></span>%.</p>
+  </div>
+  <div class="grid g3">
+    <div class="card"><div class="emoji">👀</div><h4>Cách học</h4><p class="small">Đọc ô 🧸 trước để hiểu ý, rồi chơi phần tương tác, cuối cùng đọc ô 🎤 để biết nói gì trên lớp.</p></div>
+    <div class="card"><div class="emoji">🔎</div><h4>Chữ gạch chấm</h4><p class="small">Rê chuột hoặc chạm vào chữ như <span class="term">Cypher</span> hay <span class="term">Recall@k</span> để xem nghĩa.</p></div>
+    <div class="card"><div class="emoji">⚠️</div><h4>Đọc mục 12</h4><p class="small">Lượt đánh giá chạy trên tập con, bằng mô hình miễn phí, chấm bằng luật. Biết trước giới hạn để không bị hỏi bất ngờ.</p></div>
+  </div>
+  <p class="small muted">Mọi con số trên trang này đọc từ <code>results/*.json</code> và được kiểm bằng <code>scripts/slide_numbers.py html</code>; không có số gõ tay.</p>
+  <div class="done-row"><button class="btn ok" data-done="mo-dau">✓ Mình hiểu rồi</button></div>
+</section>
+
+<section class="sec" id="tong-quan" data-sec style="border:2px solid var(--accent)">
+  <div class="sec-head"><span class="num">0</span><h2 style="margin:0">Đề tài này là gì?</h2><span class="slidetag">Đọc trước tiên</span></div>
+  <p class="lead">Trước khi học chặng 4, cần nắm cả bức tranh: nhóm đang làm gì, vì sao chia bốn chặng, và chặng của bạn đứng ở đâu.</p>
+  <div class="grid g2">
+    <div class="card"><h4>📌 Tên đề tài</h4><p><b>Từ RAG đến GraphRAG: Trợ lý hỏi đáp thị trường bất động sản Việt Nam</b>.</p><p class="small muted">Người hỏi gõ câu tiếng Việt như “Căn hộ hai phòng ngủ ở Quận 7 dưới ba tỷ có hồ bơi”, máy trả lời kèm mã tin làm bằng chứng, dạng [Tin#…] (mã tin là một số băm dài), hoặc ghi nguồn [Cypher] khi số liệu lấy từ đồ thị.</p></div>
+    <div class="card"><h4>🗂️ Dữ liệu</h4><p>Bộ <code>tinixai/vietnam-real-estates</code> trên Hugging Face: <b><span data-v="rawRows"></span> dòng</b>. Bỏ <span data-v="dupDropped"></span> tin trùng (trùng hẳn hoặc trùng phần đầu) còn <b><span data-v="kept"></span> tin</b>, dùng <b>toàn bộ</b>, không lấy mẫu.</p><p class="small muted">Mỗi tin có hai phần: <b>chữ tự do</b> (tiêu đề, mô tả) và <b>cột có cấu trúc</b> (loại hình, tỉnh, quận, phường, đường, dự án, giá, diện tích, số phòng, tháng đăng).</p></div>
+  </div>
+  <div class="box key"><span class="lbl">❓ Câu hỏi nghiên cứu của cả đề tài</span>
+    <p>Trên <b>cùng dữ liệu</b>, <b>cùng bộ câu hỏi</b> và <b>cùng mô hình ngôn ngữ</b>: cách nào trả lời tốt nhất?
+    <span class="chip c-llm">LLM thuần</span> không truy xuất (mốc) · <span class="chip c-rag">Basic RAG</span> tìm đoạn văn · <span class="chip c-graph">Graph</span> tính trên đồ thị · <span class="chip c-hybrid">Hybrid</span> chọn hoặc ghép cả hai.</p>
+  </div>
+  <h3>Bốn chặng, một dây chuyền</h3>
+  <p class="small muted">Bấm vào từng ô để xem chặng đó làm gì và đưa cho bạn thứ gì.</p>
+  <div class="flow" id="pipe4">
+    <div class="st" data-i="0"><b>Chặng 1</b>Nền tảng RAG<br><span class="small muted">rag-, data-, emb-, scale-</span></div><span class="ar">→</span>
+    <div class="st" data-i="1"><b>Chặng 2</b>Truy xuất & sinh<br><span class="small muted">ret-</span></div><span class="ar">→</span>
+    <div class="st" data-i="2"><b>Chặng 3</b>Knowledge Graph<br><span class="small muted">kg-</span></div><span class="ar">→</span>
+    <div class="st" data-i="3" style="border:2px solid var(--accent)"><b>Chặng 4 · bạn</b>GraphRAG & đánh giá<br><span class="small muted">gr-, ev-</span></div>
+  </div>
+  <div class="card" id="pipe4Info" style="min-height:96px"></div>
+  <h3>Phần của bạn trên lớp</h3>
+  <p class="small muted">Số thứ tự slide còn đổi khi dựng lại deck, nên trang này gọi slide theo <b>tên</b> (mã trong <code>slide/build/parts/p4_graphrag_eval.py</code>) và tiêu đề.</p>
+  <div class="scroll-x"><table class="tbl">
+    <tr><th>Tên slide</th><th>Tiêu đề trên slide</th><th>Cell notebook 04</th></tr>
+    <tr><td><code>gr-theory</code></td><td>GraphRAG truy xuất đồ thị con hoặc kết quả truy vấn thay cho đoạn văn</td><td class="muted">lý thuyết · P4-05 (global search chỉ giải thích)</td></tr>
+    <tr><td><code>gr-compare</code></td><td>Ba kiến trúc mạnh ở ba loại câu khác nhau; Hybrid để router chọn</td><td class="muted">lý thuyết</td></tr>
+    <tr><td><code>gr-patterns</code></td><td>Text2Cypher: mô hình viết truy vấn, Neo4j tính; năm lớp an toàn bọc quanh</td><td><b>P4-03 LIVE</b>, <b>P4-04 LIVE</b></td></tr>
+    <tr><td><code>gr-router</code></td><td>Router chọn nguồn cho từng câu; đồ thị rỗng hoặc lỗi thì lui về Basic RAG</td><td><b>P4-06 LIVE</b>, P4-07</td></tr>
+    <tr><td><code>ev-layers</code></td><td>Đánh giá ở hai tầng: truy xuất có tìm đúng tin, câu trả lời có đúng đáp án</td><td><b>P4-08 LIVE</b>, <b>P4-09 LIVE</b></td></tr>
+    <tr><td><code>ev-setup</code></td><td>Thiết lập: benchmark đủ chín nhóm, chạy trên tập con, chấm bằng luật</td><td>P4-01, P4-02, P4-10</td></tr>
+    <tr><td><code>ev-ablation</code></td><td>Ablation truy xuất: Recall@5 và MRR của từng cấu hình</td><td class="muted">đọc <code>results/ablation.json</code></td></tr>
+    <tr><td><code>ev-results</code></td><td>Graph đúng nhiều nhất trên tập con; mỗi hệ mạnh ở nhóm câu riêng</td><td>P4-11</td></tr>
+    <tr><td><code>ev-pairwise</code></td><td>So từng cặp trên cùng câu hỏi: khoảng tin cậy cho biết chênh lệch nào đáng tin</td><td>P4-14</td></tr>
+    <tr><td><code>ev-cost</code></td><td>Chi phí và độ trễ: thêm router và Cypher thì thêm thời gian và token</td><td>P4-12</td></tr>
+    <tr><td><code>ev-errors</code></td><td>Hệ thống sai vì đâu: phân loại từng câu sai theo nguyên nhân</td><td>P4-13</td></tr>
+  </table></div>
+  <p class="small muted">Tiêu đề <code>ev-ablation</code> và <code>ev-results</code> do script dựng deck tự chọn theo dữ liệu, nên có thể đổi chữ nếu kết quả đổi. Nguồn: <code>slide/build/parts/p4_graphrag_eval.py</code> và <code>notebooks/04_graphrag_eval.ipynb</code>.</p>
+  <div class="done-row"><button class="btn ok" data-done="tong-quan">✓ Mình hiểu rồi</button></div>
+</section>
+<script>
+(function(){
+  const info=[
+    `<b>Chặng 1 · Nền tảng RAG.</b> Đọc ${V.rawRows} dòng, làm sạch (ẩn số điện thoại, bỏ ${V.dupDropped} tin trùng, sửa ${V.fixedThousand} giá nhập theo nghìn đồng), cắt thành <b>${V.chunks} chunk</b> tối đa ${V.chunkSize} token, mã hoá bằng multilingual-e5-large (${V.dim} chiều) rồi cất vào kho <span class='term'>Qdrant</span>.<br><span class='muted small'>Đưa cho bạn: bảng sạch + kho vector.</span>`,
+    `<b>Chặng 2 · Truy xuất & sinh.</b> Nhận câu hỏi → LLM trích <span class='term'>bộ lọc</span> (quận, giá, dự án…) → <span class='term'>lọc trước</span> trong Qdrant → tìm bằng <span class='term'>dense</span> + <span class='term'>BM25</span> → gộp bằng <span class='term'>RRF</span> → đưa ${V.topK} tin vào prompt → LLM trả lời kèm [Tin#ID]. Phát hiện quan trọng: <b>câu tổng hợp thì RAG trả lời “không đủ dữ liệu”</b>.<br><span class='muted small'>Đưa cho bạn: hệ thống <b>Basic RAG</b>.</span>`,
+    `<b>Chặng 3 · Knowledge Graph.</b> Biến các cột thành đồ thị trong <span class='term'>Neo4j</span>: ${V.nodes} node, ${V.rels} cạnh. Tin → Phường → Quận → Tỉnh, Tin → Loại hình, Dự án, Đường, Tiện ích, Tháng; thêm ${V.marketStats} node <span class='term'>MarketStat</span> thống kê sẵn và ${V.clusters} cụm phường <span class='term'>Leiden</span>. Kiểm bất biến: số tin và tổng giá khớp bảng sạch.<br><span class='muted small'>Đưa cho bạn: đồ thị + hàm chạy Cypher chỉ đọc.</span>`,
+    `<b>Chặng 4 · bạn.</b> (1) Cho LLM tự viết Cypher từ câu hỏi (<span class='term'>Text2Cypher</span>) một cách an toàn. (2) Làm <span class='term'>router</span> chọn nguồn → hệ thống <b>Hybrid</b>. (3) So ${V.nSys} hệ trên cùng <span class='term'>benchmark</span>: đo truy xuất (Recall@k, MRR), độ chính xác theo nhóm câu, khoảng tin cậy, chi phí, độ trễ và phân loại lỗi.<br><span class='muted small'>Ra: <code>results/eval_summary.json</code>, <code>ablation.json</code>, <code>error_analysis.json</code>, <code>examples.json</code> và kết luận cuối của cả nhóm.</span>`
+  ];
+  const box=document.getElementById('pipe4Info'), sts=document.querySelectorAll('#pipe4 .st');
+  function pick(i){sts.forEach(s=>s.classList.toggle('lit',+s.dataset.i===i));box.innerHTML=info[i];if(window.bindTerms)bindTerms(box)}
+  sts.forEach(s=>s.addEventListener('click',()=>pick(+s.dataset.i)));pick(3);
+})();
+</script>
+
+<section class="sec" id="on-bai" data-sec>
+  <div class="sec-head"><span class="num">1</span><h2 style="margin:0">Ôn ba chặng trước bằng chuyện cổ tích</h2><span class="slidetag">nền tảng · chặng 1–3</span></div>
+  <p class="lead">Bạn không cần trình bày lại phần này, nhưng phải hiểu để nói chặng 4 cho trơn.</p>
+
+  <h3>① LLM trần: một người bạn nói hay nhưng chưa đọc sổ</h3>
+  <div class="box kid"><span class="lbl">🧸 Giải thích kiểu năm tuổi</span>
+    <p><span class="term">LLM</span> giống một bạn rất giỏi nói chuyện, nhưng chưa từng đọc cuốn sổ tin đăng của nhóm. Hỏi về một căn nhà cụ thể thì bạn ấy đoán theo “thường thường” (có khi đoán trúng, nhưng không có nguồn), hoặc bảo “lên mạng xem đi”.</p>
+    <p><span class="term">RAG</span> giống như dặn bạn ấy: <b>“Trước khi trả lời, chạy vào thư viện lấy vài tờ giấy liên quan nhất, đọc rồi mới nói, và nói lấy từ tờ số mấy.”</b></p>
+  </div>
+  <p class="small muted">Câu thật LK01 trong benchmark, hai câu trả lời thật lấy từ <code>results/examples.json</code>:</p>
+  <div class="seg" id="askSeg"><button class="on" data-m="llm">LLM thuần</button><button data-m="rag">Basic RAG</button></div>
+  <div class="card" id="askOut" style="margin-top:10px;min-height:120px"></div>
+
+  <h3>② RAG tìm bằng cách nào?</h3>
+  <div class="grid g3">
+    <div class="card"><div class="emoji">🎯</div><h4>Lọc điều kiện cứng</h4><p class="small">Quận, dự án, giá, số phòng là điều kiện đúng/sai → LLM trích thành bộ lọc, Qdrant lọc trên cột <b>trước</b> khi xếp hạng.</p></div>
+    <div class="card"><div class="emoji">🔤</div><h4>BM25: khớp từ</h4><p class="small">Tìm tin có đúng chữ “sổ hồng”, “Masteri Waterfront”. Từ hiếm được tính nặng hơn.</p></div>
+    <div class="card"><div class="emoji">🧠</div><h4>Dense: khớp nghĩa</h4><p class="small">“cạnh trường” ≈ “gần trường”. Mỗi chunk thành một dãy <span data-v="dim"></span> con số, gần nghĩa thì gần nhau.</p></div>
+  </div>
+  <p class="small">Hai bảng xếp hạng (BM25 và dense) được gộp bằng <span class="term">RRF</span>, lấy <span class="term">top-k</span> = <span data-v="topK"></span> tin đưa cho LLM.</p>
+
+  <h3>③ Knowledge Graph: bản đồ có dây nối</h3>
+  <div class="box kid"><span class="lbl">🧸 Giải thích kiểu năm tuổi</span>
+    <p>Hãy tưởng tượng mỗi tin đăng là một quả bóng bay, buộc dây vào phường; phường buộc vào quận; quận buộc vào tỉnh. Muốn biết “quận Cầu Giấy có những tin nào” chỉ cần <b>nắm quận Cầu Giấy rồi kéo hết các sợi dây</b>. Còn muốn biết giá trung vị thì đã có sẵn một <b>tờ thống kê</b> (MarketStat) buộc vào quận.</p>
+  </div>
+  <p class="small muted">Rê chuột hoặc chạm vào từng sợi dây để đọc “bộ ba” (chủ thể, quan hệ, đối tượng). Đây là các loại node và quan hệ thật trong schema của đồ thị.</p>
+  <svg id="miniKG" viewBox="0 0 640 260" style="width:100%;max-width:640px;display:block;margin:8px auto" role="img" aria-label="Schema đồ thị"></svg>
+  <div class="card center" id="tripleOut" style="font-family:Consolas,monospace">Chạm vào một sợi dây…</div>
+
+  <h3>④ Cypher: hỏi bản đồ bằng cách “vẽ hình”</h3>
+  <pre class="code"><span class="kw">MATCH</span> (l:Listing)-[:IN_PROJECT]->(p:Project)
+<span class="kw">WHERE</span> toLower(p.name) <span class="kw">CONTAINS</span> <span class="str">'masteri waterfront'</span>
+<span class="kw">RETURN</span> l.listing_id, l.price_vnd</pre>
+  <p class="small">Đọc là: “Tìm mọi <b>tin</b> có sợi dây <b>IN_PROJECT</b> nối tới một <b>dự án</b> có tên chứa ‘masteri waterfront’, đưa ra mã tin và giá.” Bạn vẽ hình dạng cần tìm, <span class="term">Neo4j</span> tự đi tìm mọi chỗ khớp. <span class="muted">(câu minh hoạ cú pháp)</span></p>
+
+  <div class="box key"><span class="lbl">💡 Nhớ một câu</span><p>Tin đăng có <b>hai loại tri thức</b>: chữ tự do (hợp với RAG) và cột có cấu trúc (hợp với đồ thị). Chặng 4 là ghép hai cái lại.</p></div>
+  <div class="done-row"><button class="btn ok" data-done="on-bai">✓ Mình hiểu rồi</button></div>
+</section>
+<script>
+(function(){
+  /*ASK-BEGIN*/const ans={
+    llm:'<span class="chip c-llm">LLM thuần · không nguồn · 0 điểm</span><p class="small"><b>Hỏi:</b> “Mình thấy tin bán căn hộ 3 phòng ngủ 80m2 ở Sun Feliza Suites Cầu Giấy giá 8 tỷ, căn đó có mấy WC vậy?”</p><p>“Dựa trên thiết kế tiêu chuẩn của các dự án căn hộ cao cấp tại Hà Nội (với diện tích khoảng 80m2 cho 3 phòng ngủ), các căn hộ này thường được bố trí <b>2 nhà vệ sinh</b>…”</p><p class="small pill-no">✗ Đoán theo “thường thường”, không chỉ ra được tin nào. Luật chấm câu tra cứu đòi đúng mã tin nên được 0 điểm, dù con số tình cờ trùng.</p>',
+    rag:'<span class="chip c-rag">Basic RAG · có trích dẫn · 2 điểm</span><p class="small"><b>Bộ lọc LLM trích ra:</b> Hà Nội · Cầu Giấy · Căn hộ chung cư · 3 phòng ngủ · 80 m² · 8 tỷ · dự án Sun Feliza Suites</p><p>“Căn hộ 3 phòng ngủ tại Sun Feliza Suites có 2 WC <b>[Tin#3092923782945354]</b>.”</p><p class="small pill-ok">✓ Có số liệu, kèm mã tin để kiểm chứng.</p>'
+  };/*ASK-END*/
+  const out=document.getElementById('askOut');
+  document.querySelectorAll('#askSeg button').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('#askSeg button').forEach(x=>x.classList.toggle('on',x===b));
+    out.style.opacity=0;setTimeout(()=>{out.innerHTML=ans[b.dataset.m];out.style.transition='opacity .35s';out.style.opacity=1},150);
+  });
+  out.innerHTML=ans.llm;
+
+  const N={t:[90,130,'Tin','var(--rag)'],ty:[90,225,'Loại hình','var(--hybrid)'],mo:[90,35,'Tháng','var(--llm)'],st:[300,35,'Đường','var(--llm)'],pj:[300,225,'Dự án','var(--accent)'],w:[300,130,'Phường','#2a9d8f'],d:[460,130,'Quận','var(--graph)'],p:[580,130,'Tỉnh','var(--accent)'],ms:[460,225,'MarketStat','var(--warn)'],c:[460,35,'Cụm','var(--hybrid)']};
+  const E=[['t','ty','OF_TYPE'],['t','mo','POSTED_IN'],['t','st','ON_STREET'],['t','pj','IN_PROJECT'],['t','w','IN_WARD'],['w','d','IN_DISTRICT'],['d','p','IN_PROVINCE'],['ms','d','STAT_OF'],['w','c','IN_CLUSTER']];
+  const svg=document.getElementById('miniKG'), NS='http://www.w3.org/2000/svg';
+  svg.innerHTML='<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L10,5L0,10z" fill="currentColor"/></marker></defs>';
+  const tOut=document.getElementById('tripleOut');
+  E.forEach(([a,b,r])=>{
+    const [x1,y1]=N[a],[x2,y2]=N[b],dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L;
+    const g=document.createElementNS(NS,'g');g.style.cursor='pointer';g.style.color='var(--muted)';
+    g.innerHTML=`<line x1="${x1+ux*52}" y1="${y1+uy*20}" x2="${x2-ux*56}" y2="${y2-uy*20}" stroke="currentColor" stroke-width="3" marker-end="url(#ah)"/><line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="transparent" stroke-width="18"/><text x="${(x1+x2)/2}" y="${(y1+y2)/2-8}" font-size="11" text-anchor="middle" fill="currentColor">${r}</text>`;
+    const show=()=>{svg.querySelectorAll('g.e').forEach(x=>x.style.color='var(--muted)');g.style.color='var(--accent)';tOut.innerHTML=`(${N[a][2]}) <b style="color:var(--accent)">-[:${r}]-></b> (${N[b][2]})`};
+    g.classList.add('e');g.addEventListener('mouseenter',show);g.addEventListener('click',show);svg.appendChild(g);
+  });
+  Object.values(N).forEach(([x,y,l,c])=>{
+    const g=document.createElementNS(NS,'g');
+    g.innerHTML=`<rect x="${x-52}" y="${y-17}" width="${104}" height="${34}" rx="${17}" fill="${c}"/><text x="${x}" y="${y+5}" font-size="${13}" font-weight="${600}" text-anchor="middle" fill="#fff">${l}</text>`;
+    svg.appendChild(g);
+  });
+})();
+</script>
+
+<section class="sec" id="vi-sao" data-sec>
+  <div class="sec-head"><span class="num">2</span><h2 style="margin:0">Vì sao phải có đồ thị? Vì RAG chỉ nhìn qua lỗ khoá</h2><span class="slidetag">cầu nối chặng 2 → 4</span></div>
+  <p class="lead">Đây là lý do cả chặng 4 tồn tại: Basic RAG đúng câu tra cứu, nhưng <b>bó tay ở câu tổng hợp</b> (đúng <span data-v="catRag.2"></span>% nhóm tổng hợp).</p>
+  <div class="box kid"><span class="lbl">🧸 Giải thích kiểu năm tuổi</span>
+    <p>Cô giáo hỏi: <i>“Chiều cao ở giữa của cả khối lớp là bao nhiêu?”</i></p>
+    <p>Basic RAG giống bạn chỉ được <b>nhìn qua lỗ khoá thấy vài bạn học sinh</b>. Dù thông minh mấy cũng không trả lời được.</p>
+    <p>Đồ thị giống có <b>sổ điểm danh đã tính sẵn</b>: chỉ cần mở đúng trang, đọc con số, không phải đoán.</p>
+  </div>
+  <p><b>Câu hỏi AG01:</b> “Giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy là bao nhiêu?”<br><span class="small muted">Mỗi chấm dưới đây đại diện cho mười tin căn hộ Cầu Giấy có giá (tổng <span data-v="ag01N"></span> tin).</span></p>
+  <div class="seg" id="dotSeg"><button class="on" data-m="rag">👁️ Cách Basic RAG nhìn</button><button data-m="graph">🕸️ Cách đồ thị nhìn</button></div>
+  <canvas id="dots" style="width:100%;height:auto;display:block;margin:12px 0;border-radius:12px;background:var(--surface2);border:1px solid var(--line)"></canvas>
+  <div class="card" id="dotMsg"></div>
+  <div class="grid g3" style="margin-top:14px">
+    <div class="card"><b>Top-k chỉ thấy vài tin</b><p class="small"><span data-v="topK"></span> / <span data-v="ag01N"></span> tin = <b><span data-v="ag01Seen"></span>%</b> dữ liệu.</p></div>
+    <div class="card"><b>Không gom được theo quận</b><p class="small">Không có cách nào nhóm mọi tin theo quận để tính.</p></div>
+    <div class="card"><b>LLM không phải máy tính</b><p class="small">Không thể tính trung vị trên dữ liệu nó không thấy.</p></div>
+  </div>
+  <div class="box key"><span class="lbl">💡 Câu chuyển sang chặng 4</span><p>“Đã có RAG, đã có đồ thị. Chặng cuối ghép hai thứ thành GraphRAG và đo xem có đáng không.”</p></div>
+  <div class="done-row"><button class="btn ok" data-done="vi-sao">✓ Mình hiểu rồi</button></div>
+</section>
+<script>
+(function(){
+  const cv=document.getElementById('dots'), ctx=cv.getContext('2d'), msg=document.getElementById('dotMsg');
+  const PER=10, TOTAL=Math.ceil(num(V.ag01N)/PER), SEEN=num(V.topK), cols=80, rows=Math.ceil(TOTAL/cols);
+  let rnd=7;const rand=()=>(rnd=(rnd*16807)%2147483647)/2147483647;
+  const seen=new Set();while(seen.size<SEEN)seen.add(Math.floor(rand()*TOTAL));
+  let mode='rag', anim=0, raf;
+  function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+  function size(){const w=cv.clientWidth;cv.width=w*devicePixelRatio;cv.height=Math.round(w*rows/cols)*devicePixelRatio;cv.style.height=Math.round(w*rows/cols)+'px'}
+  function draw(){
+    const W=cv.width,H=cv.height,cw=W/cols,ch=H/rows,r=Math.max(1,Math.min(cw,ch)*.32);
+    ctx.clearRect(0,0,W,H);
+    const mut=css('--line'), gr=css('--graph');
+    const shown=Math.floor(anim*TOTAL);
+    for(let i=0;i<TOTAL;i++){
+      const x=(i%cols+.5)*cw,y=(Math.floor(i/cols)+.5)*ch;
+      ctx.fillStyle=mode==='graph'&&i<shown?gr:mut;ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();
+    }
+    if(mode==='rag'){
+      seen.forEach(i=>{const x=(i%cols+.5)*cw,y=(Math.floor(i/cols)+.5)*ch;
+        ctx.strokeStyle=css('--accent');ctx.lineWidth=2*devicePixelRatio;ctx.beginPath();ctx.arc(x,y,r*5,0,7);ctx.stroke();
+        ctx.fillStyle=css('--accent');ctx.beginPath();ctx.arc(x,y,r*1.8,0,7);ctx.fill();});
+    }
+  }
+  function run(){
+    cancelAnimationFrame(raf);
+    if(mode==='rag'){anim=0;draw();
+      msg.innerHTML=`<span class="chip c-rag">Basic RAG</span> Chỉ ${V.topK} chấm tím được đưa vào prompt. Câu trả lời thật: <i>“Không đủ dữ liệu để tính toán giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy.”</i> <span class="pill-no">✗ 0 điểm</span>`;return}
+    anim=0;const t0=performance.now();
+    msg.innerHTML='<span class="chip c-graph">Graph</span> Neo4j đọc node MarketStat của quận Cầu Giấy, loại căn hộ, đã tính sẵn trên <b>mọi</b> tin…';
+    (function step(t){anim=Math.min(1,(t-t0)/1600);draw();
+      if(anim<1)raf=requestAnimationFrame(step);
+      else msg.innerHTML=`<span class="chip c-graph">Graph</span> Đủ ${V.ag01N}/${V.ag01N} tin. Câu trả lời thật: <b>${V.ag01Gt} triệu đồng/m²</b>, khớp đáp án SQL. Câu Cypher chỉ đọc một node thống kê nên chạy ${V.exAg01Ms} ms. <span class="pill-ok">✓ ĐÚNG</span><br><span class="small muted">Vị trí chấm chỉ để minh hoạ; số tin, giá và thời gian là số thật.</span>`})(t0);
+  }
+  document.querySelectorAll('#dotSeg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#dotSeg button').forEach(x=>x.classList.toggle('on',x===b));mode=b.dataset.m;run()});
+  size();run();addEventListener('resize',()=>{size();draw()});
+  window.addEventListener('themechange',draw);
+})();
+</script>
+
+<section class="sec" id="graphrag" data-sec>
+  <div class="sec-head"><span class="num">3</span><h2 style="margin:0">GraphRAG là gì? Chỉ đổi hai ô ở giữa</h2><span class="slidetag">gr-theory · gr-compare</span></div>
+  <div class="box kid"><span class="lbl">🧸 Giải thích kiểu năm tuổi</span>
+    <p>RAG thường: đi thư viện, <b>bê về vài trang sách</b> giống câu hỏi nhất.</p>
+    <p>GraphRAG: đi tới <b>tấm bản đồ có dây nối</b>, lần theo dây, <b>đếm và tính</b>, rồi mang về <b>một tờ kết quả</b> (ví dụ “Cầu Giấy, <span data-v="ag01Gt"></span> triệu/m², <span data-v="ag01N"></span> tin”).</p>
+    <p>Phần còn lại (nhận câu hỏi, đưa cho LLM viết câu trả lời) giữ nguyên.</p>
+  </div>
+  <div class="seg" id="ragSeg"><button class="on" data-m="rag">RAG thường</button><button data-m="graph">GraphRAG</button></div>
+  <div class="flow" id="ragFlow" style="margin-top:12px">
+    <div class="st"><b>Câu hỏi</b>tiếng Việt</div><span class="ar">→</span>
+    <div class="st" id="rf1"><b>Tìm top-k đoạn văn</b>gần nghĩa nhất</div><span class="ar">→</span>
+    <div class="st" id="rf2"><b>Ngữ cảnh</b>k đoạn văn</div><span class="ar">→</span>
+    <div class="st"><b>LLM</b>viết câu trả lời</div>
+  </div>
+  <p class="small muted" id="ragNote"></p>
+
+  <h3>Đồ thị lấy từ đâu ra? Hai trường phái</h3>
+  <div class="grid g2">
+    <div class="card"><h4>🏢 Microsoft GraphRAG <span class="muted small">(Edge và cộng sự, 2024)</span></h4>
+      <p class="small">Dựng đồ thị <b>từ văn bản</b>: LLM đọc từng đoạn, trích thực thể và quan hệ → thuật toán <span class="term">Leiden</span> chia cộng đồng → LLM <b>tóm tắt từng cộng đồng</b> để trả lời câu hỏi toàn cục.</p>
+      <p class="small pill-no">Tốn rất nhiều lời gọi LLM lúc lập chỉ mục.</p></div>
+    <div class="card" style="border:2px solid var(--graph)"><h4>🧱 Cách của nhóm</h4>
+      <p class="small">Dựng đồ thị <b>từ các cột có cấu trúc</b> (loại hình, phường, quận, tỉnh, đường, dự án, tháng, giá) <b>bằng luật</b>, không gọi LLM; tính sẵn <span class="term">MarketStat</span>. LLM chỉ dùng ở bước hỏi: viết Cypher.</p>
+      <p class="small pill-ok">Không tốn lời gọi LLM, đối chiếu được với SQL.</p></div>
+  </div>
+  <div class="box warn"><span class="lbl">⚠️ Nói đúng thuật ngữ (dễ bị hỏi)</span>
+    <p>Hệ thống của nhóm là <b>Graph-based RAG dựa trên Text2Cypher</b>. Nhóm <b>không</b> triển khai bước tóm tắt cộng đồng (community summarization) của Microsoft GraphRAG. Cụm Leiden có trong đồ thị (<span data-v="clusters"></span> cụm phường) nhưng dùng cho câu “khu vực tương tự”, không dùng để tóm tắt. Cell P4-05 chỉ giải thích global search, không chạy.</p>
+  </div>
+
+  <h3>Khi nào đồ thị thắng vector?</h3>
+  <div class="grid g3">
+    <div class="card"><div class="emoji">🧮</div><b>Tổng hợp</b><p class="small">Đếm, trung vị, xếp hạng trên toàn tập.</p></div>
+    <div class="card"><div class="emoji">🪜</div><b>Đa chặng</b><p class="small">Đi từ dự án lên quận, rồi so với cả tỉnh.</p></div>
+    <div class="card"><div class="emoji">🌍</div><b>Toàn cục</b><p class="small">Câu hỏi về cả kho, không nằm gọn trong một đoạn.</p></div>
+  </div>
+  <p class="small">Ngược lại, mô tả mờ như “gần trường”, “view hồ” thì <b>tìm vector vẫn hợp hơn</b>, vì những thông tin đó chỉ nằm trong chữ mô tả (hoặc chỉ có ở một số ít tiện ích được tách thành node).</p>
+
+  <h3>Ba kiến trúc thi đấu (gr-compare) và một mốc</h3>
+  <p class="small muted">Bấm vào thẻ để lật. <span class="term">LLM thuần</span> cũng được chấm cùng bộ câu, làm mốc so sánh.</p>
+  <div class="grid g3">
+    <div class="flip" data-flip><div class="flip-in">
+      <div class="flip-f"><div class="emoji">📚</div><h4 class="t-rag">Basic RAG = bạn Thủ Thư</h4><p class="small">Giỏi tìm sách theo ý nghĩa và từ khoá.</p><p class="small"><i>“Nhà gần trường học, hẻm xe hơi ở Gò Vấp”</i></p><span class="hint">↻ lật</span></div>
+      <div class="flip-b small"><b>Đơn vị truy xuất:</b> chunk gần nghĩa<br><b>Mạnh:</b> mô tả tự do<br><b>Yếu:</b> tổng hợp toàn tập<br><b>Chi phí mỗi câu:</b> trích bộ lọc + một lượt sinh</div>
+    </div></div>
+    <div class="flip" data-flip><div class="flip-in">
+      <div class="flip-f"><div class="emoji">🧮</div><h4 class="t-graph">Graph = bạn Kế Toán</h4><p class="small">Viết lệnh tra bản đồ, đếm và tính chính xác.</p><p class="small"><i>“Quận nào ở Hà Nội có giá/m² trung vị cao nhất?”</i></p><span class="hint">↻ lật</span></div>
+      <div class="flip-b small"><b>Đơn vị truy xuất:</b> kết quả Cypher<br><b>Mạnh:</b> đếm, trung vị, đa chặng<br><b>Yếu:</b> mô tả mờ, cần schema tốt<br><b>Chi phí mỗi câu:</b> viết Cypher + sinh</div>
+    </div></div>
+    <div class="flip" data-flip><div class="flip-in">
+      <div class="flip-f"><div class="emoji">🛎️</div><h4 class="t-hybrid">Hybrid = bạn Lễ Tân + cả đội</h4><p class="small">Đọc câu hỏi, giao đúng người, hoặc cho hai người cùng làm.</p><p class="small"><i>“Có nhà mặt tiền nào trên đường Lê Văn Lương… không?”</i></p><span class="hint">↻ lật</span></div>
+      <div class="flip-b small"><b>Đơn vị truy xuất:</b> cả hai, router chọn<br><b>Mạnh:</b> câu lai cột + mô tả<br><b>Yếu:</b> router chọn sai<br><b>Chi phí mỗi câu:</b> router + nguồn + sinh</div>
+    </div></div>
+  </div>
+  <div class="box say"><span class="lbl">🎤 Câu chốt</span><p>“GraphRAG không thay thế RAG mà <b>bổ sung loại bằng chứng mà đoạn văn không cung cấp được</b>.”</p></div>
+  <div class="done-row"><button class="btn ok" data-done="graphrag">✓ Mình hiểu rồi</button></div>
+</section>
+<script>
+(function(){
+  const t={rag:[['Tìm top-k đoạn văn','gần nghĩa nhất'],['Ngữ cảnh','k đoạn văn'],`RAG đưa cho LLM ${V.topK} tin; LLM phải tự “nhìn” mà trả lời.`],
+           graph:[['Duyệt đồ thị','thực thể, quan hệ, phép tính'],['Ngữ cảnh','đồ thị con hoặc kết quả truy vấn'],'Chỉ hai ô cam đổi. Neo4j làm phần tính toán; LLM chỉ viết truy vấn và diễn giải kết quả.']};
+  const a=document.getElementById('rf1'),b=document.getElementById('rf2'),n=document.getElementById('ragNote');
+  function set(m){const v=t[m];a.innerHTML=`<b>${v[0][0]}</b>${v[0][1]}`;b.innerHTML=`<b>${v[1][0]}</b>${v[1][1]}`;
+    [a,b].forEach(x=>x.classList.toggle('hot',m==='graph'));n.textContent=v[2]}
+  document.querySelectorAll('#ragSeg button').forEach(x=>x.onclick=()=>{document.querySelectorAll('#ragSeg button').forEach(y=>y.classList.toggle('on',y===x));set(x.dataset.m)});
+  set('rag');
+})();
+</script>
+
+<section class="sec" id="ba-mau" data-sec>
+  <div class="sec-head"><span class="num">4</span><h2 style="margin:0">Ba cách hỏi bản đồ, và vì sao chọn Text2Cypher</h2><span class="slidetag">gr-patterns · cell P4-03, P4-04 LIVE</span></div>
+  <div class="seg" id="pat"><button class="on" data-m="local">📍 Local</button><button data-m="global">🌍 Global</button><button data-m="t2c">✍️ Text2Cypher</button></div>
+  <div class="grid g2" style="margin-top:12px;align-items:center">
+    <svg id="patSvg" viewBox="0 0 320 220" style="width:100%;background:var(--surface2);border-radius:12px;border:1px solid var(--line)"></svg>
+    <div id="patTxt"></div>
+  </div>
+
+  <h3>Cho LLM viết lệnh: có nguy hiểm không?</h3>
+  <div class="box kid"><span class="lbl">🧸 Giải thích kiểu năm tuổi</span>
+    <p>Bạn Kế Toán được phép <b>viết phiếu tra cứu</b> gửi vào kho lưu trữ. Nhưng lỡ bạn ấy viết nhầm “xoá hết sổ sách” thì sao? Nên phiếu phải đi qua <b>năm trạm kiểm soát</b>, trạm nào thấy sai là chặn.</p>
+  </div>
+  <p class="small muted">Chọn một phiếu (câu Cypher) rồi bấm “Cho đi qua năm trạm”. Trạm một và hai chạy đúng logic code thật (<code>src/vre/graph/guard.py</code>: regex và hàm thêm LIMIT); trạm ba đến năm là mô phỏng hành vi của Neo4j và <code>text2cypher</code>.</p>
+  <div class="btns" id="cySamples"></div>
+  <textarea id="cyIn" rows="6" style="width:100%;font:14px Consolas,monospace;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--code-bg);color:var(--code-ink)"></textarea>
+  <label class="small" style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type="checkbox" id="cyBypass"> Giả sử trạm regex bị lọt, để xem giao dịch chỉ đọc có cứu được không</label>
+  <div class="btns"><button class="btn primary" id="cyRun">▶ Cho đi qua năm trạm</button></div>
+  <div id="gates" class="grid" style="gap:8px"></div>
+  <div class="card" id="cyResult" style="margin-top:10px;display:none"></div>
+
+  <h3>Đọc một câu Cypher thật mà LLM đã sinh (câu MH04, sai)</h3>
+  <p class="small muted">Câu hỏi: “Giá/m² trung vị căn hộ ở Vinhomes Central Park cao gấp bao nhiêu lần trung vị căn hộ của quận chứa dự án đó?”. Cypher lấy nguyên văn từ <code>results/error_analysis.json</code>. Rê chuột hoặc chạm vào từng dòng để xem nghĩa.</p>
+  <div id="a2" class="code" style="background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:12px;font:13.5px/1.6 Consolas,monospace;overflow-x:auto"></div>
+  <div class="card" id="a2Exp" style="margin-top:8px">↑ chọn một dòng</div>
+  <div class="box warn"><span class="lbl">⚠️ Cypher an toàn chưa chắc đã đúng</span>
+    <p>Câu này qua cả năm trạm, chạy được, nhưng trả lời <b>sai</b>: LLM viết “gấp 1,96 lần” trong khi đáp án SQL là <b><span data-v="mh04Gt"></span> lần</b> (dự án <span data-v="mh04Proj"></span>, quận Bình Thạnh <span data-v="mh04Dist"></span> triệu/m²). Lý do: <code>CONTAINS 'vinhomes central park'</code> khớp cả dự án con “The LandMark - Vinhomes Central Park”, rồi <code>LIMIT 1</code> không có <code>ORDER BY</code> nên lấy dòng nào cũng được. Ví dụ mẫu trong prompt có <code>ORDER BY n_project DESC</code>, LLM đã bỏ mất.</p>
+  </div>
+
+  <div class="box say"><span class="lbl">🎤 Khi chạy cell P4-03 trên lớp, màn hình sẽ hiện</span>
+    <p>Bảng kiểm lớp regex: câu đọc thì cho qua, câu <code>DETACH DELETE</code> và <code>CALL</code> thì bị chặn; rồi một câu Cypher LLM sinh cho một câu hỏi tổng hợp, kèm kết quả. Tiêu đề cell sinh từ kết quả chạy, nên đọc đúng màn hình.</p>
+    <p><b>Câu chốt:</b> “Phép tính do Neo4j thực thi, không để LLM ước lượng; LLM chỉ viết truy vấn và diễn giải kết quả.”</p>
+  </div>
+  <div class="done-row"><button class="btn ok" data-done="ba-mau">✓ Mình hiểu rồi</button></div>
+</section>
+<script>
+(function(){
+  /* ---------- 3 mẫu truy xuất ---------- */
+  const P={
+    local:{t:'<h4>📍 Local: hỏi hàng xóm</h4><p class="small">Đứng ở <b>một thực thể</b> (ví dụ một phường), đi ra các nút kề bên: quận chứa nó, các phường <b>cùng cụm giá</b> Leiden, các tin trong nó.</p><p class="small">Cell P4-04 LIVE: từ các phường của Quận 7, mở ra những phường cùng cụm.</p><p class="small">🧸 Như hỏi: “Quanh nhà mình có những ai giống mình?”</p>'},
+    global:{t:'<h4>🌍 Global: đọc bản tóm tắt từng xóm</h4><p class="small">Chia đồ thị thành <b>cộng đồng</b>, nhờ LLM <b>tóm tắt trước</b> từng cộng đồng, khi hỏi thì gộp các bản tóm tắt (map-reduce). Hợp với câu “chủ đề chính của cả kho là gì?”.</p><p class="small pill-no">Nhóm không chạy: cần LLM tóm tắt trước, tốn lời gọi; dữ liệu đã có cột nên tính thẳng chính xác hơn.</p>'},
+    t2c:{t:'<h4>✍️ Text2Cypher: viết phiếu tra cứu</h4><p class="small">LLM đọc câu hỏi + <span class="term">schema</span> + vài ví dụ mẫu, viết <b>một câu Cypher</b>; Neo4j chạy trên <b>toàn tập</b> (hoặc đọc <span class="term">MarketStat</span> tính sẵn) và trả về con số chính xác.</p><p class="small pill-ok">Nhóm chọn cách này: câu hỏi nhà đất phần lớn là lọc và tính trên cột.</p>'}
+  };
+  const svg=document.getElementById('patSvg'),txt=document.getElementById('patTxt');
+  const nodes=[[160,110,'W','var(--graph)'],[160,35,'Q','var(--accent)'],[80,70,'',''],[240,70,'',''],[80,150,'',''],[240,150,'',''],[160,185,'',''],[40,30,'',''],[280,30,'',''],[40,195,'',''],[280,195,'','']];
+  const edges=[[0,1],[2,0],[3,0],[4,0],[5,0],[6,0],[7,1],[8,1],[9,4],[10,5],[2,7],[3,8]];
+  function draw(m){
+    const grp=[0,1,0,1,2,1,2,0,1,2,1];const gc=['var(--rag)','var(--graph)','var(--hybrid)'];
+    let h='';
+    edges.forEach(([a,b])=>{const on=m==='local'&&(a===0||b===0);h+=`<line x1="${nodes[a][0]}" y1="${nodes[a][1]}" x2="${nodes[b][0]}" y2="${nodes[b][1]}" stroke="${on?'var(--graph)':'var(--line)'}" stroke-width="${on?3:2}"/>`});
+    nodes.forEach((n,i)=>{let c='var(--llm)';
+      if(m==='local')c=i===0?'var(--graph)':(edges.some(e=>(e[0]===0&&e[1]===i)||(e[1]===0&&e[0]===i))?'var(--rag)':'var(--line)');
+      if(m==='global')c=gc[grp[i]];
+      if(m==='t2c')c=i<2?'var(--accent)':'var(--rag)';
+      h+=`<circle cx="${n[0]}" cy="${n[1]}" r="${i===0?16:12}" fill="${c}"><animate attributeName="r" values="${i===0?16:12};${i===0?19:14};${i===0?16:12}" dur="${1.4+i*.1}s" repeatCount="indefinite"/></circle>`});
+    if(m==='global')h+='<text x="160" y="214" text-anchor="middle" font-size="11" fill="var(--muted)">ba màu = ba cộng đồng, mỗi cộng đồng một bản tóm tắt</text>';
+    if(m==='t2c')h+='<rect x="8" y="8" width="150" height="26" rx="6" fill="var(--code-bg)"/><text x="16" y="25" font-size="11" fill="#9ece6a" font-family="Consolas,monospace">MATCH … RETURN …</text><text x="160" y="214" text-anchor="middle" font-size="11" fill="var(--muted)">duyệt toàn bộ, tính chính xác</text>';
+    if(m==='local')h+='<text x="160" y="214" text-anchor="middle" font-size="11" fill="var(--muted)">nút cam = phường; xanh = láng giềng trực tiếp</text>';
+    svg.innerHTML=h;txt.innerHTML=P[m].t;if(window.bindTerms)bindTerms(txt);
+  }
+  document.querySelectorAll('#pat button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#pat button').forEach(x=>x.classList.toggle('on',x===b));draw(b.dataset.m)});
+  draw('local');
+
+  /* ---------- 5 trạm an toàn ---------- */
+  const FORBIDDEN=/\b(CREATE|MERGE|DELETE|DETACH|SET|REMOVE|DROP|LOAD\s+CSV|CALL|FOREACH|USE|SHOW|GRANT|DENY|REVOKE|ALTER|RENAME)\b/i; // giống hệt src/vre/graph/guard.py
+  const WRITE=/\b(CREATE|MERGE|DELETE|SET|REMOVE|DROP)\b/i;
+  const MAXROWS=num(V.cfgMaxRows);
+  function ensureLimit(c,n=MAXROWS){c=c.trim().replace(/;\s*$/,'').trim();const i=c.toUpperCase().lastIndexOf('RETURN');const tail=i>=0?c.slice(i):c;return /\bLIMIT\b/i.test(tail)?c:c+'\nLIMIT '+n}
+  /*S-BEGIN*/const S=[
+    {k:'ok',l:'✅ Câu thật MH04',c:"MATCH (mp:MarketStat {scope: 'project', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'})-[:STAT_OF]->(p:Project)-[:IN_DISTRICT]->(d:District)\nWHERE toLower(p.name) CONTAINS 'vinhomes central park' AND mp.n >= 20\nMATCH (md:MarketStat {scope: 'district', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'})-[:STAT_OF]->(d)\nRETURN p.name AS project, d.name AS district, round(mp.median_price_m2_mil, 2) AS project_median_m2_mil, round(md.median_price_m2_mil, 2) AS district_median_m2_mil, round(mp.median_price_m2_mil / md.median_price_m2_mil, 2) AS ratio LIMIT 1"},
+    {k:'nolimit',l:'📏 Quên LIMIT',c:"MATCH (l:Listing)-[:IN_PROJECT]->(p:Project)\nWHERE toLower(p.name) CONTAINS 'masteri waterfront'\nRETURN l.listing_id AS listing_id, l.price_vnd AS price_vnd"},
+    {k:'del',l:'💣 Lệnh xoá',c:"MATCH (l:Listing) DETACH DELETE l"},
+    {k:'set',l:'🕵️ Lệnh sửa (thử tắt trạm regex)',c:"MATCH (l:Listing {listing_id: -1}) SET l.x = 1"},
+    {k:'heavy',l:'🐢 Câu quá nặng',c:"MATCH p = (a:Listing)-[*1..8]-(b:Listing)\nRETURN count(p) AS so_duong LIMIT 1"},
+    {k:'typo',l:'🔁 Viết sai cú pháp',c:"MATCH (l:Listing)-[:OF_TYPE]->(t:PropertyType {name: 'Đất'})\nRETRUN count(l) AS so_tin"}
+  ];/*S-END*/
+  let cur=S[0];
+  const box=document.getElementById('cySamples'),inp=document.getElementById('cyIn');
+  S.forEach(s=>{const b=document.createElement('button');b.className='btn';b.textContent=s.l;b.onclick=()=>{cur=s;inp.value=s.c;document.getElementById('cyBypass').checked=s.k==='set';reset()};box.appendChild(b)});
+  inp.value=S[0].c;inp.addEventListener('input',()=>{cur={k:'custom',c:inp.value};reset()});
+  const G=['Trạm một · Regex chặn từ nguy hiểm','Trạm hai · Thêm LIMIT nếu thiếu','Trạm ba · Giao dịch chỉ đọc của Neo4j',`Trạm bốn · Timeout ${V.cfgTimeout} s, tối đa ${V.cfgMaxRows} dòng`,`Trạm năm · Lỗi thì gửi lỗi cho LLM, thử lại tối đa ${V.cfgRetries} lần`];
+  const gates=document.getElementById('gates'),res=document.getElementById('cyResult');
+  function reset(){gates.innerHTML=G.map((g,i)=>`<div class="card small" id="g${i}" style="transition:all .3s;opacity:.55">⏳ ${g}</div>`).join('');res.style.display='none'}
+  reset();
+  function mark(i,state,note){const el=document.getElementById('g'+i);el.style.opacity=1;
+    el.style.background=state==='pass'?'var(--good-soft)':state==='block'?'var(--bad-soft)':state==='fix'?'var(--warn-soft)':'var(--surface2)';
+    el.innerHTML=`${state==='pass'?'✅':state==='block'?'⛔':state==='fix'?'🔧':'—'} <b>${G[i]}</b><br>${note}`}
+  document.getElementById('cyRun').onclick=async()=>{
+    reset();const q=inp.value,bypass=document.getElementById('cyBypass').checked;const wait=ms=>new Promise(r=>setTimeout(r,ms));
+    const steps=[];
+    if(!bypass && FORBIDDEN.test(q)){const m=q.match(FORBIDDEN)[0];steps.push([0,'block',`Phát hiện từ <code>${esc(m.toUpperCase())}</code> → không gửi tới Neo4j. LLM nhận lỗi “bị chặn: câu Cypher chứa lệnh ghi hoặc lệnh quản trị” và được yêu cầu viết lại.`]);}
+    else{
+      steps.push([0,bypass?'skip':'pass',bypass?'(giả sử lọt qua)':'Không có từ nguy hiểm.']);
+      const fixed=ensureLimit(q);const added=fixed!==q.trim().replace(/;\s*$/,'').trim();
+      steps.push([1,added?'fix':'pass',added?`Thiếu LIMIT ở RETURN cuối → tự thêm <code>LIMIT ${V.cfgMaxRows}</code>.`:'Đã có LIMIT.']);
+      if(WRITE.test(q)) steps.push([2,'block','Neo4j mở phiên <i>chỉ đọc</i> nên từ chối lệnh ghi, trả lỗi <code>Neo.ClientError.Statement.AccessMode</code>. Đây là lưới an toàn thứ hai khi regex sót.']);
+      else{
+        steps.push([2,'pass','Chỉ đọc → được chạy.']);
+        if(cur.k==='heavy') steps.push([3,'block',`(mô phỏng) Đường đi dài nhiều bước bùng nổ số tổ hợp → quá ${V.cfgTimeout} s, Neo4j huỷ giao dịch. Lỗi được gửi lại cho LLM ở trạm năm.`]);
+        else if(cur.k==='typo'){steps.push([3,'pass','—']);steps.push([4,'fix','(mô phỏng) Neo4j báo lỗi cú pháp ở <code>RETRUN</code>. Code gửi lại cho LLM: câu hỏi + câu Cypher trước + thông báo lỗi + “Hãy viết lại câu Cypher đúng.” Lần sau LLM sửa thành <code>RETURN</code> và chạy được.']);}
+        else if(cur.k==='custom'){steps.push([3,'skip','Chỉ kiểm được khi chạy thật trong notebook có Neo4j.']);steps.push([4,'skip','Chỉ kiểm được khi chạy thật trong notebook có Neo4j.'])}
+        else{steps.push([3,'pass',`Chạy xong trong giới hạn, đọc tối đa ${V.cfgMaxRows} dòng.`]);steps.push([4,'pass','Không lỗi, không cần thử lại.'])}
+      }
+    }
+    for(const s of steps){await wait(450);mark(...s)}
+    await wait(300);res.style.display='block';
+    const blocked=steps.some(s=>s[1]==='block');
+    res.innerHTML={
+      ok:`📊 Qua cả năm trạm và chạy được, nhưng <b>sai</b>: LLM trả lời gấp 1,96 lần, đáp án SQL là ${V.mh04Gt} lần. Năm trạm bảo vệ <b>dữ liệu</b>, không bảo đảm <b>đúng</b>; đúng/sai phải đo bằng đáp án chuẩn.`,
+      nolimit:`📊 Trả về tối đa ${V.cfgMaxRows} dòng tin của dự án, kèm <code>listing_id</code> để LLM trích [Tin#ID].`,
+      typo:`📊 Sau lần sửa, câu chạy được. Nếu thử đủ một lần đầu + ${V.cfgRetries} lần thử lại vẫn lỗi thì trả về rỗng → Hybrid lui về Basic RAG.`,
+      heavy:'📊 Không có kết quả → Hybrid coi như đồ thị lỗi và <b>lui về Basic RAG</b>.',
+      del:'🛡️ Dữ liệu an toàn: lệnh không bao giờ tới Neo4j.',
+      set:'🛡️ Dữ liệu an toàn: dù regex sót, cơ sở dữ liệu vẫn từ chối.'
+    }[cur.k] || (blocked?'🛡️ Bị chặn trước khi gây hại.':'ℹ️ Câu của bạn qua được trạm một và hai (logic code thật). Các trạm sau chỉ chạy thật trong notebook có Neo4j.');
+  };
+
+  /* ---------- đọc câu MH04 ---------- */
+  /*A2-BEGIN*/const A2=[
+    ["MATCH (mp:MarketStat {scope: 'project', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'})","Tìm node <b>MarketStat</b> thống kê sẵn ở cấp <b>dự án</b>, loại căn hộ, mọi tháng, tin bán. Không quét từng tin: đọc con số đã tính."],
+    ["      -[:STAT_OF]->(p:Project)-[:IN_DISTRICT]->(d:District)","…thống kê đó thuộc dự án <b>p</b>, dự án nằm trong quận <b>d</b>. Đây là bước đa chặng: Thống kê → Dự án → Quận."],
+    ["WHERE toLower(p.name) CONTAINS 'vinhomes central park' AND mp.n >= 20","Lọc dự án có tên <b>chứa</b> ‘vinhomes central park’, chỉ lấy thống kê đủ nhiều tin. ⚠️ CONTAINS khớp cả dự án con “The LandMark - Vinhomes Central Park”."],
+    ["MATCH (md:MarketStat {scope: 'district', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'})-[:STAT_OF]->(d)","Lấy thêm thống kê căn hộ cấp <b>quận</b> của chính quận <b>d</b> đó."],
+    ["RETURN p.name AS project, d.name AS district, round(mp.median_price_m2_mil, 2) AS project_median_m2_mil,","Trả tên dự án, tên quận, trung vị giá/m² của dự án…"],
+    ["       round(md.median_price_m2_mil, 2) AS district_median_m2_mil, round(mp.median_price_m2_mil / md.median_price_m2_mil, 2) AS ratio","…trung vị của quận, và tỷ số giữa hai con số: đây là đáp án câu hỏi."],
+    ["LIMIT 1","⚠️ Lấy <b>một</b> dòng mà không sắp xếp: khi có nhiều dự án khớp tên, dòng nào được lấy là tuỳ Neo4j. Chính chỗ này chọn nhầm dự án con."]
+  ];/*A2-END*/
+  const a2=document.getElementById('a2'),ex=document.getElementById('a2Exp');
+  a2.innerHTML=A2.map((r,i)=>`<div data-i="${i}" style="padding:2px 6px;border-radius:6px;cursor:pointer;white-space:pre">${esc(r[0])}</div>`).join('');
+  a2.querySelectorAll('div').forEach(d=>{const f=()=>{a2.querySelectorAll('div').forEach(x=>x.style.background='');d.style.background='var(--accent-soft)';ex.innerHTML=A2[d.dataset.i][1]};d.onmouseenter=f;d.onclick=f});
+})();
+</script>
+
+<section class="sec" id="router" data-sec>
+  <div class="sec-head"><span class="num">5</span><h2 style="margin:0">Router: bạn Lễ Tân chia việc, và đường lui khi hỏng</h2><span class="slidetag">gr-router · cell P4-06 LIVE</span></div>
+  <div class="box kid"><span class="lbl">🧸 Giải thích kiểu năm tuổi</span>
+    <p>Ở phòng khám, cô lễ tân nghe bệnh nhân kể rồi chỉ: “Ho thì sang khoa A, gãy tay sang khoa B, vừa ho vừa gãy tay thì gặp cả hai.” <span class="term">router</span> làm đúng việc đó với câu hỏi.</p>
+    <p>Nếu khoa B đóng cửa, cô lễ tân không bắt bệnh nhân về tay không mà gửi sang khoa A. Đó là <span class="term">đường lui</span>.</p>
+  </div>
+  <div class="grid g2">
+    <div class="card" style="border-top:4px solid var(--rag)"><b class="t-rag">basic_rag</b><p class="small">Tìm một tin cụ thể, hoặc liệt kê tin theo điều kiện (có lọc trước theo cột) kèm mô tả tự do.</p><p class="small muted">“Nhà gần trường học, hẻm xe hơi ở Gò Vấp”</p></div>
+    <div class="card" style="border-top:4px solid var(--graph)"><b class="t-graph">graph</b><p class="small">Đếm, trung vị, xếp hạng, so sánh khu vực, xu hướng theo tháng, thống kê theo dự án hoặc tuyến đường.</p><p class="small muted">“Quận nào ở Hà Nội có giá/m² trung vị cao nhất?”</p></div>
+    <div class="card" style="border-top:4px solid var(--hybrid)"><b class="t-hybrid">hybrid</b><p class="small">Vừa cần thực thể trên đồ thị (dự án, tuyến đường) vừa cần tin cụ thể và mô tả.</p><p class="small muted">“Có nhà mặt tiền nào trên đường Lê Văn Lương… không?”</p></div>
+    <div class="card" style="border-top:4px solid var(--accent)"><b style="color:var(--accent)">valuation</b><p class="small">Hỏi một bất động sản được mô tả “đáng giá bao nhiêu” → gọi mô hình định giá (chặng định giá).</p><p class="small muted">“Mảnh đất ở Thủ Đức bây giờ bán được khoảng bao nhiêu?”</p></div>
+  </div>
+  <p class="small">Router là <b>một lượt LLM</b>, trả lời bằng <span class="term">structured output</span> dạng <code>{"route": …, "reason": …}</code>. Prompt có vài ví dụ mẫu cho từng nhãn (<code>src/vre/hybrid/router.py</code>).</p>
+
+  <h3>🎮 Bạn làm Lễ Tân</h3>
+  <p class="small muted">Đây là <span data-v="nSub"></span> câu thật đã chạy trong lượt đánh giá. Chọn đường đi cho từng câu rồi so với nhãn đúng (<code>route_gold</code> trong <code>benchmark/questions.jsonl</code>).</p>
+  <div class="card" id="rg">
+    <div class="small muted" id="rgCount"></div>
+    <p id="rgQ" style="font-size:1.1rem;font-weight:600;min-height:56px"></p>
+    <div class="btns"><button class="btn" data-r="basic_rag" style="border-color:var(--rag)">📚 basic_rag</button><button class="btn" data-r="graph" style="border-color:var(--graph)">🧮 graph</button><button class="btn" data-r="hybrid" style="border-color:var(--hybrid)">🛎️ hybrid</button><button class="btn" data-r="valuation" style="border-color:var(--accent)">🏷️ valuation</button></div>
+    <div class="fb" id="rgFb"></div>
+    <div class="btns"><button class="btn primary" id="rgNext" style="display:none">Câu tiếp →</button></div>
+  </div>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card stat"><span class="big-num"><span data-v="routerAcc"></span>%</span><small>router thật chọn đúng nhãn · <span data-v="routerN"></span> câu</small></div>
+    <div class="card stat"><span class="big-num"><span data-v="routerExcl"></span>%</span><small>không tính nhóm phải từ chối · <span data-v="routerNExcl"></span> câu</small></div>
+  </div>
+  <div class="box key"><span class="lbl">💡 Router thật sai ở đâu?</span>
+    <p>Cả <b><span data-v="routerRagToHybrid"></span> câu sai</b> đều là câu nhãn <code>basic_rag</code> bị gửi sang <code>hybrid</code>: <span data-v="routerLookupWrong"></span> câu tra cứu và <span data-v="routerUnansWrong"></span> câu phải từ chối. Mọi câu nhãn <code>graph</code> (<span data-v="routerGraphOk"></span> câu) và <code>valuation</code> (<span data-v="routerValOk"></span> câu) đều đúng. Lý do dễ hiểu: câu tra cứu hay nhắc tên dự án (“Sun Feliza Suites”, “Mizuki Park”) nên trông giống câu cần thực thể trên đồ thị.</p>
+    <p class="small">Sai kiểu này ít hại: hybrid vẫn chạy RAG, nên nhóm tra cứu của Hybrid vẫn đúng <span data-v="catHybrid.0"></span>%.</p>
+  </div>
+
+  <h3>Đường lui: khi bạn Kế Toán bó tay</h3>
+  <p class="small muted">Chọn một tình huống để xem câu hỏi đi đường nào.</p>
+  <div class="btns" id="fbBtns">
+    <button class="btn" data-s="ok">✅ Đồ thị trả kết quả</button>
+    <button class="btn" data-s="err">❌ Cypher lỗi mọi lần thử</button>
+    <button class="btn" data-s="empty">🫙 Kết quả rỗng</button>
+    <button class="btn" data-s="down">🔌 Neo4j mất kết nối</button>
+  </div>
+  <svg id="fbSvg" viewBox="0 0 640 210" style="width:100%;max-width:680px;display:block;margin:6px auto"></svg>
+  <div class="card small" id="fbTxt">↑ chọn tình huống</div>
+  <p class="small muted">Tỷ lệ câu phải lui về Basic RAG chưa được ghi vào <code>results/eval_summary.json</code>, nên trang này không nêu con số.</p>
+
+  <h3>Mẹo làm nhanh: chạy song song</h3>
+  <div class="box kid"><span class="lbl">🧸 Giải thích kiểu năm tuổi</span>
+    <p>Trong lúc cô lễ tân còn đang đọc phiếu, <b>bạn Thủ Thư đã đi lấy sách trước</b>. Nếu cuối cùng cần sách (tuyến hybrid hoặc phải lui), sách đã có sẵn, không phải chờ thêm.</p>
+  </div>
+  <div class="seg" id="parSeg"><button data-m="seq">Làm lần lượt</button><button class="on" data-m="par">Làm song song (code thật)</button></div>
+  <div id="gantt" style="margin:12px 0"></div>
+  <p class="small muted">Độ dài thanh chỉ để minh hoạ thứ tự, không phải số đo. Đổi lại, tuyến graph vẫn tốn lượt trích bộ lọc RAG dù không dùng tới kết quả.</p>
+
+  <div class="box say"><span class="lbl">🎤 Khi chạy cell P4-06 trên lớp</span>
+    <p>Cell chạy router trên các câu benchmark có trong cache LLM và in bảng: mã câu, nhãn đúng, nhãn router chọn. Số câu trên màn hình có thể ít hơn <span data-v="routerN"></span> câu của slide; nói rõ con số trên slide là cả tập con đã đánh giá.</p>
+    <p><b>Câu chốt:</b> “RAG chạy song song với router và Cypher, nên đường lui không phải chờ thêm một lượt truy xuất.”</p>
+  </div>
+  <div class="done-row"><button class="btn ok" data-done="router">✓ Mình hiểu rồi</button></div>
+</section>
+
+<script>
+(function(){
+  /* ---------- trò chơi router: câu hỏi nguyên văn từ benchmark/questions.jsonl, đúng tập con đã đánh giá ---------- */
+  /*Q-BEGIN*/const Q=[
+    ["LK01", "lookup", "basic_rag", "Mình thấy tin bán căn hộ 3 phòng ngủ 80m2 ở Sun Feliza Suites Cầu Giấy giá 8 tỷ, căn đó có mấy WC vậy?"],
+    ["LK02", "lookup", "basic_rag", "Căn 4PN 132m2 tầng cao ở Sunshine Sky City Q7 rao 7,35 tỷ còn không, thông tin chi tiết thế nào?"],
+    ["LK03", "lookup", "basic_rag", "Tìm giúp tin bán căn hộ Masteri Waterfront 58,62m2 2 phòng ngủ giá 3,73 tỷ."],
+    ["LK04", "lookup", "basic_rag", "Biệt thự 224m2 trong khu biệt lập 44 căn ở Mizuki Park giá 21 tỷ có sổ hồng riêng chưa?"],
+    ["CS01", "constraint", "basic_rag", "Tìm căn hộ 2 phòng ngủ ở Quận 7 giá dưới 3 tỷ, chung cư có hồ bơi."],
+    ["CS02", "constraint", "basic_rag", "Nhà hxh Gò Vấp từ 4 tầng trở lên, diện tích từ 60m2, giá dưới 7 tỷ."],
+    ["CS03", "constraint", "basic_rag", "Đất Ngũ Hành Sơn, Đà Nẵng, diện tích 100 đến 150m2, giá dưới 5 tỷ, đăng trong tháng 3/2026."],
+    ["CS04", "constraint", "basic_rag", "Biệt thự hoặc liền kề ở Tây Hồ có thang máy và view hồ."],
+    ["AG01", "aggregate", "graph", "Giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy là bao nhiêu?"],
+    ["AG02", "aggregate", "graph", "gia nha trung binh moi m2 o go vap la bao nhieu (trung vi)?"],
+    ["AG03", "aggregate", "graph", "Có bao nhiêu tin rao bán đất ở Đà Nẵng trong dữ liệu?"],
+    ["AG04", "aggregate", "graph", "Quận nào ở Hà Nội có giá/m² căn hộ trung vị cao nhất (chỉ tính quận có từ 20 tin)?"],
+    ["MH01", "multihop", "graph", "Dự án Sunshine Sky City nằm ở quận nào, và giá/m² căn hộ của quận đó cao hay thấp hơn trung vị căn hộ toàn TP.HCM bao nhiêu %?"],
+    ["MH02", "multihop", "graph", "Masteri Waterfront thuộc quận nào của Hà Nội? Giá/m² căn hộ quận đó chênh bao nhiêu % so với trung vị căn hộ cả Hà Nội?"],
+    ["MH03", "multihop", "graph", "mizuki park o quan nao, gia can ho quan do so voi trung vi tp hcm chenh bao nhieu phan tram"],
+    ["MH04", "multihop", "graph", "Giá/m² trung vị căn hộ ở Vinhomes Central Park cao gấp bao nhiêu lần trung vị căn hộ của quận chứa dự án đó?"],
+    ["TM01", "temporal", "graph", "Giá/m² căn hộ trung vị ở Hà Nội tháng 3/2026 tăng hay giảm bao nhiêu % so với tháng 6/2025?"],
+    ["TM02", "temporal", "graph", "Tháng nào có nhiều tin rao bán đất ở Đà Nẵng nhất?"],
+    ["TM03", "temporal", "graph", "Trong giai đoạn có dữ liệu, tháng nào giá nhà/m² trung vị ở TP.HCM cao nhất?"],
+    ["TM04", "temporal", "graph", "Tháng 1/2026 có bao nhiêu tin bán căn hộ ở Quận 7?"],
+    ["CP01", "comparison", "graph", "Giá/m² căn hộ ở Cầu Giấy hay Nam Từ Liêm cao hơn?"],
+    ["CP02", "comparison", "graph", "nha o q3 hay phu nhuan dat hon tinh theo m2"],
+    ["CP03", "comparison", "graph", "Đất ở Đà Nẵng hay Khánh Hòa có giá/m² trung vị cao hơn?"],
+    ["CP04", "comparison", "graph", "Căn hộ Vinhomes Central Park và Vinhomes Golden River, dự án nào có giá/m² trung vị cao hơn?"],
+    ["PS01", "project_street", "graph", "Giá/m² trung vị căn hộ ở dự án Vinhomes Grand Park (Thủ Đức) là bao nhiêu?"],
+    ["PS02", "project_street", "graph", "Dự án Masteri Trinity Square có bao nhiêu tin rao bán?"],
+    ["PS03", "project_street", "graph", "Nhà mặt đường Quang Trung, Gò Vấp có giá/m² trung vị bao nhiêu?"],
+    ["PS04", "project_street", "graph", "Ở Quận 7, tuyến đường nào có nhiều tin rao bán nhất?"],
+    ["VA01", "valuation", "valuation", "Căn hộ 75m2, 2 phòng ngủ ở Cầu Giấy, Hà Nội hiện đáng giá khoảng bao nhiêu?"],
+    ["VA02", "valuation", "valuation", "Nhà 60m2, 4 tầng ở Gò Vấp, TP.HCM định giá khoảng bao nhiêu tiền?"],
+    ["VA03", "valuation", "valuation", "Mảnh đất 100m2 ở Thủ Đức bây giờ bán được khoảng bao nhiêu?"],
+    ["VA04", "valuation", "valuation", "dinh gia giup can ho 70m2 2pn o q7"],
+    ["UN01", "unanswerable", "graph", "Giá/m² căn hộ ở Cầu Giấy tháng 3/2024 là bao nhiêu?"],
+    ["UN02", "unanswerable", "graph", "Dự báo giá nhà ở Quận 7 vào năm 2027 sẽ tăng bao nhiêu %?"],
+    ["UN03", "unanswerable", "basic_rag", "Lãi suất vay mua nhà ở Vietcombank hiện là bao nhiêu?"],
+    ["UN04", "unanswerable", "basic_rag", "Đường Vành đai 4 có quy hoạch đi qua lô đất nào ở Hoài Đức không?"]
+  ];/*Q-END*/
+  const WHY={lookup:"Câu <b>tra cứu</b>: tìm một tin cụ thể theo mô tả. Nhãn đúng là basic_rag; router thật hay gửi nhầm loại này sang hybrid vì câu có tên dự án.",
+    constraint:"Câu <b>ràng buộc</b>: liệt kê tin theo điều kiện; Basic RAG lọc trước theo cột rồi tìm theo mô tả.",
+    aggregate:"Câu <b>tổng hợp</b>: trung vị, đếm, xếp hạng trên toàn tập → chỉ đồ thị tính được.",
+    multihop:"Câu <b>đa chặng</b>: dự án → quận → so với cả tỉnh, phải đi qua nhiều bước rồi tính.",
+    temporal:"Câu <b>thời gian</b>: so sánh hoặc xếp hạng theo tháng đăng, đọc MarketStat theo tháng.",
+    comparison:"Câu <b>so sánh</b>: hai khu vực hoặc hai dự án, cần trung vị của cả hai.",
+    project_street:"Câu <b>dự án, đường</b>: thống kê theo dự án hoặc tuyến đường, có node riêng trên đồ thị.",
+    valuation:"Câu <b>định giá</b>: hỏi một bất động sản giả định đáng giá bao nhiêu → mô hình định giá.",
+    unanswerable:"Câu <b>phải từ chối</b>: dữ liệu không có (ngoài khoảng thời gian, dự báo, lãi suất, quy hoạch). Nhãn ghi nguồn sẽ tìm, nhưng điểm chỉ có khi câu trả lời từ chối."};
+  let order=[...Q.keys()].sort(()=>Math.random()-.5),i=0,score=0,answered=false;
+  const qEl=document.getElementById('rgQ'),fb=document.getElementById('rgFb'),cnt=document.getElementById('rgCount'),nx=document.getElementById('rgNext');
+  function show(){
+    if(i>=order.length){qEl.innerHTML=`🎉 Xong! Bạn đúng <b>${score}/${Q.length}</b>. Router thật đúng ${V.routerAcc}%.`;fb.className='fb';nx.style.display='inline-block';nx.textContent='Chơi lại';cnt.textContent='';return}
+    const q=Q[order[i]];answered=false;cnt.textContent=`Câu ${i+1}/${Q.length} · mã ${q[0]} · bạn đang đúng ${score}`;qEl.textContent='“'+q[3]+'”';fb.className='fb';nx.style.display='none';
+  }
+  document.querySelectorAll('#rg [data-r]').forEach(b=>b.onclick=()=>{
+    if(answered||i>=order.length)return;answered=true;const q=Q[order[i]],ok=b.dataset.r===q[2];if(ok)score++;
+    fb.className='fb show '+(ok?'ok':'no');fb.innerHTML=(ok?'✓ Đúng! ':'✗ Nhãn đúng là <b>'+q[2]+'</b>. ')+WHY[q[1]];
+    nx.style.display='inline-block';nx.textContent='Câu tiếp →';
+  });
+  nx.onclick=()=>{if(i>=order.length){order.sort(()=>Math.random()-.5);i=0;score=0}else i++;show()};
+  show();
+
+  /* ---------- đường lui ---------- */
+  const svg=document.getElementById('fbSvg'),tx=document.getElementById('fbTxt');
+  const B=(x,y,w,t,c,id)=>`<g id="${id}"><rect x="${x}" y="${y}" width="${w}" height="${40}" rx="${10}" fill="var(--surface2)" stroke="${c}" stroke-width="${2}"/><text x="${x+w/2}" y="${y+25}" text-anchor="middle" font-size="${12.5}" fill="var(--ink)">${t}</text></g>`;
+  function base(){return B(10,85,100,'Câu hỏi','var(--muted)','n0')+B(140,85,100,'Router','var(--accent)','n1')+B(280,25,140,'Text2Cypher → Neo4j','var(--graph)','n2')+B(280,145,140,'Basic RAG (top-k)','var(--rag)','n3')+B(470,85,150,'LLM viết câu trả lời','var(--hybrid)','n4')}
+  const L=(x1,y1,x2,y2,c,d)=>`<path d="M${x1},${y1} L${x2},${y2}" stroke="${c}" stroke-width="${3}" fill="none" stroke-dasharray="${d?'6 5':'0'}"><animate attributeName="stroke-dashoffset" from="${40}" to="${0}" dur="1s" repeatCount="indefinite"/></path>`;
+  const S={
+    ok:{p:[[110,105,140,105],[240,100,280,50],[420,45,470,100]],t:'Router chọn <b>graph</b>, Cypher chạy được và có dòng kết quả → ngữ cảnh là câu Cypher + bảng kết quả. LLM ghi nguồn <code>[Cypher]</code>. Kết quả RAG chạy song song bị bỏ.'},
+    err:{p:[[110,105,140,105],[240,100,280,50],[350,65,350,145],[420,165,470,110]],bad:true,t:`Cypher lỗi cả một lần đầu và ${V.cfgRetries} lần thử lại → coi như đồ thị không trả lời → <b>lui về Basic RAG</b>. Câu trả lời vẫn có, chỉ là bằng chứng từ top-k tin.`},
+    empty:{p:[[110,105,140,105],[240,100,280,50],[350,65,350,145],[420,165,470,110]],bad:true,t:'Cypher chạy nhưng trả về <b>không dòng nào</b> (ví dụ tên dự án viết khác trong dữ liệu) → lui về Basic RAG.'},
+    down:{p:[[110,105,140,105],[240,100,280,50],[350,65,350,145],[420,165,470,110]],bad:true,t:'Neo4j mất kết nối hoặc hết giờ → code bắt lỗi, ghi log “lui về Basic RAG”, không làm hỏng cả câu trả lời.'}
+  };
+  function run(k){const s=S[k];let h=base();s.p.forEach((p,j)=>{h+=L(...p,j===2&&s.bad?'var(--bad)':'var(--accent)',true)});
+    if(s.bad)h+=`<text x="${358}" y="${110}" font-size="${20}">⚠️</text>`;svg.innerHTML=h;tx.innerHTML=s.t}
+  svg.innerHTML=base();
+  document.querySelectorAll('#fbBtns button').forEach(b=>b.onclick=()=>run(b.dataset.s));
+
+  /* ---------- song song (đơn vị minh hoạ, không phải số đo) ---------- */
+  const gantt=document.getElementById('gantt');
+  function G(mode){
+    const rows=mode==='par'
+      ?[['Trích bộ lọc + tìm top-k (RAG)',0,45,'var(--rag)'],['Router',0,25,'var(--accent)'],['Text2Cypher + Neo4j',25,35,'var(--graph)'],['LLM viết câu trả lời',60,40,'var(--hybrid)']]
+      :[['Router',0,25,'var(--accent)'],['Text2Cypher + Neo4j',25,35,'var(--graph)'],['Trích bộ lọc + tìm top-k (RAG)',60,45,'var(--rag)'],['LLM viết câu trả lời',105,40,'var(--hybrid)']];
+    const max=145,end=Math.max(...rows.map(r=>r[1]+r[2]));
+    gantt.innerHTML=rows.map(r=>`<div class="bar-row" style="grid-template-columns:minmax(120px,210px) 1fr"><span class="small">${r[0]}</span><div class="bar-track" style="position:relative;background:transparent;border:0"><div style="position:absolute;left:${r[1]/max*100}%;width:0;height:100%;background:${r[3]};border-radius:6px;transition:width .8s" data-w="${r[2]/max*100}%"></div></div></div>`).join('')
+      +`<p class="small center"><b>Xong ở mốc ${end}</b> (đơn vị minh hoạ)</p>`;
+    requestAnimationFrame(()=>gantt.querySelectorAll('[data-w]').forEach(e=>e.style.width=e.dataset.w));
+  }
+  document.querySelectorAll('#parSeg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#parSeg button').forEach(x=>x.classList.toggle('on',x===b));G(b.dataset.m)});
+  G('par');
+})();
+</script>
+
+<section class="sec" id="hai-tang" data-sec>
+  <div class="sec-head"><span class="num">6</span><h2 style="margin:0">Đánh giá ở hai tầng: đi chợ và nấu ăn</h2><span class="slidetag">ev-layers · ev-setup</span></div>
+  <div class="box kid"><span class="lbl">🧸 Giải thích kiểu năm tuổi</span>
+    <p>Muốn biết vì sao món canh dở, phải hỏi hai chuyện: <b>đi chợ có mua đúng rau không?</b> (tầng 1, <b>truy xuất</b>) và <b>nấu có ra đúng món khách gọi không?</b> (tầng 2, <b>câu trả lời</b>). Mua sai rau thì đầu bếp giỏi mấy cũng hỏng; mua đúng mà vẫn dở thì lỗi ở người nấu.</p>
+  </div>
+  <p class="small muted">Bấm vào từng khâu để xem chỉ số nào đo khâu đó.</p>
+  <div class="flow" id="evFlow">
+    <div class="st" data-k="q"><b>Câu hỏi</b></div><span class="ar">→</span>
+    <div class="st" data-k="r"><b>Truy xuất</b>🛒 đi chợ</div><span class="ar">→</span>
+    <div class="st" data-k="c"><b>Ngữ cảnh</b>🧺 giỏ rau</div><span class="ar">→</span>
+    <div class="st" data-k="g"><b>Sinh</b>🍳 nấu</div><span class="ar">→</span>
+    <div class="st" data-k="a"><b>Câu trả lời</b>🍲 món ăn</div>
+  </div>
+  <div class="card" id="evInfo" style="min-height:110px"></div>
+
+  <h3>🩺 Trò chơi bác sĩ: chỉ số nào thấp thì chữa khâu nào?</h3>
+  <div id="doc" class="grid" style="gap:10px"></div>
+
+  <h3>Thiết lập lượt đánh giá (ev-setup)</h3>
+  <div class="grid g3">
+    <div class="card stat"><span class="big-num" data-v="nBench"></span><small>câu trong benchmark, <span data-v="nCat"></span> nhóm, đáp án chuẩn bằng SQL</small></div>
+    <div class="card stat"><span class="big-num" data-v="nSub"></span><small>câu đã chạy: tập con <span data-v="perCat"></span> câu mỗi nhóm</small></div>
+    <div class="card stat"><span class="big-num" data-v="nSys"></span><small>hệ trên cùng câu hỏi: LLM thuần, Basic RAG, Graph, Hybrid</small></div>
+  </div>
+  <div class="grid g2">
+    <div class="card small"><b>Mô hình sinh:</b> <code>gemini-flash-lite-latest</code> (gói miễn phí). Kế hoạch ban đầu là mô hình khác, đổi vì hết hạn mức API; mọi hệ dùng cùng một mô hình nên vẫn so được với nhau.</div>
+    <div class="card small"><b>Giám khảo:</b> không có (<code>llm.judge = null</code>). Câu trả lời được <span class="term">chấm bằng luật</span> so với <span class="term">đáp án chuẩn</span>; <span class="term">Faithfulness</span> để trống.</div>
+  </div>
+  <div class="box warn"><span class="lbl">📏 Luật chấm (nguyên tắc trong <code>eval_summary.json → scoring_rules</code>)</span>
+    <p class="small">• <b>Câu tìm tin</b> (tra cứu, ràng buộc): <span class="term">Recall@k</span> theo cụm tin trùng trên các tin hệ thống đưa ra; đủ cao được 2 điểm, có trúng ít nhất một tin được 1 điểm.<br>
+    • <b>Câu ra số</b>: có một con số trong câu trả lời nằm trong sai số cho phép so với đáp án SQL được 2 điểm; lệch xa hơn một chút được 1 điểm.<br>
+    • <b>Câu ra tên</b> (quận, tháng, dự án): câu trả lời phải chứa đúng chuỗi đáp án.<br>
+    • <b>Câu phải từ chối</b>: có câu từ chối (không có dữ liệu, ngoài phạm vi) mới được điểm.<br>
+    • <b>“Đúng”</b> = đạt trọn 2 điểm; độ chính xác = tỷ lệ câu đúng.</p>
+  </div>
+
+  <h3>Đáp án chuẩn: tính bằng SQL, không gõ tay, không nhờ LLM</h3>
+  <p>Mỗi câu trong <code>benchmark/questions.jsonl</code> có một câu <code>gt_sql</code> chạy bằng DuckDB trên view <code>v_listings</code> của toàn bộ bảng sạch; kết quả lưu ở <code>results/benchmark_gt.json</code>. Ví dụ thật:</p>
+  <div class="scroll-x"><table class="tbl small">
+    <tr><th>Câu</th><th>Loại đáp án</th><th>Đáp án tính ra</th></tr>
+    <tr><td>LK03 tra cứu</td><td><code>ids</code> · danh sách mã tin</td><td><span data-v="lk03Ids"></span> tin đúng</td></tr>
+    <tr><td>CS01 ràng buộc</td><td><code>ids</code></td><td><span data-v="cs01Ids"></span> tin thoả điều kiện</td></tr>
+    <tr><td>AG01 tổng hợp</td><td><code>value</code> · một con số</td><td><span data-v="ag01Gt"></span> triệu/m² (<span data-v="ag01N"></span> tin)</td></tr>
+    <tr><td>AG03 tổng hợp</td><td><code>value</code></td><td><span data-v="ag03Gt"></span> tin đất Đà Nẵng</td></tr>
+    <tr><td>MH01 đa chặng</td><td><code>value</code></td><td>Quận 7, cao hơn trung vị TP.HCM <span data-v="mh01Gt"></span>%</td></tr>
+    <tr><td>UN03 phải từ chối</td><td><code>refusal</code></td><td>không có SQL: dữ liệu không chứa lãi suất ngân hàng</td></tr>
+  </table></div>
+  <div class="box key"><span class="lbl">💡 Vì sao quan trọng</span><p>Đáp án chuẩn <b>không phụ thuộc LLM</b> nên ai cũng chạy lại được. Luật chấm cũng không dùng LLM, nên kết quả lặp lại được; đổi lại, luật có thể chấm oan vài câu (mục 12 có một ví dụ).</p></div>
+  <div class="box say"><span class="lbl">🎤 Câu chốt</span><p>“Chỉ số nào thấp thì cải thiện đúng khâu đó.”</p></div>
+  <div class="done-row"><button class="btn ok" data-done="hai-tang">✓ Mình hiểu rồi</button></div>
+</section>
+<script>
+(function(){
+  const I={
+    q:`Câu hỏi là đầu vào, không chấm điểm. Benchmark có ${V.nBench} câu thuộc ${V.nCat} nhóm; lượt đánh giá lấy ${V.perCat} câu mỗi nhóm.`,
+    r:'<b>Tầng 1 · Truy xuất: có tìm đúng tin không?</b><ul class="small"><li><span class="term">Recall@k</span>: tìm <b>đủ</b> các tin đúng trong top-k chưa?</li><li><span class="term">MRR</span>: tin đúng <b>đầu tiên</b> xếp hạng mấy?</li><li><span class="term">nDCG</span>: mọi tin đúng có đứng cao không?</li></ul>',
+    c:'<b>Ngữ cảnh</b> là những gì đưa cho LLM: top-k tin, hoặc câu Cypher + bảng kết quả. <span class="term">Context Precision</span> (RAGAS) hỏi ngữ cảnh hữu ích có được xếp đầu không; lượt này không đo.',
+    g:'<b>Tầng 2 · Sinh</b>: <span class="term">Faithfulness</span> hỏi mỗi nhận định trong câu trả lời có căn cứ trong ngữ cảnh không. Cần LLM giám khảo nên lượt này để trống.',
+    a:'<b>Tầng 2 · Câu trả lời</b>: so với <span class="term">đáp án chuẩn</span> bằng luật: đúng tin, đúng số trong sai số cho phép, đúng tên, hoặc từ chối đúng lúc.'
+  };
+  const box=document.getElementById('evInfo');
+  document.querySelectorAll('#evFlow .st').forEach(s=>s.onclick=()=>{document.querySelectorAll('#evFlow .st').forEach(x=>x.classList.toggle('lit',x===s));box.innerHTML=I[s.dataset.k];bindTerms(box)});
+  document.querySelector('#evFlow [data-k="r"]').click();
+
+  const D=[
+    ['Recall@k thấp','Thiếu tin đúng trong top-k','r','Đi chợ thiếu rau: sửa truy xuất (lọc trước, gộp BM25 + dense).'],
+    ['MRR thấp','Tin đúng có nhưng nằm cuối danh sách','r','Rau đúng bị vùi dưới đáy giỏ: sửa xếp hạng (RRF, rerank).'],
+    ['Đúng tin mà sai đáp án','Ngữ cảnh có số đúng nhưng câu trả lời ghi số khác','g','Đầu bếp có rau mà nấu sai: sửa prompt sinh, hoặc sửa Cypher nếu bảng kết quả sai.'],
+    ['Không chịu từ chối','Câu ngoài dữ liệu mà vẫn trả lời','g','Khách gọi món quán không có mà vẫn bưng ra: sửa prompt “không có thì nói không có”.']
+  ];
+  const doc=document.getElementById('doc');
+  D.forEach(d=>{const el=document.createElement('div');el.className='card';
+    el.innerHTML=`<b>🤒 ${d[0]}</b> <span class="small muted">· ${d[1]}</span><div class="btns"><button class="btn" data-a="r">🛒 Chữa khâu truy xuất</button><button class="btn" data-a="g">🍳 Chữa khâu sinh/prompt</button></div><div class="fb"></div>`;
+    el.querySelectorAll('button').forEach(b=>b.onclick=()=>{const f=el.querySelector('.fb'),ok=b.dataset.a===d[2];f.className='fb show '+(ok?'ok':'no');f.innerHTML=(ok?'✓ Đúng. ':'✗ Chưa đúng. ')+d[3]});
+    doc.appendChild(el)});
+})();
+</script>
+
+<section class="sec" id="recall" data-sec>
+  <div class="sec-head"><span class="num">7</span><h2 style="margin:0">Recall@k và MRR: tự tay tính, rồi đọc ablation</h2><span class="slidetag">ev-layers · ev-ablation · cell P4-08 LIVE</span></div>
+
+  <h3>Recall@k: tìm có đủ không?</h3>
+  <div class="box kid"><span class="lbl">🧸 Giải thích kiểu năm tuổi</span>
+    <p>Mẹ dặn mua <b>ba thứ</b>: d1, d4, d7. Bạn chỉ được xách <b>năm món</b> về. Trong giỏ có d1 và d4, quên d7 → nhớ được <b>hai phần ba</b>. Đó là Recall@5.</p>
+  </div>
+  <p class="mono center" style="font-size:1.05rem">Recall@k = |đúng ∩ top-k| / min(|đúng|, k)</p>
+  <p class="small muted">Bấm vào các ô d1…d9 ở hàng dưới để đổi “thứ mẹ dặn”. Kéo thanh k để đổi cỡ giỏ.</p>
+  <div class="card">
+    <div class="small"><b>Giỏ (top-k hệ thống trả về, theo thứ hạng):</b></div>
+    <div id="rcList" class="btns"></div>
+    <div class="small" style="margin-top:6px"><b>Thứ mẹ dặn (tin đúng):</b></div>
+    <div id="rcRel" class="btns"></div>
+    <label class="small">k = <b id="kVal"></b> <input type="range" id="kRange" min="1" max="5" value="5" style="vertical-align:middle;width:160px"></label>
+    <label class="small" style="margin-left:14px"><input type="checkbox" id="capT" checked> chia cho min(|đúng|, k)</label>
+    <div class="big-num" id="rcOut" style="margin-top:8px"></div>
+    <div class="small muted" id="rcExp"></div>
+  </div>
+  <div class="box warn"><span class="lbl">⚠️ Vì sao chia cho min(|đúng|, k)?</span>
+    <p>Câu ràng buộc CS01 có <b><span data-v="cs01Ids"></span> tin đúng</b>, nhưng giỏ chỉ chứa <span data-v="topK"></span>. Nếu chia cho <span data-v="cs01Ids"></span> thì hệ thống hoàn hảo cũng chỉ được <span data-v="cs01Naive"></span>. Chia cho min(<span data-v="cs01Ids"></span>, k) = k thì lấy đủ k tin đúng sẽ được trọn điểm. Câu tra cứu chỉ có một vài tin đúng nên công thức như bình thường. Luật chấm còn đếm theo <b>cụm tin trùng</b>: hai tin đăng lại cùng một căn chỉ tính một lần.</p>
+  </div>
+
+  <h3>MRR: phải lật đến tờ thứ mấy?</h3>
+  <div class="box kid"><span class="lbl">🧸 Giải thích kiểu năm tuổi</span>
+    <p>Tìm chìa khoá trong chồng giấy. Thấy ngay tờ đầu: trọn điểm. Tờ thứ hai: nửa điểm. Tờ thứ ba: một phần ba điểm. Không thấy: không điểm. Hỏi nhiều câu rồi lấy trung bình là MRR.</p>
+  </div>
+  <p class="mono center" style="font-size:1.05rem">MRR = trung bình của 1 / hạng tin đúng đầu tiên</p>
+  <div class="card" id="mrrBox"></div>
+
+  <h3>Số thật ① · truy xuất trong lượt đánh giá (<span data-v="retN"></span> câu tra cứu và ràng buộc)</h3>
+  <div class="scroll-x"><table class="tbl small">
+    <tr><th>Hệ</th><th class="c">Recall@5</th><th class="c">MRR</th><th>Ghi chú</th></tr>
+    <tr><td><span class="chip c-rag">Basic RAG</span></td><td class="c"><b data-v="retRagR5"></b></td><td class="c"><b data-v="retRagMrr"></b></td><td>top-k tin đưa vào ngữ cảnh</td></tr>
+    <tr><td><span class="chip c-graph">Graph</span></td><td class="c"><b data-v="retGraphR5"></b></td><td class="c"><b data-v="retGraphMrr"></b></td><td>Cypher lọc đúng điều kiện cột, trả mã tin</td></tr>
+  </table></div>
+  <p class="small muted">Hybrid có cùng số với Basic RAG vì router gửi các câu này sang basic_rag hoặc hybrid, đều dùng phần RAG. Mẫu chỉ <span data-v="retN"></span> câu.</p>
+
+  <h3>Số thật ② · ablation truy xuất (ev-ablation, <span data-v="abQ"></span> câu, chỉ mục đầy đủ)</h3>
+  <p class="small muted">Chạy thẳng trên chỉ mục e5-large đủ <span data-v="chunks"></span> chunk, chunk <span data-v="chunkSize"></span> token, không qua mô hình sinh nên không tốn lời gọi API. Rerank không có vì model cross-encoder chưa có trong cache.</p>
+  <div class="seg" id="t1Seg"><button class="on" data-c="0">Recall@5</button><button data-c="1">MRR</button><button data-c="2">Độ trễ p50 (ms)</button></div>
+  <div class="bars" id="t1Bars"></div>
+  <div class="box key"><span class="lbl">💡 Đọc ablation thế nào</span>
+    <p>• <b>Bước nhảy lớn nhất đến từ <span class="term">lọc trước</span></b>: dense <span data-v="ab_dense.0"></span> → <b><span data-v="ab_dense_prefilter.0"></span></b>, BM25 <span data-v="ab_bm25.0"></span> → <b><span data-v="ab_bm25_prefilter.0"></span></b>, hybrid <span data-v="ab_hybrid.0"></span> → <b><span data-v="ab_hybrid_prefilter.0"></span></b> (Recall@5). Embedding không bảo đảm điều kiện cứng như “dưới ba tỷ”, “hai phòng ngủ”.</p>
+    <p>• Có lọc thì <b>BM25 + lọc</b> cao nhất ở cả Recall@5 (<span data-v="ab_bm25_prefilter.0"></span>) và MRR (<span data-v="ab_bm25_prefilter.1"></span>), hybrid + lọc đứng sau (<span data-v="ab_hybrid_prefilter.0"></span> và <span data-v="ab_hybrid_prefilter.1"></span>). Nói thật: trên bộ này, gộp dense vào chưa giúp thêm khi đã lọc.</p>
+    <p>• Mọi con số đều thấp hơn nhiều so với truy xuất trong lượt đánh giá, vì ablation không có bước LLM trích bộ lọc đầy đủ như hệ thật và đo trên tập câu khác. Đừng so trực tiếp hai bảng.</p>
+  </div>
+  <div class="box say"><span class="lbl">🎤 Khi chạy cell P4-08 trên lớp</span>
+    <p>Cell chạy một ví dụ nhỏ có <code>assert</code> kiểm công thức, rồi in Recall@5, MRR thật đọc từ <code>results/</code>. Tiêu đề cell sinh từ kết quả, đọc đúng màn hình.</p>
+    <p><b>Câu chốt:</b> “Lọc trước theo cột đóng góp nhiều nhất; không đo thì không biết thay đổi nào là cải tiến.”</p>
+  </div>
+  <div class="done-row"><button class="btn ok" data-done="recall">✓ Mình hiểu rồi</button></div>
+</section>
+<script>
+(function(){
+  /* ví dụ minh hoạ công thức, không phải số đo */
+  const retrieved=['d4','d2','d1','d9','d3'];let rel=new Set(['d1','d4','d7']);
+  const L=document.getElementById('rcList'),R=document.getElementById('rcRel'),kR=document.getElementById('kRange'),cap=document.getElementById('capT');
+  function upd(){
+    const k=+kR.value;document.getElementById('kVal').textContent=k;
+    const top=retrieved.slice(0,k),hit=top.filter(d=>rel.has(d));
+    L.innerHTML=retrieved.map((d,i)=>`<span class="btn" style="cursor:default;${i>=k?'opacity:.3;':''}${rel.has(d)&&i<k?'background:var(--good);color:#fff;border-color:var(--good)':''}">#${i+1} ${d}</span>`).join('');
+    R.innerHTML=['d1','d2','d3','d4','d5','d6','d7','d8','d9'].map(d=>`<button class="btn" data-d="${d}" style="${rel.has(d)?'background:var(--accent);color:#fff;border-color:var(--accent)':''}">${d}</button>`).join('');
+    R.querySelectorAll('button').forEach(b=>b.onclick=()=>{rel.has(b.dataset.d)?rel.delete(b.dataset.d):rel.add(b.dataset.d);upd()});
+    if(!rel.size){document.getElementById('rcOut').textContent='—';document.getElementById('rcExp').textContent='Chưa có tin đúng nào.';return}
+    const den=cap.checked?Math.min(rel.size,k):rel.size;
+    document.getElementById('rcOut').textContent=`Recall@${k} = ${hit.length}/${den} = ${(hit.length/den).toFixed(2).replace('.',',')}`;
+    document.getElementById('rcExp').innerHTML=`Trúng: ${hit.join(', ')||'không có'} · Bị sót: ${[...rel].filter(d=>!top.includes(d)).join(', ')||'không'}`;
+  }
+  kR.oninput=upd;cap.onchange=upd;upd();
+
+  const qs=[['Câu một',1],['Câu hai',3],['Câu ba',2]];const box=document.getElementById('mrrBox');
+  function m(){
+    box.innerHTML=qs.map((q,i)=>`<div class="bar-row" style="grid-template-columns:72px minmax(0,1fr) 82px"><span class="small">${q[0]}</span><select data-i="${i}" style="font:inherit;padding:6px;border-radius:8px;background:var(--surface2);color:var(--ink);border:1px solid var(--line)">${[1,2,3,4,5,0].map(r=>`<option value="${r}" ${r===q[1]?'selected':''}>${r?'tin đúng đầu ở hạng '+r:'không có trong top-k'}</option>`).join('')}</select><span class="bar-val">1/${q[1]||'∞'} = ${(q[1]?1/q[1]:0).toFixed(2)}</span></div>`).join('')
+      +`<div class="big-num" style="margin-top:8px">MRR = ${(qs.reduce((s,q)=>s+(q[1]?1/q[1]:0),0)/qs.length).toFixed(2).replace('.',',')}</div><div class="small muted">Đổi hạng ở từng câu để thấy MRR thay đổi.</div>`;
+    box.querySelectorAll('select').forEach(s=>s.onchange=()=>{qs[s.dataset.i][1]=+s.value;m()});
+  }
+  m();
+
+  const T={'dense':V.ab_dense,'dense + lọc':V.ab_dense_prefilter,'BM25':V.ab_bm25,'BM25 + lọc':V.ab_bm25_prefilter,'hybrid':V.ab_hybrid,'hybrid + lọc':V.ab_hybrid_prefilter};
+  const C={'dense':'var(--rag)','dense + lọc':'var(--rag)','BM25':'var(--llm)','BM25 + lọc':'var(--llm)','hybrid':'var(--hybrid)','hybrid + lọc':'var(--hybrid)'};
+  const bars=document.getElementById('t1Bars');
+  function draw(c){const mx=c===2?Math.max(...Object.values(T).map(v=>num(v[2]))):1;
+    bars.innerHTML=Object.entries(T).map(([k,v])=>`<div class="bar-row"><span>${k}</span><div class="bar-track"><div class="bar-fill" style="background:${C[k]};opacity:${k.includes('lọc')?1:.55}" data-w="${num(v[c])/mx*100}%"></div></div><span class="bar-val">${v[c]}</span></div>`).join('');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>bars.querySelectorAll('.bar-fill').forEach(b=>b.style.width=b.dataset.w)))}
+  document.querySelectorAll('#t1Seg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#t1Seg button').forEach(x=>x.classList.toggle('on',x===b));draw(+b.dataset.c)});
+  draw(0);
+})();
+</script>
+
+<section class="sec" id="ragas" data-sec>
+  <div class="sec-head"><span class="num">8</span><h2 style="margin:0">Faithfulness: hiểu chỉ số, và vì sao lượt này để trống</h2><span class="slidetag">ev-layers · cell P4-09 LIVE</span></div>
+  <div class="box kid"><span class="lbl">🧸 Giải thích kiểu năm tuổi</span>
+    <p>Bạn viết bài văn tả con mèo, nhìn ảnh con mèo. Cô giáo gạch từng câu: “mèo màu cam” ✓ có trong ảnh, “mèo đội mũ” ✗ ảnh không có. <b>Bao nhiêu câu có thật trong ảnh</b> chính là Faithfulness.</p>
+  </div>
+  <div class="box warn"><span class="lbl">⚠️ Trạng thái thật</span>
+    <p>Lượt đánh giá <b>không có <span class="term">LLM giám khảo</span></b>, nên Faithfulness, Answer Relevancy và Context Precision đều để trống (<code>ragas.*</code> = null, số câu chấm = <span data-v="ragasN"></span>). Hai chỉ số sau đã bỏ để tiết kiệm lời gọi API; Faithfulness cần một LLM tách và kiểm từng nhận định. Trên slide, nói rõ: “đã cài đặt, chưa chạy được trong lượt này”.</p>
+  </div>
+
+  <h3>① Faithfulness: tự tay làm giám khảo</h3>
+  <p class="small muted">Ngữ cảnh là kết quả Cypher thật của câu AG01. Câu trả lời dưới đây là bản <b>minh hoạ</b> có cài một ý bịa. Bấm từng nhận định để kiểm.</p>
+  <div class="grid g2">
+    <div class="card"><b>📄 Ngữ cảnh (Cypher)</b><p id="fCtx" style="font-family:Consolas,monospace;font-size:.88rem"></p></div>
+    <div class="card"><b>💬 Câu trả lời → tách thành bốn nhận định</b><div id="fClaims" class="btns" style="flex-direction:column;align-items:stretch"></div></div>
+  </div>
+  <div class="big-num center" id="fScore" style="margin-top:10px">Faithfulness = ?</div>
+  <p class="small">Trong code (<code>vre.eval.metrics.faithfulness</code>): nhận danh sách đúng/sai của từng nhận định và trả tỷ lệ đúng. Phần “tách nhận định và phán đúng/sai” là việc của LLM giám khảo, lượt này không có.</p>
+
+  <h3>② Answer Relevancy: đoán ngược câu hỏi</h3>
+  <div class="grid g2">
+    <div class="card small">Giám khảo đọc câu trả lời rồi <b>viết vài câu hỏi</b> mà câu trả lời đó trả lời được. Mỗi câu được biến thành vector, đo <span class="term">cosine</span> với câu hỏi gốc rồi lấy trung bình. Trả lời đúng trọng tâm thì câu hỏi đoán ngược sẽ giống câu gốc.</div>
+    <div class="card small"><b>🧸</b> Nghe một câu trả lời, đoán xem người ta đã hỏi gì. Đoán ra đúng câu hỏi ban đầu nghĩa là câu trả lời không lạc đề.</div>
+  </div>
+
+  <h3>③ Context Precision: đồ tốt có nằm trên cùng không?</h3>
+  <p class="small muted">Bấm ✓/✗ để đánh dấu ngữ cảnh hữu ích, dùng ▲▼ để đổi thứ tự. Công thức: trung bình của precision@i tại các vị trí hữu ích.</p>
+  <div class="card"><div id="cpList"></div><div class="big-num" id="cpOut" style="margin-top:8px"></div><div class="small muted" id="cpExp"></div></div>
+
+  <div class="box warn"><span class="lbl">⚠️ Bẫy quan trọng nhất: bám nguồn không có nghĩa là đúng</span>
+    <p>Câu AG01, Basic RAG trả lời: <i>“Không đủ dữ liệu để tính toán giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy.”</i> Câu này không bịa gì, nên nếu có giám khảo thì Faithfulness vẫn cao, nhưng nó <b>không trả lời</b> câu hỏi và bị chấm 0 điểm. Vì vậy thước đo chính của nhóm là so với đáp án chuẩn.</p>
+  </div>
+  <div class="box say"><span class="lbl">🎤 Câu chốt</span><p>“Đáp án chuẩn tính bằng SQL trên toàn bộ dữ liệu; chấm bằng luật nên ai chạy lại cũng ra cùng kết quả.”</p></div>
+  <div class="done-row"><button class="btn ok" data-done="ragas">✓ Mình hiểu rồi</button></div>
+</section>
+<script>
+(function(){
+  const ctxTxt=`median_price_m2_mil = ${V.ag01Gt} · n = ${V.ag01N}`;
+  const claims=[['Đây là căn hộ ở Cầu Giấy','(câu hỏi + Cypher lọc Cầu Giấy)',true],[`Giá trung vị ${V.ag01Gt} triệu/m²`,V.ag01Gt,true],[`Tính trên ${V.ag01N} tin`,V.ag01N,true],['Giá đang tăng mạnh',null,false]];
+  const box=document.getElementById('fClaims'),ctx=document.getElementById('fCtx'),sc=document.getElementById('fScore');const done=new Set();
+  ctx.textContent=ctxTxt;
+  claims.forEach((c,i)=>{const b=document.createElement('button');b.className='btn';b.style.textAlign='left';b.textContent=(i+1)+'. '+c[0];
+    b.onclick=()=>{done.add(i);
+      ctx.innerHTML=c[1]&&ctxTxt.includes(c[1])?esc(ctxTxt).replace(esc(c[1]),`<mark style="background:var(--good-soft);color:var(--good);padding:0 3px;border-radius:4px">${esc(c[1])}</mark>`):esc(ctxTxt)+(c[2]?`<br><span style="color:var(--good)">✓ ${esc(c[1])}</span>`:'<br><span style="color:var(--bad)">✗ ngữ cảnh không có thông tin xu hướng giá</span>');
+      b.style.background=c[2]?'var(--good-soft)':'var(--bad-soft)';b.textContent=(c[2]?'✓ ':'✗ ')+(i+1)+'. '+c[0];
+      const ok=claims.filter((x,j)=>done.has(j)&&x[2]).length;
+      sc.innerHTML=done.size===claims.length?`Faithfulness = ${ok}/${claims.length} = <span style="color:var(--accent)">${(ok/claims.length).toFixed(2).replace('.',',')}</span>`:`Đã kiểm ${done.size}/${claims.length} nhận định…`};
+    box.appendChild(b)});
+
+  let items=[['Tin đúng quận, đúng giá',true],['Tin sai quận',false],['Tin đúng quận, thiếu giá',true],['Tin loại hình khác',false]];
+  const L=document.getElementById('cpList');
+  function cp(){
+    L.innerHTML=items.map((it,i)=>`<div class="bar-row" style="grid-template-columns:40px 1fr auto"><b>#${i+1}</b><span class="small">${it[0]}</span><span><button class="btn" data-t="${i}" style="padding:4px 10px;${it[1]?'background:var(--good);color:#fff;border-color:var(--good)':''}">${it[1]?'✓':'✗'}</button> <button class="btn" data-u="${i}" style="padding:4px 8px">▲</button><button class="btn" data-d="${i}" style="padding:4px 8px">▼</button></span></div>`).join('');
+    L.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{items[b.dataset.t][1]=!items[b.dataset.t][1];cp()});
+    L.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{const i=+b.dataset.u;if(i>0){[items[i-1],items[i]]=[items[i],items[i-1]];cp()}});
+    L.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{const i=+b.dataset.d;if(i<items.length-1){[items[i+1],items[i]]=[items[i],items[i+1]];cp()}});
+    let hits=0,tot=0,parts=[];items.forEach((it,i)=>{if(it[1]){hits++;tot+=hits/(i+1);parts.push(`${hits}/${i+1}`)}});
+    document.getElementById('cpOut').textContent='Context Precision = '+(hits?(tot/hits).toFixed(2).replace('.',','):'—');
+    document.getElementById('cpExp').textContent=hits?`= (${parts.join(' + ')}) / ${hits}. Thử đưa hai ô ✓ lên đầu: điểm thành trọn vẹn.`:'Không có ngữ cảnh hữu ích nào → không điểm.';
+  }
+  cp();
+})();
+</script>
+
+<section class="sec" id="chi-phi" data-sec>
+  <div class="sec-head"><span class="num">9</span><h2 style="margin:0">Đúng thôi chưa đủ: tốn bao nhiêu, chậm bao lâu, rủi ro gì</h2><span class="slidetag">ev-cost · cell P4-12</span></div>
+  <div class="box kid"><span class="lbl">🧸 Giải thích kiểu năm tuổi</span>
+    <p>Đội nào giải đúng nhiều nhất chưa chắc đã là đội nên thuê, nếu đội đó <b>ăn nhiều kẹo</b> (token = tiền) và <b>làm chậm</b> (độ trễ). Phải nhìn cả ba thứ.</p>
+  </div>
+  <div class="seg" id="cSeg"><button class="on" data-m="0">⏱️ Độ trễ p50 (giây)</button><button data-m="1">⏱️ Độ trễ p95 (giây)</button><button data-m="2">🍬 Token vào/câu</button><button data-m="3">✍️ Token ra/câu</button></div>
+  <div class="bars" id="cBars"></div>
+  <p class="small muted"><span data-v="nSub"></span> câu × <span data-v="nSys"></span> hệ, mỗi câu chạy một lần, gồm router và Cypher nếu có. Gói API miễn phí nên chi phí ghi nhận là <span data-v="usd"></span> USD; token là thước đo chi phí thay thế.</p>
+  <div class="box key"><span class="lbl">💡 Đọc biểu đồ</span>
+    <p>• <b>Graph và Hybrid</b> đọc vào nhiều token nhất (<span data-v="costGraph.2"></span> và <span data-v="costHybrid.2"></span> mỗi câu, so với <span data-v="costRag.2"></span> của Basic RAG), vì prompt viết Cypher chứa cả schema đồ thị và ví dụ mẫu, Hybrid còn thêm lượt router.</p>
+    <p>• Độ trễ trung vị: Basic RAG <span data-v="costRag.0"></span> s, Graph <span data-v="costGraph.0"></span> s, Hybrid <span data-v="costHybrid.0"></span> s, LLM thuần <span data-v="costLlm.0"></span> s. Truy xuất thuần chỉ khoảng <span data-v="abDenseLat"></span> ms (ablation), nên phần lớn thời gian nằm ở các lượt gọi mô hình. Vì sao Basic RAG chậm hơn Graph ở trung vị thì chưa đo tách từng bước; đừng khẳng định nguyên nhân.</p>
+    <p>• p95 cao gấp vài lần p50 (Basic RAG <span data-v="costRag.1"></span> s): API miễn phí dao động mạnh, nên chỉ so tương đối giữa các hệ trong cùng lượt chạy.</p>
+  </div>
+  <h3>Rủi ro → cách nhóm đã giảm</h3>
+  <p class="small muted">Bấm để lật.</p>
+  <div class="grid g3" id="risks"></div>
+  <div class="box say"><span class="lbl">🎤 Câu chốt</span><p>“Hệ thống là <b>công cụ tra cứu tin rao</b>, không phải tư vấn định giá.”</p></div>
+  <div class="done-row"><button class="btn ok" data-done="chi-phi">✓ Mình hiểu rồi</button></div>
+</section>
+<script>
+(function(){
+  const U=[' s',' s','',''];
+  const el=document.getElementById('cBars');
+  function d(m){const vals=SYS.map(s=>V['cost'+s[3]][m]),mx=Math.max(...vals.map(num));
+    el.innerHTML=SYS.map((s,i)=>`<div class="bar-row"><span>${s[1]}</span><div class="bar-track"><div class="bar-fill" style="background:var(--${s[2]})" data-w="${num(vals[i])/mx*100}%"></div></div><span class="bar-val">${vals[i]}${U[m]}</span></div>`).join('');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>el.querySelectorAll('.bar-fill').forEach(b=>b.style.width=b.dataset.w)))}
+  document.querySelectorAll('#cSeg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#cSeg button').forEach(x=>x.classList.toggle('on',x===b));d(+b.dataset.m)});d(0);
+  const R=[['🏷️','Giá rao ≠ giá giao dịch','Trả lời theo giá rao, luôn kèm nguồn [Tin#ID] hoặc [Cypher].'],['👯','Tin trùng, giá nhập sai đơn vị',`Bỏ ${V.dupDropped} tin trùng; sửa ${V.fixedThousand} giá nhập theo nghìn đồng; chấm Recall theo cụm tin trùng.`],['📞','Số điện thoại trong tin','Ẩn SĐT và email trước khi lưu và hiển thị.'],['💥','Cypher sai hoặc nặng',`Chỉ đọc, thêm LIMIT, timeout ${V.cfgTimeout} s; câu tổng hợp đọc MarketStat tính sẵn.`],['💸','Chi phí và hạn mức API','Giới hạn tần suất, cache kết quả LLM; lượt đánh giá chạy trên tập con vì hết hạn mức.'],['🧪','Prompt injection trong tin đăng','Bọc tin trong thẻ riêng, dặn LLM coi nội dung là dữ liệu, bỏ qua mọi chỉ thị trong đó.']];
+  document.getElementById('risks').innerHTML=R.map(r=>`<div class="flip" data-flip style="min-height:150px"><div class="flip-in" style="min-height:150px"><div class="flip-f"><div class="emoji">${r[0]}</div><b>${r[1]}</b><br><span class="hint">↻ lật xem cách giảm</span></div><div class="flip-b small">${r[2]}</div></div></div>`).join('');
+})();
+</script>
+
+<section class="sec" id="ket-qua" data-sec>
+  <div class="sec-head"><span class="num">10</span><h2 style="margin:0">Kết quả: ai thắng nhóm câu nào, và chắc đến đâu?</h2><span class="slidetag">ev-results · ev-pairwise · ev-errors · cell P4-11, P4-13, P4-14</span></div>
+  <div class="box kid"><span class="lbl">🧸 Giải thích kiểu năm tuổi</span>
+    <p>Bốn bạn làm cùng bài thi <span data-v="nSub"></span> câu, <span data-v="nCat"></span> dạng bài, mỗi dạng <span data-v="perCat"></span> câu. <b>Thủ Thư</b> giỏi bài “tìm” mà gần như trắng bài “tính”. <b>Kế Toán</b> giỏi bài “tính”, và lần này cả bài “liệt kê theo điều kiện”. <b>Lễ Tân</b> giao việc khéo nhưng đôi khi giao bài liệt kê cho Thủ Thư, nên kém Kế Toán một chút.</p>
+  </div>
+  <div class="grid g2">
+    <div class="card stat"><span class="big-num t-graph"><span data-v="accGraph"></span>%</span><small>Graph đúng <span data-v="okGraph"></span>/<span data-v="nSub"></span> câu</small></div>
+    <div class="card stat"><span class="big-num t-hybrid"><span data-v="accHybrid"></span>%</span><small>Hybrid đúng <span data-v="okHybrid"></span>/<span data-v="nSub"></span> câu</small></div>
+    <div class="card stat"><span class="big-num t-rag"><span data-v="accRag"></span>%</span><small>Basic RAG đúng <span data-v="okRag"></span>/<span data-v="nSub"></span> câu</small></div>
+    <div class="card stat"><span class="big-num" style="color:var(--llm)"><span data-v="accLlm"></span>%</span><small>LLM thuần đúng <span data-v="okLlm"></span>/<span data-v="nSub"></span> câu</small></div>
+  </div>
+  <p class="small muted">Bấm vào một ô để xem giải thích. Mỗi ô là số câu đạt trọn điểm trên <span data-v="perCat"></span> câu của nhóm.</p>
+  <div class="scroll-x"><table class="tbl" id="t3"></table></div>
+  <div class="card small" id="t3Info">↑ chọn một ô</div>
+  <h3>Biểu đồ độ chính xác theo nhóm câu</h3>
+  <svg id="t3Chart" viewBox="0 0 680 300" style="width:100%;max-width:720px;display:block;margin:0 auto"></svg>
+
+  <h3>So từng cặp trên cùng câu hỏi (ev-pairwise)</h3>
+  <p class="small muted">Chênh lệch độ chính xác (điểm phần trăm) giữa hai hệ trên cùng <span data-v="nSub"></span> câu, <span class="term">khoảng tin cậy</span> bằng <span class="term">bootstrap</span> ghép cặp. Khoảng chứa số không thì chưa đủ bằng chứng nói hệ nào hơn.</p>
+  <div class="scroll-x"><table class="tbl" id="pw"></table></div>
+
+  <h3>Đọc trung thực: mẫu nhỏ</h3>
+  <div class="card"><p class="small">Mỗi nhóm chỉ <span data-v="perCat"></span> câu, nên <b>một câu</b> đổi tỷ lệ của nhóm rất nhiều. Bấm để thấy:</p>
+    <div class="btns"><button class="btn" id="flip1">Giả sử Hybrid đúng thêm một câu ràng buộc</button><button class="btn" id="flip0">Trả lại số thật</button></div>
+    <div class="small" id="flipOut"></div></div>
+
+  <h3>Hệ thống sai vì đâu (ev-errors)</h3>
+  <p class="small muted">Mỗi câu sai được gán đúng một nguyên nhân theo thứ tự ưu tiên trong <code>results/error_analysis.json</code>.</p>
+  <div class="scroll-x"><table class="tbl small" id="errT"></table></div>
+  <div class="grid g2">
+    <div class="card small"><b>Graph · Cypher ra sai · MH04</b><br>Hỏi tỷ số giá/m² dự án Vinhomes Central Park so với quận. Đáp án SQL <span data-v="mh04Gt"></span>; Graph và Hybrid cùng trả lời 1,96 vì Cypher khớp nhầm dự án con (mục 4).</div>
+    <div class="card small"><b>Basic RAG · truy xuất trượt · CS01</b><br>“Tìm căn hộ hai phòng ngủ ở Quận 7 giá dưới ba tỷ, chung cư có hồ bơi.” Có <span data-v="cs01Ids"></span> tin đúng nhưng top-k lấy về không đủ tin thuộc tập đúng, nên Recall@5 dưới ngưỡng.</div>
+  </div>
+
+  <div class="box key"><span class="lbl">💡 Ba điều rút ra</span>
+    <p>• <b class="t-graph">Graph</b> đúng nhiều nhất (<span data-v="accGraph"></span>%): đọc MarketStat tính sẵn nên đúng mọi câu tổng hợp, so sánh, dự án/đường; và lọc bằng Cypher nên đúng cả câu ràng buộc.</p>
+    <p>• <b class="t-hybrid">Hybrid</b> (<span data-v="accHybrid"></span>%) kém Graph <span data-v="pwHG.0"></span> điểm % (CI <span data-v="pwHG.1"></span> … <span data-v="pwHG.2"></span>), chênh lệch đến từ nhóm ràng buộc: nhãn đúng của nhóm này là basic_rag, router làm đúng, nhưng phần RAG không lấy đủ tin đúng. Bài học: câu ràng buộc thuần cột nên gửi sang graph.</p>
+    <p>• So với <b class="t-rag">Basic RAG</b>, Hybrid hơn <span data-v="pwHR.0"></span> điểm % (CI <span data-v="pwHR.1"></span> … <span data-v="pwHR.2"></span>). Basic RAG hơn LLM thuần <span data-v="pwRL.0"></span> điểm % nhưng CI <span data-v="pwRL.1"></span> … <span data-v="pwRL.2"></span> chứa số không: trên tập con này chưa đủ bằng chứng.</p>
+  </div>
+  <div class="box say"><span class="lbl">🎤 Câu chốt</span><p>“Truy xuất đúng loại bằng chứng quan trọng hơn mô hình to hay nhỏ: đồ thị thắng câu cần tính, RAG thắng câu tìm tin. Mỗi nhóm chỉ <span data-v="perCat"></span> câu, nên đọc theo hình dạng và khoảng tin cậy, không so từng điểm phần trăm.”</p></div>
+  <div class="done-row"><button class="btn ok" data-done="ket-qua">✓ Mình hiểu rồi</button></div>
+</section>
+<script>
+(function(){
+  const per=num(V.perCat);
+  const base={};SYS.forEach(s=>base[s[0]]=V['cat'+s[3]].map(p=>Math.round(num(p)*per/100)));
+  let S=JSON.parse(JSON.stringify(base));
+  const note={
+    lookup:{llm_only:'Không có kho tin đăng nên không chỉ ra được tin nào; luật chấm câu tra cứu đòi đúng mã tin.',basic_rag:'Lọc trước theo dự án, diện tích, giá rồi tìm: tin đúng đứng đầu.',graph:'Cypher lọc theo dự án và các cột, trả mã tin.',hybrid:'Router gửi về basic_rag hoặc hybrid, đều dùng RAG.'},
+    constraint:{llm_only:'Không có dữ liệu để liệt kê.',basic_rag:`Truy xuất trượt: top-k không đủ tin trong tập đúng (Recall@5 dưới ngưỡng), điểm trung bình ${V.ragConstrPts}/2.`,graph:'Cypher lọc đúng mọi điều kiện cột và trả mã tin, nên trúng.',hybrid:'Router gửi đúng nhãn basic_rag, nên chịu cùng lỗi truy xuất với Basic RAG.'},
+    aggregate:{llm_only:'Đoán theo hiểu biết chung, có lần trúng trong sai số cho phép.',basic_rag:'Top-k tin không thể thay cả nghìn tin: trả lời “không đủ dữ liệu”.',graph:'Đọc MarketStat tính sẵn, khớp đáp án SQL.',hybrid:'Router gửi sang graph.'},
+    multihop:{llm_only:'Không có dữ liệu.',basic_rag:'Không đi được Dự án → Quận → Tỉnh để tính.',graph:'Sai đúng một câu: MH04, Cypher khớp nhầm dự án con.',hybrid:'Cùng lỗi MH04 với Graph.'},
+    temporal:{llm_only:'Không có dữ liệu theo tháng.',basic_rag:'Không gom được theo tháng.',graph:'Có câu trả lời đúng tháng nhưng ghi “07/2025” nên luật so chuỗi “2025-07” chấm trượt (mục 12).',hybrid:'Router gửi sang graph, kết quả như Graph.'},
+    comparison:{llm_only:'Đoán theo hiểu biết chung, trúng một nửa.',basic_rag:'Câu duy nhất được điểm (CP02) thật ra là câu “không đủ dữ liệu để so sánh…”: luật so chuỗi chấm oan (mục 12).',graph:'Đọc trung vị của cả hai khu vực rồi so.',hybrid:'Router gửi sang graph.'},
+    project_street:{llm_only:'Không có dữ liệu dự án, tuyến đường.',basic_rag:'Không tính được trung vị theo dự án, đường.',graph:'Node Dự án, Đường và MarketStat cấp dự án.',hybrid:'Router gửi sang graph.'},
+    valuation:{llm_only:'Không có mô hình định giá.',basic_rag:'Không có mô hình định giá.',graph:'Đồ thị không định giá một căn giả định.',hybrid:`Gọi mô hình định giá nhưng lệch quá sai số cho phép so với đáp án (trung vị giá/m² × diện tích); điểm trung bình ${V.hybridValPts}/2.`},
+    unanswerable:{llm_only:'Hay trả lời bừa thay vì từ chối.',basic_rag:'Từ chối đúng phần lớn; câu Vành đai 4 thì liệt kê tin thay vì từ chối.',graph:'Như Basic RAG, sai câu Vành đai 4.',hybrid:'Như Basic RAG, sai câu Vành đai 4.'}
+  };
+  const t=document.getElementById('t3'),info=document.getElementById('t3Info');
+  function table(){
+    t.innerHTML='<tr><th>Hệ thống</th>'+CATS.map(c=>`<th class="c">${c[1]}</th>`).join('')+'<th class="c">Tổng</th></tr>'+
+    SYS.map(s=>{const v=S[s[0]];return `<tr><td><span class="chip c-${s[2]}">${s[1]}</span></td>${v.map((n,i)=>`<td class="c" data-k="${s[0]}" data-i="${i}" style="cursor:pointer;font-weight:700;background:color-mix(in srgb,var(--good) ${Math.round(n/per*60)}%,var(--surface))">${n}/${per}</td>`).join('')}<td class="c"><b>${v.reduce((a,b)=>a+b,0)}/${per*CATS.length}</b></td></tr>`}).join('');
+    t.querySelectorAll('[data-k]').forEach(c=>c.onclick=()=>{const k=c.dataset.k,i=+c.dataset.i,s=SYS.find(x=>x[0]===k);info.innerHTML=`<span class="chip c-${s[2]}">${s[1]}</span> · <b>${CATS[i][1]}: ${S[k][i]}/${per}</b> = ${Math.round(S[k][i]/per*100)}%<br>${note[CATS[i][0]][k]}`});
+    chart();
+  }
+  function chart(){
+    const svg=document.getElementById('t3Chart'),W=680,l=40,b=230,gw=(W-l-10)/CATS.length,bw=gw/5;let h='';
+    [0,.5,1].forEach(v=>{const y=b-v*190;h+=`<line x1="${l}" x2="${W-10}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${l-6}" y="${y+4}" font-size="${11}" text-anchor="end" fill="var(--muted)">${v*100}%</text>`});
+    CATS.forEach((c,i)=>{SYS.forEach((s,j)=>{const v=S[s[0]][i]/per,x=l+i*gw+gw*.08+j*bw*1.05,hgt=Math.max(v*190,1);
+      h+=`<rect x="${x}" y="${b-hgt}" width="${bw}" height="${hgt}" fill="var(--${s[2]})" rx="${2}"><animate attributeName="height" from="${0}" to="${hgt}" dur=".8s"/><animate attributeName="y" from="${b}" to="${b-hgt}" dur=".8s"/></rect>`});
+      h+=`<text x="${l+i*gw+gw/2}" y="${b+16}" font-size="${10.5}" text-anchor="middle" fill="var(--ink)">${c[1]}</text>`});
+    h+=SYS.map((s,j)=>`<rect x="${l+j*150}" y="${270}" width="${12}" height="${12}" fill="var(--${s[2]})"/><text x="${l+j*150+17}" y="${280}" font-size="${12}" fill="var(--ink)">${s[1]}</text>`).join('');
+    svg.innerHTML=h;
+  }
+  table();
+  document.getElementById('flip1').onclick=()=>{S=JSON.parse(JSON.stringify(base));S.hybrid[1]=Math.min(per,S.hybrid[1]+1);table();
+    const tot=S.hybrid.reduce((a,b)=>a+b,0),all=per*CATS.length;
+    document.getElementById('flipOut').innerHTML=`Nhóm ràng buộc của Hybrid nhảy ${Math.round(100/per)} điểm %, tổng thành ${tot}/${all} = ${Math.round(tot/all*100)}%. Chỉ một câu đã đổi nhiều như vậy.`};
+  document.getElementById('flip0').onclick=()=>{S=JSON.parse(JSON.stringify(base));table();document.getElementById('flipOut').textContent='Đã trả về số thật.'};
+
+  const P=[['Hybrid − Basic RAG',V.pwHR],['Basic RAG − LLM thuần',V.pwRL],['Hybrid − Graph',V.pwHG]];
+  document.getElementById('pw').innerHTML='<tr><th>So sánh</th><th class="c">Chênh lệch</th><th class="c">CI95</th><th class="c">p</th><th>Đọc là</th></tr>'+
+    P.map(([n,v])=>{const lo=num(v[1]),hi=num(v[2]),sure=lo>0||hi<0;return `<tr><td>${n}</td><td class="c"><b>${v[0]} điểm %</b></td><td class="c">${v[1]} … ${v[2]}</td><td class="c">${v[3]}</td><td class="small">${sure?'<span class="pill-ok">khoảng không chứa số không</span>':'<span class="pill-no">chứa số không: chưa đủ bằng chứng</span>'}</td></tr>`}).join('');
+
+  const CAUSE=[['insufficient_context','Thiếu ngữ cảnh'],['retrieval_miss','Truy xuất trượt'],['cypher_wrong_result','Cypher ra sai'],['refusal_missing','Không từ chối']];
+  document.getElementById('errT').innerHTML='<tr><th>Nguyên nhân</th>'+SYS.map(s=>`<th class="c">${s[1]}</th>`).join('')+'</tr>'+
+    CAUSE.map(([k,n])=>`<tr><td>${n}</td>${SYS.map(s=>`<td class="c">${V['err'+s[3]][k]||'–'}</td>`).join('')}</tr>`).join('');
+})();
+</script>
+
+<section class="sec" id="kich-ban" data-sec>
+<style>
+#scripts{--ks-size:17px}
+.ks-say{font-size:var(--ks-size);line-height:1.75;margin:.55em 0}
+.ks-point,.ks-act,.ks-pause{font-size:calc(var(--ks-size) * .86);margin:.7em 0 .3em;font-style:italic}
+.ks-point{color:var(--accent)}
+.ks-act{color:var(--graph-ink);font-style:normal;font-weight:600}
+.ks-pause{color:var(--muted)}
+.ks-live{margin:16px 0 6px;padding:8px 14px;border-radius:10px;background:var(--graph);color:#fff;font-weight:700;font-size:calc(var(--ks-size) * .9)}
+.ks-side{font-size:calc(var(--ks-size) * .82);border-radius:10px;padding:8px 12px;margin:10px 0;border:1px dashed}
+.ks-side b{display:block}
+.ks-backup{border-color:var(--rag);background:color-mix(in srgb,var(--rag) 9%,transparent)}
+.ks-note{border-color:var(--warn);background:var(--warn-soft)}
+.ks-opt{border-color:var(--hybrid);background:color-mix(in srgb,var(--hybrid) 9%,transparent)}
+.ks-fill{background:var(--kid);color:var(--ink);border:1px dashed var(--kid-line);border-radius:5px;padding:0 4px;font-style:normal}
+.ks-onslide{font-size:.86rem;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:4px 0 12px}
+.ks-next{font-size:var(--ks-size);border-left:4px solid var(--accent);padding:4px 12px;margin:12px 0}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:.86rem;margin:10px 0}
+.tp{position:fixed;inset:0;z-index:300;background:#0f1013;color:#f1f1f1;display:flex;flex-direction:column}
+.tp[hidden]{display:none}
+.tp-top,.tp-bot{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 16px;background:#1b1d22;border-color:#2c2f37}
+.tp-top{border-bottom:1px solid #2c2f37}.tp-bot{border-top:1px solid #2c2f37}
+.tp-top b{flex:1;min-width:200px;font-size:1rem}
+.tp .btn{background:#2a2d35;color:#f1f1f1;border-color:#3a3e48}
+.tp-body{flex:1;overflow-y:auto;padding:5vh max(16px,8vw) 45vh;font-size:var(--tp-size,30px);line-height:1.6}
+.tp-body .ks-say,.tp-body .ks-next{font-size:1em;color:#f6f6f6}
+.tp-body .ks-point,.tp-body .ks-act,.tp-body .ks-pause,.tp-body .ks-live,.tp-body .ks-side{font-size:.62em}
+.tp-body .ks-point{color:#c4b5fd}.tp-body .ks-act{color:#ffb86b}.tp-body .ks-pause{color:#9aa0ab}
+.tp-body .ks-side{color:#e5e5e5}
+.tp-body .ks-fill{background:#4a3f12;color:#ffe08a;border-color:#8a7322}
+.tp-body.hide-side .ks-side{display:none}
+.tp-clock{font-family:Consolas,monospace;font-size:1.1rem}
+.tp-over{color:#ff7b7b}
+</style>
+  <div class="sec-head"><span class="num">11</span><h2 style="margin:0">Kịch bản nói chi tiết từng slide</h2><span class="slidetag">gr-theory → ev-errors · đọc nguyên văn</span></div>
+  <p class="lead">Mỗi slide có lời nói đầy đủ để đọc nguyên văn, kèm chỉ dẫn lúc nào chỉ vào đâu, cách chạy cell LIVE, phương án khi lỗi và bản rút gọn khi bị giục giờ. Lời được viết theo tiêu đề và ghi chú người nói của các slide chặng 4 trong <code>slide/build/parts/p4_graphrag_eval.py</code>; mọi con số lấy từ <code>results/*.json</code>.</p>
+  <div class="card">
+    <b>Cách đọc các ký hiệu</b>
+    <div class="legend">
+      <span>Chữ thường = <b>đọc to</b></span>
+      <span style="color:var(--accent);font-style:italic">👉 chỉ tay / nhìn vào slide</span>
+      <span style="color:var(--graph-ink);font-weight:600">⌨️ thao tác trên máy</span>
+      <span class="muted" style="font-style:italic">⏸ dừng lại</span>
+      <span><mark class="ks-fill">«ô vàng»</mark> tự điền khi nói</span>
+      <span>🛟 dự phòng khi lỗi</span><span>📝 lưu ý, không đọc</span><span>➕ nói thêm nếu còn giờ</span>
+    </div>
+  </div>
+  <details class="acc"><summary>✅ Chuẩn bị trước khi lên (đọc một lần)</summary><div class="in small">
+    <p>• Chạy trước notebook <code>04_graphrag_eval.ipynb</code> sau khi lượt đánh giá đã ghi xong <code>results/</code>. Các cell LIVE đọc cache LLM; không cần gọi API mới.</p>
+    <p>• Mở sẵn Jupyter ở notebook 04 trong một tab, phóng to trình duyệt để chữ trong output đủ lớn.</p>
+    <p>• Có bản HTML xuất của notebook và clip ngắn cho mỗi cell LIVE (P4-03, P4-04, P4-06, P4-08, P4-09) để dự phòng khi Neo4j hoặc máy lỗi.</p>
+    <p>• Đối chiếu tiêu đề cell với số trên slide (xem mục 12): tiêu đề cell sinh từ kết quả chạy, nếu notebook chạy trước khi đánh giá xong thì còn số cũ.</p>
+    <p>• Điền trước các ô vàng: tên bạn, tên các bạn chặng 1, 2, 3.</p>
+    <p>• Khi nói: chậm hơn bình thường một chút; chỉ vào slide trước rồi mới nói về nó; hết mỗi ý thì nhìn xuống khán giả.</p>
+  </div></details>
+  <h3>Tổng quan</h3>
+  <div class="scroll-x"><table class="tbl" id="ksTable"></table></div>
+  <p class="small muted" id="ksTotal"></p>
+  <div class="btns">
+    <button class="btn primary" id="ksTp">📺 Mở máy nhắc chữ (toàn màn hình)</button>
+    <button class="btn" id="ksOpen">Mở hết</button><button class="btn" id="ksClose">Thu gọn hết</button>
+    <button class="btn" id="ksSmall">A−</button><button class="btn" id="ksBig">A+</button>
+  </div>
+  <div id="scripts"></div>
+  <div class="done-row"><button class="btn ok" data-done="kich-ban">✓ Mình hiểu rồi</button></div>
+</section>
+
+<div class="tp" id="tp" hidden>
+  <div class="tp-top"><b id="tpTitle"></b><span class="tp-clock" id="tpClock"></span><button class="btn" id="tpClose">✕ Đóng (Esc)</button></div>
+  <div class="tp-body" id="tpBody"></div>
+  <div class="tp-bot">
+    <button class="btn" id="tpPrev">◀ Slide trước</button><button class="btn" id="tpNext">Slide sau ▶</button>
+    <button class="btn" id="tpSmall">A−</button><button class="btn" id="tpBig">A+</button>
+    <button class="btn" id="tpPlay">⏯ Tự cuộn</button>
+    <label class="small">Tốc độ <input type="range" id="tpSpeed" min="1" max="10" value="3" style="vertical-align:middle"></label>
+    <label class="small"><input type="checkbox" id="tpHide"> Ẩn lưu ý và dự phòng</label>
+    <span class="small" style="color:#9aa0ab">Phím: ← → đổi slide · Space tự cuộn · Esc đóng</span>
+  </div>
+</div>
+<script>/* Kịch bản chi tiết. Loại khối:
+   say = đọc nguyên văn · point = chỉ tay / nhìn vào đâu · act = thao tác máy · live = tiêu đề phần chạy cell
+   pause = dừng · backup = dự phòng khi lỗi · note = lưu ý riêng cho bạn (không đọc) · opt = nói thêm nếu còn giờ
+   «...» = chỗ bạn tự điền khi đang nói. Mọi con số lấy từ V (results/*.json). */
+const KS=[
+{s:'gr-theory',t:'GraphRAG truy xuất đồ thị con hoặc kết quả truy vấn thay cho đoạn văn',live:null,
+ onSlide:'Hai hàng sơ đồ: RAG ở trên (Câu hỏi → Tìm top-k đoạn văn gần nghĩa → Ngữ cảnh: k đoạn văn → LLM), GraphRAG ở dưới (Câu hỏi → Duyệt đồ thị → Ngữ cảnh: đồ thị con, kết quả truy vấn → LLM). Dòng cuối “Đồ thị vượt trội”.',
+ b:[
+  ['note','Nhận lời từ bạn trình bày chặng 3. Câu chuyển của bạn ấy kết thúc phần đồ thị tri thức.'],
+  ['say','Em cảm ơn bạn «tên bạn chặng 3». Em là «tên mình», em trình bày chặng cuối: ghép RAG với đồ thị thành GraphRAG, rồi đo xem việc ghép đó có đáng hay không.'],
+  ['say',`Sau ba chặng trước, nhóm có hai công cụ. Thứ nhất là Basic RAG: lọc theo điều kiện, tìm ${V.topK} tin gần nghĩa nhất rồi đưa cho mô hình ngôn ngữ viết câu trả lời. Thứ hai là đồ thị tri thức trong Neo4j, với ${V.nodes} node và ${V.rels} cạnh.`],
+  ['say',`Basic RAG có một giới hạn rõ. Hỏi “giá trung vị mỗi mét vuông căn hộ ở Cầu Giấy”, nó trả lời “không đủ dữ liệu”. Vì nó chỉ nhìn thấy ${V.topK} tin, trong khi Cầu Giấy có ${V.ag01N} tin căn hộ có giá.`],
+  ['pause','Dừng một nhịp, chuyển ánh mắt lên sơ đồ.'],
+  ['point','Chỉ vào hàng TRÊN của sơ đồ (RAG).'],
+  ['say','Hàng trên là RAG thông thường. Câu hỏi đi vào, hệ thống tìm k đoạn văn gần nghĩa nhất, k đoạn văn đó làm ngữ cảnh, mô hình đọc và viết câu trả lời.'],
+  ['point','Chỉ vào hàng DƯỚI, rồi khoanh tay vào hai ô ở giữa.'],
+  ['say','Hàng dưới là GraphRAG. Chỉ có hai ô ở giữa là khác. Thay vì tìm đoạn văn, hệ thống duyệt đồ thị: đi theo thực thể, theo quan hệ, và làm phép tính luôn. Ngữ cảnh đưa cho mô hình là một đồ thị con, hoặc một bảng kết quả truy vấn.'],
+  ['say',`Lấy lại câu Cầu Giấy. Với GraphRAG, ngữ cảnh chỉ còn một dòng: trung vị ${V.ag01Gt} triệu một mét vuông, tính trên ${V.ag01N} tin. Mô hình không phải đoán, chỉ cần diễn đạt lại con số đó.`],
+  ['say','Về nguồn gốc đồ thị có hai hướng. Microsoft GraphRAG cho mô hình đọc văn bản, trích thực thể và quan hệ, chia cộng đồng bằng Leiden rồi tóm tắt từng cộng đồng. Cách đó tốn rất nhiều lời gọi mô hình lúc lập chỉ mục. Tin đăng của nhóm đã có sẵn cột, nên nhóm dựng đồ thị bằng luật, không tốn lời gọi nào, và đối chiếu được với SQL.'],
+  ['point','Chỉ xuống dòng “Đồ thị vượt trội”.'],
+  ['say','Đồ thị mạnh ở ba kiểu câu: tổng hợp như đếm, trung vị, xếp hạng; đa chặng như đi từ dự án lên quận rồi so với cả tỉnh; và câu hỏi về cả kho dữ liệu. Còn mô tả mờ như “gần trường” thì tìm vector vẫn hợp hơn.']
+ ],
+ key:'GraphRAG không thay thế RAG mà bổ sung loại bằng chứng mà đoạn văn không cung cấp được.',
+ short:'GraphRAG chỉ đổi hai ô giữa: thay vì tìm đoạn văn, nó duyệt đồ thị và tính toán. Microsoft dựng đồ thị bằng LLM từ văn bản, rất tốn lời gọi; nhóm dựng bằng luật từ các cột có sẵn. Đồ thị mạnh ở câu tổng hợp, đa chặng, toàn cục; mô tả mờ thì vector vẫn hợp hơn.',
+ next:'Slide sau so sánh ba kiến trúc.'},
+
+{s:'gr-compare',t:'Ba kiến trúc mạnh ở ba loại câu khác nhau; Hybrid để router chọn',live:null,
+ onSlide:'Bảng bốn cột: Tiêu chí · Basic RAG · Graph (Text2Cypher) · Hybrid. Bốn hàng: Đơn vị truy xuất, Mạnh ở, Yếu ở, Chi phí mỗi câu.',
+ b:[
+  ['say','Bảng này đặt ba kiến trúc cạnh nhau. Em đọc theo từng cột.'],
+  ['point','Chỉ vào cột Basic RAG.'],
+  ['say','Basic RAG lấy chunk gần nghĩa làm đơn vị truy xuất. Nó mạnh với mô tả tự do, ví dụ “nhà gần trường học, hẻm xe hơi ở Gò Vấp”, và yếu ở câu tổng hợp trên toàn tập.'],
+  ['point','Chỉ vào cột Graph.'],
+  ['say','Graph dùng Text2Cypher: mô hình viết câu Cypher, Neo4j tính chính xác trên toàn bộ dữ liệu. Nó mạnh ở đếm, trung vị, xếp hạng và đa chặng. Điểm yếu là mô tả mờ, và nó phụ thuộc schema: schema không có khái niệm nào thì Cypher không có gì để hỏi.'],
+  ['point','Chỉ vào cột Hybrid.'],
+  ['say','Hybrid có một router chọn nguồn theo câu hỏi: RAG, đồ thị, cả hai, hoặc mô hình định giá. Nó mạnh ở câu vừa có điều kiện cột vừa có yêu cầu trong mô tả; đổi lại, router chọn sai thì trả lời sai.'],
+  ['say','Trong phần đánh giá còn có LLM thuần, cùng mô hình nhưng không truy xuất gì, làm mốc so sánh.'],
+  ['pause','Dừng một nhịp trước phần thuật ngữ, vì đây là chỗ giảng viên hay hỏi.'],
+  ['say','Em nói rõ thuật ngữ: hệ thống của nhóm là Graph-based RAG dựa trên Text2Cypher. Nhóm không làm bước tóm tắt cộng đồng của Microsoft GraphRAG.']
+ ],
+ key:'Microsoft GraphRAG trích đồ thị bằng LLM nên tốn lời gọi khi lập chỉ mục; dữ liệu có cấu trúc thì dựng bằng luật.',
+ short:'Basic RAG lấy đoạn văn, mạnh ở mô tả, yếu ở tổng hợp. Graph lấy kết quả Cypher, mạnh ở đếm và xếp hạng, yếu ở mô tả mờ. Hybrid để router chọn, mạnh ở câu lai, yếu khi router chọn sai. LLM thuần là mốc. Hệ của nhóm là Graph-based RAG dựa trên Text2Cypher.',
+ next:'Slide sau: các mẫu truy xuất trên đồ thị và lớp an toàn.'},
+
+{s:'gr-patterns',t:'Text2Cypher: mô hình viết truy vấn, Neo4j tính; năm lớp an toàn bọc quanh',live:'P4-03, P4-04',
+ onSlide:'Trái: năm lớp an toàn (Regex chặn, Thêm LIMIT, Chỉ đọc, Timeout, Thử lại). Phải: một câu hỏi tổng hợp và câu Cypher mô hình sinh thật trong lượt đánh giá.',
+ b:[
+  ['say','Trên đồ thị có ba mẫu truy xuất. Local đi từ một thực thể ra láng giềng. Global dùng bản tóm tắt cộng đồng viết sẵn. Text2Cypher để mô hình viết truy vấn. Câu hỏi nhà đất phần lớn là lọc và tính trên cột, nên nhóm chọn Text2Cypher.'],
+  ['say','Prompt gửi cho mô hình có quy tắc chỉ đọc, schema đồ thị kèm đơn vị từng thuộc tính, và vài câu hỏi mẫu kèm Cypher đúng. Quy tắc quan trọng nhất: câu tổng hợp phải đọc node MarketStat đã tính sẵn, không quét từng tin.'],
+  ['point','Chỉ vào năm lớp an toàn, đi từ trên xuống.'],
+  ['say','Cho mô hình viết truy vấn vào cơ sở dữ liệu thì có rủi ro, nên nhóm bọc năm lớp.'],
+  ['say','Lớp một là regex: thấy các từ khoá ghi hay quản trị như CREATE, DELETE, SET, CALL là chặn, câu đó không bao giờ tới cơ sở dữ liệu.'],
+  ['say','Lớp hai: nếu mệnh đề RETURN cuối chưa có LIMIT thì code tự thêm.'],
+  ['say','Lớp ba, quan trọng nhất: câu truy vấn chạy trong giao dịch chỉ đọc của Neo4j, nên lệnh ghi có lọt regex thì chính cơ sở dữ liệu vẫn từ chối.'],
+  ['say',`Lớp bốn là giới hạn tài nguyên: quá ${V.cfgTimeout} giây thì huỷ, đọc tối đa ${V.cfgMaxRows} dòng.`],
+  ['say',`Lớp năm là thử lại có phản hồi: Neo4j báo lỗi thì code gửi lại cho mô hình câu hỏi, câu Cypher cũ và thông báo lỗi, thử lại tối đa ${V.cfgRetries} lần. Vẫn hỏng thì coi như đồ thị không trả lời được.`],
+  ['live','▶ CHẠY CELL P4-03'],
+  ['act','Chuyển sang Jupyter · notebook 04_graphrag_eval.ipynb · cell có dòng “# P4-03 · LIVE” · Shift + Enter.'],
+  ['say','Bảng đầu tiên kiểm lớp regex: câu đọc tên quận được cho qua, còn câu DETACH DELETE và câu CALL bị chặn. Phần sau là một câu Cypher mô hình sinh và kết quả của nó.'],
+  ['act','Đọc đúng những gì màn hình in: câu Cypher, số dòng, giá trị.'],
+  ['backup','Nếu Neo4j hoặc notebook lỗi: “Em mở bản đã chạy sẵn”, rồi mở bản HTML đã xuất hoặc clip. Không có thì quay lại slide và đọc đoạn Cypher in sẵn.'],
+  ['live','▶ CHẠY CELL P4-04 (nếu còn giờ)'],
+  ['say','Cell này minh hoạ mẫu Local: từ các phường của Quận 7, mở ra những phường cùng cụm giá Leiden.'],
+  ['point','Quay lại slide, chỉ vào đoạn Cypher.'],
+  ['say',`Câu trên slide đọc thẳng node thống kê, nên chạy rất nhanh: câu trung vị Cầu Giấy chạy ${V.exAg01Ms} mili giây. So với câu đếm đất Đà Nẵng phải đi qua từng tin, mất ${V.exAg03Ms} mili giây. Đó là lý do tính sẵn MarketStat.`],
+  ['say','Điểm chính: phép tính do Neo4j thực hiện. Mô hình chỉ viết truy vấn và diễn giải kết quả.']
+ ],
+ key:'Phép tính do Neo4j thực thi, không để LLM ước lượng; LLM chỉ viết truy vấn và diễn giải kết quả.',
+ short:`Ba mẫu: Local, Global, Text2Cypher; nhóm chọn Text2Cypher vì câu hỏi chủ yếu là lọc và tính trên cột. Năm lớp an toàn: regex, thêm LIMIT, giao dịch chỉ đọc, timeout ${V.cfgTimeout} giây với tối đa ${V.cfgMaxRows} dòng, thử lại tối đa ${V.cfgRetries} lần.`,
+ next:'Câu tổng hợp rõ ràng nên hỏi đồ thị. Nhưng câu tìm một căn cụ thể thì không. Ai quyết định câu nào đi đường nào? Đó là router.'},
+
+{s:'gr-router',t:'Router chọn nguồn cho từng câu; đồ thị rỗng hoặc lỗi thì lui về Basic RAG',live:'P4-06',
+ onSlide:'Dải bốn ô: Câu hỏi → Router (một lượt LLM) → Nguồn (RAG · Graph · cả hai · định giá) → Sinh (kèm [Tin#ID] và Cypher). Hai con số lớn: tỷ lệ router đúng nhãn, và tỷ lệ khi bỏ nhóm phải từ chối. Bên phải: đường lui.',
+ b:[
+  ['point','Chỉ vào ô Router.'],
+  ['say','Router là một lượt gọi mô hình. Nó đọc câu hỏi và chọn một nhãn: basic_rag, graph, hybrid hoặc valuation, kèm một câu lý do. Đầu ra ép theo khuôn JSON nên code đọc được ngay.'],
+  ['say','Basic_rag cho câu tìm tin theo mô tả hay theo điều kiện. Graph cho câu đếm, trung vị, xếp hạng, so sánh, theo tháng, theo dự án hay tuyến đường. Hybrid cho câu vừa cần thực thể trên đồ thị vừa cần tin cụ thể. Valuation cho câu hỏi một căn nhà đáng giá bao nhiêu.'],
+  ['point','Chỉ vào hai con số lớn.'],
+  ['say',`Trên ${V.routerN} câu đã chạy, router chọn đúng nhãn ${V.routerAcc} phần trăm. Không tính nhóm câu phải từ chối thì ${V.routerExcl} phần trăm, trên ${V.routerNExcl} câu.`],
+  ['say',`Cả ${V.routerRagToHybrid} câu sai đều cùng một kiểu: câu có nhãn basic_rag bị gửi sang hybrid, gồm ${V.routerLookupWrong} câu tra cứu và ${V.routerUnansWrong} câu phải từ chối. Câu tra cứu hay nhắc tên dự án nên trông giống câu cần đồ thị. Sai kiểu này ít hại vì hybrid vẫn chạy RAG.`],
+  ['point','Chỉ vào phần đường lui.'],
+  ['say','Nếu router chọn đồ thị mà đồ thị không trả lời được, có ba tình huống: Cypher vẫn lỗi sau mọi lần thử, Cypher chạy nhưng trả về rỗng, hoặc Neo4j mất kết nối. Cả ba đều lui về Basic RAG, người dùng vẫn nhận câu trả lời có nguồn.'],
+  ['say','Truy xuất RAG chạy song song với router và Text2Cypher ngay khi câu hỏi đến, nên khi phải lui, các tin đã có sẵn, không phải chờ thêm.'],
+  ['live','▶ CHẠY CELL P4-06'],
+  ['act','Chuyển sang Jupyter · cell “# P4-06 · LIVE” · Shift + Enter.'],
+  ['say','Cell chạy router trên các câu benchmark có trong cache và in bảng: mã câu, nhãn đúng, nhãn router chọn.'],
+  ['act','Chỉ vào một dòng sai nếu có.'],
+  ['say','«Nếu có câu sai:» Đây đúng là kiểu em vừa nói: một câu tra cứu có tên dự án.'],
+  ['note','Số câu trong cell có thể ít hơn số trên slide, vì cell chỉ chạy các câu có trong cache. Nói rõ: con số trên slide là cả tập con đã đánh giá.'],
+  ['backup','Nếu lỗi: “Em dùng số trên slide” và quay lại slide.']
+ ],
+ key:'RAG chạy song song với router và Cypher, nên đường lui không phải chờ thêm.',
+ short:`Router là một lượt LLM chọn basic_rag, graph, hybrid hoặc valuation. Đúng ${V.routerAcc}% trên ${V.routerN} câu; cả ${V.routerRagToHybrid} câu sai là câu basic_rag bị gửi sang hybrid. Đồ thị lỗi, rỗng hoặc mất kết nối thì lui về Basic RAG; RAG chạy song song nên lui không phải chờ.`,
+ next:'Có đủ bốn hệ rồi. Câu hỏi còn lại: đo thế nào cho công bằng?'},
+
+{s:'ev-layers',t:'Đánh giá ở hai tầng: truy xuất có tìm đúng tin, câu trả lời có đúng đáp án',live:'P4-08, P4-09',
+ onSlide:'Hai khối: “Tầng 1 · Truy xuất” (Recall@k, MRR) và “Tầng 2 · Câu trả lời” (so với đáp án SQL, câu không trả lời được phải từ chối). Dòng cuối: chỉ số thấp thì sửa ở đâu.',
+ b:[
+  ['say','Một hệ RAG có thể sai ở hai chỗ khác nhau, nên phải đo cả hai tầng.'],
+  ['say','Em hay ví như nấu canh. Tầng một là đi chợ: có mua đúng rau không. Tầng hai là nấu: có ra đúng món khách gọi không. Mua sai rau thì đầu bếp giỏi mấy cũng hỏng; mua đúng mà vẫn dở thì lỗi ở người nấu.'],
+  ['point','Chỉ vào khối “Tầng 1 · Truy xuất”.'],
+  ['say','Recall at k: trong các tin đúng, tìm được bao nhiêu tin trong top k. Em chia cho số nhỏ hơn giữa số tin đúng và k, vì có câu có hàng trăm tin đúng mà top k chỉ chứa được vài tin. Và đếm theo cụm tin trùng, để một căn đăng nhiều lần chỉ tính một.'],
+  ['say','MRR: tin đúng đầu tiên đứng hạng mấy. Hạng nhất được trọn điểm, hạng nhì nửa điểm, hạng ba một phần ba, rồi lấy trung bình.'],
+  ['point','Chỉ vào khối “Tầng 2 · Câu trả lời”.'],
+  ['say','Tầng câu trả lời so với đáp án chuẩn tính bằng SQL, có sai số cho phép. Câu không có trong dữ liệu thì hệ thống phải từ chối mới được điểm.'],
+  ['say','Faithfulness kiểm từng nhận định có căn cứ trong ngữ cảnh không. Chỉ số này cần một mô hình làm giám khảo; lượt đánh giá này không có giám khảo nên em để trống, và em sẽ nói rõ ở slide thiết lập.'],
+  ['live','▶ CHẠY CELL P4-08 (và P4-09 nếu còn giờ)'],
+  ['act','Chuyển sang Jupyter · cell “# P4-08 · LIVE” · Shift + Enter.'],
+  ['say','Cell chạy ví dụ nhỏ có assert kiểm công thức, rồi in số thật đọc từ thư mục kết quả. P4-09 làm tương tự với Faithfulness trên một ví dụ nhỏ.'],
+  ['backup','Nếu lỗi: phần ví dụ nhỏ không cần mạng; lỗi thường do thiếu file kết quả. Nói “em dùng số trên slide”, quay lại slide.'],
+  ['point','Chỉ xuống dòng cuối slide.'],
+  ['say','Chỉ số nào thấp thì sửa đúng khâu đó: Recall thấp thì sửa truy xuất; đúng tin mà trả lời sai thì sửa prompt hoặc Cypher.']
+ ],
+ key:'Chỉ số nào thấp thì cải thiện đúng khâu đó.',
+ short:'Tầng truy xuất: Recall@k (mẫu số là min của số tin đúng và k, đếm theo cụm tin trùng), MRR. Tầng câu trả lời: so với đáp án SQL có sai số cho phép, câu ngoài dữ liệu phải từ chối. Faithfulness cần LLM giám khảo nên lượt này để trống.',
+ next:'Slide sau: thiết lập của lượt đánh giá.'},
+
+{s:'ev-setup',t:'Thiết lập: benchmark đủ chín nhóm, chạy trên tập con, chấm bằng luật',live:null,
+ onSlide:'Ba con số: số câu benchmark, số câu đã chạy, số hệ. Tên mô hình sinh. Danh sách luật chấm.',
+ b:[
+  ['point','Chỉ vào ba con số.'],
+  ['say',`Benchmark có ${V.nBench} câu, thuộc ${V.nCat} nhóm, đáp án chuẩn tính bằng SQL trên toàn bộ bảng sạch.`],
+  ['say',`Vì hạn mức API miễn phí, lượt đánh giá chạy trên tập con ${V.nSub} câu, ${V.perCat} câu mỗi nhóm, đủ cả ${V.nCat} nhóm, với cả ${V.nSys} hệ trên cùng câu hỏi.`],
+  ['point','Chỉ vào tên mô hình sinh.'],
+  ['say','Mô hình sinh là gemini flash lite, bản miễn phí, khác mô hình dự kiến ban đầu. Cả bốn hệ dùng cùng mô hình, nên so sánh giữa các hệ vẫn công bằng.'],
+  ['point','Chỉ vào danh sách luật chấm.'],
+  ['say','Câu trả lời được chấm bằng luật, không dùng mô hình làm giám khảo. Câu tìm tin chấm bằng Recall at năm theo cụm tin. Câu ra số thì phải có một con số nằm trong sai số cho phép so với đáp án. Câu ra tên thì phải chứa đúng tên. Câu phải từ chối thì phải có câu từ chối. Câu đạt trọn hai điểm mới tính là đúng.'],
+  ['say','Vì vậy mọi con số phía sau là chỉ dấu trên cỡ mẫu nhỏ. Em luôn ghi số câu và khoảng tin cậy đi kèm.'],
+  ['note','Nếu bị hỏi “sao không chạy đủ benchmark”: hết hạn mức API miễn phí, nhóm không có ngân sách; benchmark đầy đủ và đáp án vẫn có sẵn, chạy lại chỉ cần khoá API.']
+ ],
+ key:'Tập con nhỏ, chấm bằng luật: đọc kết quả như chỉ dấu, kèm n và khoảng tin cậy.',
+ short:`Benchmark ${V.nBench} câu, ${V.nCat} nhóm, đáp án SQL. Chạy tập con ${V.nSub} câu (${V.perCat} câu mỗi nhóm) cho ${V.nSys} hệ, mô hình sinh gemini flash lite miễn phí, chấm bằng luật, không giám khảo.`,
+ next:'Slide sau: ablation truy xuất.'},
+
+{s:'ev-ablation',t:'Ablation truy xuất: Recall@5 và MRR của từng cấu hình',live:null,
+ onSlide:'Biểu đồ cột Recall@5 và MRR cho từng cấu hình (dense, BM25, hybrid; có và không có lọc trước). Bên phải ba gạch đầu dòng: cùng chỉ mục e5-large, lọc trước trong Qdrant, không qua LLM.',
+ b:[
+  ['say',`Ablation chạy thẳng trên chỉ mục đầy đủ, ${V.chunks} chunk, không qua mô hình sinh, nên không tốn lời gọi API. Đo trên ${V.abQ} câu có tập tin đúng.`],
+  ['point','Chỉ lần lượt từng cặp cột “không lọc” và “có lọc”.'],
+  ['say',`Bước nhảy lớn nhất đến từ lọc trước. Dense từ ${V.ab_dense[0]} lên ${V.ab_dense_prefilter[0]}. BM25 từ ${V.ab_bm25[0]} lên ${V.ab_bm25_prefilter[0]}. Hybrid từ ${V.ab_hybrid[0]} lên ${V.ab_hybrid_prefilter[0]}. Đó là Recall at năm.`],
+  ['say','Lý do: câu ràng buộc có điều kiện cứng như dưới ba tỷ, đúng hai phòng ngủ. Embedding đo độ gần về nghĩa, nên với nó căn hai phòng và căn ba phòng vẫn rất giống nhau. Chỉ lọc trên cột mới bảo đảm điều kiện đúng hay sai.'],
+  ['say',`Em nói thẳng một điểm: khi đã lọc, BM25 cao nhất, Recall ${V.ab_bm25_prefilter[0]} và MRR ${V.ab_bm25_prefilter[1]}; hybrid có lọc đứng sau. Trên bộ câu này, gộp thêm dense chưa giúp thêm.`],
+  ['say','Rerank không có trong lượt đo vì mô hình cross-encoder chưa có trong cache. So sánh các mô hình embedding nằm ở chặng một.'],
+  ['note','Số ablation thấp hơn nhiều so với Recall trong lượt đánh giá, vì đo trên tập câu khác và không có bước LLM trích bộ lọc đầy đủ. Đừng so trực tiếp hai con số.']
+ ],
+ key:'Lọc trước theo cột đóng góp nhiều nhất; không đo thì không biết thay đổi nào là cải tiến.',
+ short:`Ablation trên chỉ mục đầy đủ, ${V.abQ} câu, không gọi LLM. Lọc trước nâng Recall@5: dense ${V.ab_dense[0]} → ${V.ab_dense_prefilter[0]}, BM25 ${V.ab_bm25[0]} → ${V.ab_bm25_prefilter[0]}, hybrid ${V.ab_hybrid[0]} → ${V.ab_hybrid_prefilter[0]}. BM25 + lọc cao nhất.`,
+ next:'Slide sau: kết quả câu trả lời theo nhóm câu hỏi.'},
+
+{s:'ev-results',t:'Graph đúng nhiều nhất trên tập con; mỗi hệ mạnh ở nhóm câu riêng',live:'P4-11',
+ onSlide:'Biểu đồ cột độ chính xác của bốn hệ theo chín nhóm câu. Chú thích dưới: tổng của từng hệ và n.',
+ b:[
+  ['note','Tiêu đề slide do script dựng deck tự chọn theo hệ có độ chính xác tổng cao nhất. Đọc đúng tiêu đề đang hiện.'],
+  ['point','Chỉ vào dòng tổng ở dưới.'],
+  ['say',`Tổng trên ${V.nSub} câu: Graph đúng ${V.accGraph} phần trăm, Hybrid ${V.accHybrid}, Basic RAG ${V.accRag}, LLM thuần ${V.accLlm}.`],
+  ['point','Chỉ vào các nhóm tổng hợp, so sánh, dự án đường.'],
+  ['say','Ở các nhóm cần tính, gồm tổng hợp, so sánh, dự án và tuyến đường, Graph và Hybrid đúng hết; Basic RAG gần như không câu nào, vì vài tin không thể thay cả nghìn tin khi phải tính trung vị.'],
+  ['point','Chỉ vào nhóm tra cứu.'],
+  ['say',`Ở nhóm tra cứu, ba hệ có truy xuất đều đúng hết, còn LLM thuần ${V.catLlm[0]} phần trăm, vì không chỉ ra được tin nào.`],
+  ['point','Chỉ vào nhóm ràng buộc.'],
+  ['say',`Chỗ bất ngờ là nhóm ràng buộc: Graph đúng ${V.catGraph[1]} phần trăm, còn Basic RAG và Hybrid ${V.catRag[1]}. Cypher lọc đúng mọi điều kiện cột và trả mã tin; còn phần RAG lấy về chưa đủ tin thuộc tập đúng.`],
+  ['point','Chỉ vào nhóm định giá.'],
+  ['say',`Nhóm định giá thì không hệ nào đạt trọn điểm: Hybrid có gọi mô hình định giá nhưng lệch quá sai số cho phép, điểm trung bình ${V.hybridValPts} trên hai.`],
+  ['say',`Mỗi nhóm chỉ có ${V.perCat} câu, nên một câu đúng sai làm số đổi rất nhiều. Em đọc theo hình dạng: hệ nào mạnh ở nhóm nào, không so từng điểm phần trăm.`],
+  ['live','▶ CHẠY CELL P4-11'],
+  ['act','Chuyển sang Jupyter · cell “# P4-11” · Shift + Enter.'],
+  ['say','Cell đọc kết quả đã lưu và vẽ lại biểu đồ này, kèm khoảng tin cậy của từng ô.'],
+  ['backup','Nếu lỗi: “Em dùng biểu đồ trên slide”.']
+ ],
+ key:'Truy xuất đúng loại bằng chứng quan trọng hơn: đồ thị thắng câu cần tính, RAG thắng câu tìm tin.',
+ short:`Tổng: Graph ${V.accGraph}%, Hybrid ${V.accHybrid}%, Basic RAG ${V.accRag}%, LLM thuần ${V.accLlm}% trên ${V.nSub} câu. Graph và Hybrid đúng hết nhóm cần tính; ràng buộc thì chỉ Graph đúng; định giá chưa hệ nào đạt. Mỗi nhóm ${V.perCat} câu nên đọc theo hình dạng.`,
+ next:'Chênh lệch nào là thật? Slide sau dùng khoảng tin cậy.'},
+
+{s:'ev-pairwise',t:'So từng cặp trên cùng câu hỏi: khoảng tin cậy cho biết chênh lệch nào đáng tin',live:null,
+ onSlide:'Bảng: So sánh · Phạm vi · Chênh lệch · CI95 · p, cho ba cặp ở toàn tập và ở nhóm tổng hợp.',
+ b:[
+  ['say',`Bảng so từng cặp hệ trên cùng câu hỏi. Chênh lệch là hiệu độ chính xác, tính bằng điểm phần trăm. Khoảng tin cậy CI95 lấy bằng bootstrap ${V.nBoot} mẫu, lấy mẫu lại theo câu hỏi và ghép cặp giữa hai hệ.`],
+  ['point','Chỉ vào hàng Hybrid trừ Basic RAG.'],
+  ['say',`Hybrid hơn Basic RAG ${V.pwHR[0]} điểm phần trăm, khoảng tin cậy từ ${V.pwHR[1]} đến ${V.pwHR[2]}. Khoảng không chứa số không, nên chênh lệch này đáng tin trên tập con.`],
+  ['point','Chỉ vào hàng Basic RAG trừ LLM thuần.'],
+  ['say',`Basic RAG hơn LLM thuần ${V.pwRL[0]} điểm, nhưng khoảng tin cậy từ ${V.pwRL[1]} đến ${V.pwRL[2]}, chứa số không. Trên tập con này, em chưa đủ bằng chứng để nói Basic RAG hơn.`],
+  ['point','Chỉ vào hàng Hybrid trừ Graph.'],
+  ['say',`Hybrid kém Graph ${V.pwHG[0]} điểm, khoảng tin cậy từ ${V.pwHG[1]} đến ${V.pwHG[2]}. Toàn bộ chênh lệch nằm ở nhóm ràng buộc, nơi router gửi câu sang RAG đúng như nhãn mà RAG lại lấy thiếu tin.`],
+  ['say','Đó là cách đọc trung thực với cỡ mẫu nhỏ.']
+ ],
+ key:'Khoảng tin cậy chứa số không thì chưa đủ bằng chứng.',
+ short:`Hybrid − Basic RAG ${V.pwHR[0]} điểm (CI ${V.pwHR[1]} … ${V.pwHR[2]}): đáng tin. Basic RAG − LLM thuần ${V.pwRL[0]} (CI ${V.pwRL[1]} … ${V.pwRL[2]}): chứa số không. Hybrid − Graph ${V.pwHG[0]} (CI ${V.pwHG[1]} … ${V.pwHG[2]}), do nhóm ràng buộc.`,
+ next:'Slide sau: chi phí và độ trễ.'},
+
+{s:'ev-cost',t:'Chi phí và độ trễ: thêm router và Cypher thì thêm thời gian và token',live:null,
+ onSlide:'Trái: biểu đồ độ trễ p50 và p95 (giây) của bốn hệ. Phải: token vào và token ra trung bình mỗi câu. Dòng cuối: các biện pháp rủi ro.',
+ b:[
+  ['point','Chỉ vào biểu đồ độ trễ.'],
+  ['say',`Độ trễ trung vị mỗi câu: LLM thuần ${V.costLlm[0]} giây, Basic RAG ${V.costRag[0]}, Graph ${V.costGraph[0]}, Hybrid ${V.costHybrid[0]}. Số này gồm cả router và Cypher nếu có.`],
+  ['say',`Truy xuất thuần chỉ khoảng ${V.abDenseLat} mili giây, nên phần lớn thời gian nằm ở các lượt gọi mô hình trên API miễn phí, vốn dao động mạnh: p95 của Basic RAG lên tới ${V.costRag[1]} giây.`],
+  ['point','Chỉ vào biểu đồ token.'],
+  ['say',`Graph và Hybrid đọc vào nhiều token nhất, ${V.costGraph[2]} và ${V.costHybrid[2]} mỗi câu, so với ${V.costRag[2]} của Basic RAG, vì prompt viết Cypher chứa cả schema và ví dụ mẫu, Hybrid còn thêm lượt router.`],
+  ['point','Chỉ vào dòng rủi ro.'],
+  ['say','Các rủi ro triển khai đều có biện pháp trong code: giá là giá rao chứ không phải giá giao dịch nên luôn kèm nguồn; số điện thoại bị ẩn trước khi lưu; Cypher chỉ đọc; API có giới hạn tần suất và cache.'],
+  ['note','Không khẳng định vì sao Basic RAG chậm hơn Graph ở trung vị: chưa đo tách từng bước.']
+ ],
+ key:'Hệ thống là công cụ tra cứu tin rao, không phải tư vấn định giá.',
+ short:`p50: LLM thuần ${V.costLlm[0]} s, Basic RAG ${V.costRag[0]} s, Graph ${V.costGraph[0]} s, Hybrid ${V.costHybrid[0]} s. Token vào: Basic RAG ${V.costRag[2]}, Graph ${V.costGraph[2]}, Hybrid ${V.costHybrid[2]}. Truy xuất chỉ chiếm phần nhỏ; rủi ro đều có biện pháp trong code.`,
+ next:'Slide sau: hệ thống sai vì đâu.'},
+
+{s:'ev-errors',t:'Hệ thống sai vì đâu: phân loại từng câu sai theo nguyên nhân',live:'P4-13',
+ onSlide:'Trái: bảng số câu sai theo nguyên nhân × hệ. Phải: hai câu sai thật trong lượt đánh giá.',
+ b:[
+  ['say','Mỗi câu sai được gán đúng một nguyên nhân theo thứ tự ưu tiên. Bảng đếm theo hệ.'],
+  ['point','Chỉ vào cột LLM thuần và Basic RAG.'],
+  ['say',`Với LLM thuần và Basic RAG, nguyên nhân lớn nhất là thiếu ngữ cảnh: ${V.errLlm.insufficient_context} và ${V.errRag.insufficient_context} câu. Nghĩa là trong ngữ cảnh không có thứ cần để trả lời, đúng như câu tổng hợp “không đủ dữ liệu”.`],
+  ['point','Chỉ vào cột Graph.'],
+  ['say',`Với Graph, nguyên nhân lớn nhất là Cypher chạy được nhưng ra sai: ${V.errGraph.cypher_wrong_result} câu. Ví dụ bên phải là câu Vinhomes Central Park: Cypher dùng CONTAINS nên khớp cả dự án con The LandMark, rồi lấy một dòng không sắp xếp. Đáp án đúng là ${V.mh04Gt} lần, hệ thống trả lời 1,96 lần.`],
+  ['point','Chỉ vào cột Hybrid.'],
+  ['say',`Hybrid có cả hai loại: ${V.errHybrid.retrieval_miss} câu truy xuất trượt ở nhóm ràng buộc, và ${V.errHybrid.cypher_wrong_result} câu Cypher ra sai.`],
+  ['say','Và có một câu cả ba hệ có truy xuất đều không từ chối: câu hỏi đường Vành đai bốn có quy hoạch qua lô đất nào. Dữ liệu tin rao không có thông tin quy hoạch, nhưng hệ thống liệt kê tin có nhắc tới Vành đai bốn.'],
+  ['say','Nguyên nhân phổ biến nhất của từng hệ là chỗ nên sửa trước: với Graph là thêm sắp xếp và khớp tên dự án chặt hơn trong prompt; với Hybrid là gửi câu ràng buộc thuần cột sang đồ thị.'],
+  ['live','▶ CHẠY CELL P4-13 (nếu còn giờ)'],
+  ['act','Chuyển sang Jupyter · cell “# P4-13” · Shift + Enter.'],
+  ['say','Cell in lại bảng này và các ví dụ, đọc từ file kết quả.'],
+  ['say','Phần trình bày của em đến đây là hết. Em xin cảm ơn thầy cô và các bạn đã lắng nghe.']
+ ],
+ key:'Nguyên nhân phổ biến nhất của từng hệ là chỗ nên sửa trước.',
+ short:`Thiếu ngữ cảnh: LLM thuần ${V.errLlm.insufficient_context}, Basic RAG ${V.errRag.insufficient_context}. Graph: Cypher ra sai ${V.errGraph.cypher_wrong_result} (ví dụ MH04 khớp nhầm dự án con). Hybrid: ${V.errHybrid.retrieval_miss} truy xuất trượt, ${V.errHybrid.cypher_wrong_result} Cypher ra sai. Câu Vành đai bốn: không hệ nào từ chối.`,
+ next:'(Hết chặng 4. Chuyển sang phần mở rộng: định giá, demo, hạn chế.)'}
+];
+</script>
+
+<script>
+(function(){
+  const WPM=170, LIVE_SEC=45;
+  const fill=t=>esc(t).replace(/«(.*?)»/g,'<mark class="ks-fill">«$1»</mark>');
+  const est=x=>Math.round(x.b.filter(b=>b[0]==='say').reduce((n,b)=>n+b[1].trim().split(/\s+/).length,0)/WPM*60+(x.live?LIVE_SEC:0));
+  const mmss=s=>`${Math.floor(s/60)} phút ${String(Math.round(s%60)).padStart(2,'0')} giây`;
+  const clock=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');
+  function block([k,t]){
+    if(k==='say')return `<p class="ks-say">${fill(t)}</p>`;
+    if(k==='point')return `<p class="ks-point">👉 ${fill(t)}</p>`;
+    if(k==='act')return `<p class="ks-act">⌨️ ${fill(t)}</p>`;
+    if(k==='live')return `<div class="ks-live">${fill(t)}</div>`;
+    if(k==='pause')return `<p class="ks-pause">⏸ ${fill(t)}</p>`;
+    if(k==='backup')return `<div class="ks-side ks-backup"><b>🛟 Dự phòng</b>${fill(t)}</div>`;
+    if(k==='note')return `<div class="ks-side ks-note"><b>📝 Lưu ý cho bạn (không đọc)</b>${fill(t)}</div>`;
+    if(k==='opt')return `<div class="ks-side ks-opt"><b>➕ Nói thêm nếu còn giờ</b>${fill(t.replace(/^Nói thêm nếu còn giờ:\s*/,''))}</div>`;
+    return '';
+  }
+  function body(x){
+    return x.b.map(block).join('')+
+      `<div class="box key" style="margin:14px 0"><span class="lbl">💡 Ý chốt của slide</span>${esc(x.key)}</div>`+
+      `<div class="ks-side ks-opt"><b>⏩ Nếu bị giục giờ, chỉ nói đoạn này</b>${esc(x.short)}</div>`+
+      `<p class="ks-point">➡️ Câu chuyển sang slide sau:</p><p class="ks-next">${esc(x.next)}</p>`;
+  }
+  /* bảng tổng quan */
+  const tot=KS.reduce((a,x)=>a+est(x),0);
+  document.getElementById('ksTable').innerHTML='<tr><th>Slide</th><th>Tiêu đề trên slide</th><th>Ước tính</th><th>Cell LIVE</th><th></th></tr>'+
+    KS.map((x,i)=>`<tr><td><b>${x.s}</b></td><td class="small">${esc(x.t)}</td><td class="small">${mmss(est(x))}</td><td class="small">${x.live?'<b style="color:var(--graph-ink)">'+x.live+'</b>':'—'}</td><td><button class="btn" data-tp="${i}" style="padding:4px 10px">📺 Đọc</button></td></tr>`).join('');
+  document.getElementById('ksTotal').textContent=`Tổng ước tính bản đầy đủ: ${mmss(tot)} (tính theo khoảng ${WPM} chữ mỗi phút, cộng ${LIVE_SEC} giây cho mỗi cell LIVE). Nếu bị giới hạn thời gian, dùng ô “Nếu bị giục giờ” của từng slide.`;
+  /* kịch bản */
+  const host=document.getElementById('scripts');
+  host.innerHTML=KS.map((x,i)=>`<details class="acc" id="ks-${x.s}" ${i===0?'open':''}><summary>Slide ${x.s} · ${esc(x.t)} <span class="muted small">· ~${mmss(est(x))}${x.live?' · ▶ '+x.live:''}</span></summary><div class="in">
+    <div class="ks-onslide"><b>🖼️ Trên slide có:</b> ${esc(x.onSlide)}</div>${body(x)}
+    <div class="btns"><button class="btn" data-tp="${i}">📺 Đọc slide này bằng máy nhắc chữ</button></div></div></details>`).join('');
+  const size=v=>{const n=Math.max(14,Math.min(26,v));host.style.setProperty('--ks-size',n+'px');store('p4_ks_size',n);return n};
+  let ks=size(store('p4_ks_size')||17);
+  document.getElementById('ksSmall').onclick=()=>ks=size(ks-1);
+  document.getElementById('ksBig').onclick=()=>ks=size(ks+1);
+  document.getElementById('ksOpen').onclick=()=>host.querySelectorAll('details').forEach(d=>d.open=true);
+  document.getElementById('ksClose').onclick=()=>host.querySelectorAll('details').forEach(d=>d.open=false);
+
+  /* máy nhắc chữ */
+  const tp=document.getElementById('tp'),tb=document.getElementById('tpBody'),tt=document.getElementById('tpTitle'),tc=document.getElementById('tpClock');
+  let cur=0,t0=0,all0=0,tick=null,playing=false,raf=null,acc=0,last=0;
+  let tps=store('p4_tp_size')||30;const tpSize=v=>{tps=Math.max(20,Math.min(56,v));tp.style.setProperty('--tp-size',tps+'px');store('p4_tp_size',tps)};tpSize(tps);
+  function show(i){cur=Math.max(0,Math.min(KS.length-1,i));const x=KS[cur];
+    tt.textContent=`${x.s} · ${x.t}${x.live?' · ▶ '+x.live:''}`;
+    tb.innerHTML=`<div class="ks-side ks-note"><b>🖼️ Trên slide có</b>${esc(x.onSlide)}</div>`+body(x);tb.scrollTop=0;t0=performance.now();acc=0}
+  function update(){const x=KS[cur],e=(performance.now()-t0)/1000,lim=est(x);
+    tc.innerHTML=`<span class="${e>lim?'tp-over':''}">${clock(e)}</span> / ~${clock(lim)} · tổng ${clock((performance.now()-all0)/1000)}`}
+  function loop(ts){if(!playing)return;const dt=last?(ts-last)/1000:0;last=ts;acc+=dt*(+document.getElementById('tpSpeed').value)*4;
+    if(acc>=1){tb.scrollTop+=Math.floor(acc);acc-=Math.floor(acc)}raf=requestAnimationFrame(loop)}
+  function play(on){playing=on;last=0;document.getElementById('tpPlay').textContent=on?'⏸ Dừng cuộn':'⏯ Tự cuộn';if(on)raf=requestAnimationFrame(loop);else cancelAnimationFrame(raf)}
+  function open(i){tp.hidden=false;document.body.style.overflow='hidden';all0=performance.now();show(i);clearInterval(tick);tick=setInterval(update,250);update()}
+  function close(){tp.hidden=true;document.body.style.overflow='';clearInterval(tick);play(false)}
+  document.querySelectorAll('[data-tp]').forEach(b=>b.addEventListener('click',()=>open(+b.dataset.tp)));
+  document.getElementById('ksTp').onclick=()=>open(0);
+  document.getElementById('tpClose').onclick=close;
+  document.getElementById('tpPrev').onclick=()=>show(cur-1);
+  document.getElementById('tpNext').onclick=()=>show(cur+1);
+  document.getElementById('tpSmall').onclick=()=>tpSize(tps-2);
+  document.getElementById('tpBig').onclick=()=>tpSize(tps+2);
+  document.getElementById('tpPlay').onclick=()=>play(!playing);
+  document.getElementById('tpHide').onchange=e=>tb.classList.toggle('hide-side',e.target.checked);
+  document.addEventListener('keydown',e=>{if(tp.hidden)return;
+    if(e.key==='Escape')close();
+    else if(e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();show(cur+1)}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();show(cur-1)}
+    else if(e.key===' '){e.preventDefault();play(!playing)}
+    else if(e.key==='+'||e.key==='=')tpSize(tps+2);else if(e.key==='-')tpSize(tps-2)});
+})();
+</script>
+
+<section class="sec" id="bay" data-sec>
+  <div class="sec-head"><span class="num">12</span><h2 style="margin:0">Chỗ dễ bị hỏi vặn: giới hạn của lượt đánh giá</h2><span class="slidetag">kiểm trước buổi trình bày</span></div>
+  <p class="lead">Đối chiếu <code>results/*.json</code>, kế hoạch, notebook 04 và các slide chặng 4. Đây là những chỗ phải nói trung thực, hoặc phải kiểm lại trước khi lên.</p>
+  <div id="trapList"></div>
+  <div class="done-row"><button class="btn ok" data-done="bay">✓ Mình hiểu rồi</button></div>
+</section>
+<script>
+(function(){
+  const T=[
+    ['🔴','Chỉ chạy tập con, không phải cả benchmark',`Benchmark có ${V.nBench} câu (${V.nCat} nhóm) và đủ đáp án SQL, nhưng lượt đánh giá chỉ chạy ${V.nSub} câu, ${V.perCat} câu mỗi nhóm, vì hết hạn mức API miễn phí.`,'Nói thẳng trên slide ev-setup và slide Hạn chế. Mọi kết luận là chỉ dấu; đọc kèm n và khoảng tin cậy. Đừng nói “trên cả benchmark”.'],
+    ['🔴','Mô hình sinh khác kế hoạch, không có giám khảo','Mô hình sinh là <code>gemini-flash-lite-latest</code> (gói miễn phí), không phải mô hình trong kế hoạch ban đầu. <code>llm.judge</code> = null: chấm bằng luật, <b>Faithfulness, Answer Relevancy, Context Precision đều để trống</b>.','Không nói “RAGAS cho thấy…”. Nếu bị hỏi: chỉ số đã cài đặt (<code>vre.eval.metrics</code>, cell P4-09 có ví dụ nhỏ), chưa chạy được vì cần LLM giám khảo.'],
+    ['🟠','Luật so chuỗi có thể chấm trượt câu đúng','Câu TM02 “Tháng nào có nhiều tin rao bán đất ở Đà Nẵng nhất?”: Graph trả lời đúng tháng nhưng viết “07/2025”, đáp án lưu dạng “2025-07”, nên bị 0 điểm. (Số tin Graph đọc từ MarketStat là 8.535, đáp án SQL đếm ' + V.tm02N + ' tin: hai cách đếm khác phạm vi.)','Nói: “chấm bằng luật lặp lại được nhưng cứng; vài câu bị chấm trượt vì định dạng”. Đây là lý do độ chính xác nhóm thời gian của Graph có thể thấp hơn thực tế.'],
+    ['🟠','Luật so chuỗi cũng có thể cho điểm oan','Câu CP02 “nha o q3 hay phu nhuan dat hon tinh theo m2”: Basic RAG trả lời “Không đủ dữ liệu để so sánh…” mà vẫn được trọn điểm (<code>examples.json</code>). Đó là câu duy nhất Basic RAG đúng ở nhóm so sánh.','Không dùng nhóm so sánh để khen Basic RAG. Nói rõ luật chấm có cả chấm oan lẫn chấm trượt; muốn chắc phải đọc tay câu trả lời.'],
+    ['🟠','Hybrid thấp hơn Graph','Hybrid kém Graph ' + V.pwHG[0] + ' điểm % (CI ' + V.pwHG[1] + ' … ' + V.pwHG[2] + '). Toàn bộ do nhóm ràng buộc: nhãn đúng của nhóm này là basic_rag, router làm đúng, nhưng phần RAG lấy thiếu tin; Graph lọc bằng Cypher thì đúng hết.','Đừng nói “Hybrid tốt nhất”. Nói: “Graph đúng nhiều nhất trên tập con; Hybrid thua ở câu ràng buộc vì đi tuyến RAG; cải tiến hợp lý là gửi câu ràng buộc thuần cột sang graph.”'],
+    ['🟡','Cypher an toàn nhưng sai','MH04: Cypher khớp <code>CONTAINS</code> nhầm dự án con, <code>LIMIT 1</code> không sắp xếp. Năm lớp an toàn chỉ bảo vệ dữ liệu, không bảo đảm đúng.','Dùng làm ví dụ ở slide gr-patterns hoặc ev-errors; chính là lý do cần đáp án SQL độc lập.'],
+    ['🟡','Tiêu đề cell notebook có thể còn số cũ','Tiêu đề các cell P4-06, P4-08, P4-10, P4-11, P4-12, P4-13, P4-14 được sinh từ <code>results/</code> lúc chạy notebook. Nếu notebook chạy trước khi đánh giá xong thì tiêu đề còn số của lượt chạy thử nhỏ.','Chạy lại notebook 04 sau khi có kết quả cuối, rồi so tiêu đề cell với số trên slide trước khi lên.'],
+    ['🟢','Ablation: không có rerank, BM25 + lọc mới là cao nhất','<code>ablation.json</code> có dense, BM25, hybrid × có/không lọc trước. Rerank bị bỏ vì model cross-encoder chưa có trong cache. Có lọc thì BM25 cao nhất, không phải hybrid.','Tiêu đề slide ev-ablation do script tự chọn; đừng nói “hybrid có lọc thắng” nếu số không cho thấy vậy.'],
+    ['🟢','Tỷ lệ lui về Basic RAG chưa có số','Code có đường lui (Cypher lỗi, rỗng, mất kết nối) nhưng <code>eval_summary.json</code> chưa ghi tỷ lệ câu phải lui.','Nói định tính. Nếu cần con số: nhờ người phụ trách đánh giá thêm khoá vào writer, không tự đếm tay.']
+  ];
+  document.getElementById('trapList').innerHTML=T.map(t=>`<details class="acc"><summary>${t[0]} ${t[1]}</summary><div class="in"><p class="small"><b>Thực tế:</b> ${t[2]}</p><p class="small"><b>Nên làm gì:</b> ${t[3]}</p></div></details>`).join('');
+})();
+</script>
+
+<section class="sec" id="hoi-dap" data-sec>
+  <div class="sec-head"><span class="num">13</span><h2 style="margin:0">Luyện hỏi đáp: giảng viên có thể hỏi gì?</h2><span class="slidetag">thẻ lật</span></div>
+  <p class="small muted">Tự trả lời trong đầu trước, rồi bấm “Xem gợi ý”. Bấm “Mình trả lời được” để đếm.</p>
+  <div class="small" id="qaCount"></div>
+  <div id="qaList" class="grid" style="gap:10px"></div>
+  <div class="done-row"><button class="btn ok" data-done="hoi-dap">✓ Mình hiểu rồi</button></div>
+</section>
+<script>
+(function(){
+  const Q=[
+    ['Hệ thống của nhóm có phải Microsoft GraphRAG không?','Không. Nhóm làm <b>Graph-based RAG dựa trên Text2Cypher</b>: đồ thị dựng bằng luật từ cột có cấu trúc, LLM chỉ viết Cypher và diễn giải kết quả. Không làm bước tóm tắt cộng đồng (global search). Lý do: dữ liệu đã có cột nên tính thẳng bằng Cypher chính xác và rẻ hơn.'],
+    ['Để LLM viết truy vấn cơ sở dữ liệu có nguy hiểm không?',`Có rủi ro nên có năm lớp: regex chặn CREATE/MERGE/DELETE/SET/CALL/SHOW…; tự thêm LIMIT; giao dịch chỉ đọc của Neo4j (lệnh ghi bị từ chối kể cả khi lọt regex); timeout ${V.cfgTimeout} s và đọc tối đa ${V.cfgMaxRows} dòng; lỗi thì gửi lỗi lại cho LLM, thử lại tối đa ${V.cfgRetries} lần. Nhưng an toàn không có nghĩa là đúng: câu MH04 qua đủ năm lớp mà vẫn sai.`],
+    ['Sao câu tổng hợp không tính thẳng trên từng tin?',`Có ${V.kept} tin; quét từng tin cho mỗi câu thì chậm và dễ quá timeout. Nhóm tính sẵn ${V.marketStats} node MarketStat (trung vị, số tin theo khu vực, tháng, loại hình). Câu trung vị Cầu Giấy đọc một node, chạy ${V.exAg01Ms} ms; câu đếm đất Đà Nẵng đi qua từng tin mất ${V.exAg03Ms} ms.`],
+    ['Router sai thì sao?',`Router đúng ${V.routerAcc}% (${V.routerN} câu). Cả ${V.routerRagToHybrid} câu sai là câu nhãn basic_rag bị gửi sang hybrid; hybrid vẫn chạy RAG nên câu tra cứu vẫn đúng. Nếu đồ thị lỗi, rỗng hoặc mất kết nối thì lui về Basic RAG; RAG chạy song song nên lui không phải chờ thêm.`],
+    ['Vì sao Hybrid lại thấp hơn Graph?',`Hybrid kém Graph ${V.pwHG[0]} điểm % (CI ${V.pwHG[1]} … ${V.pwHG[2]}), toàn bộ ở nhóm ràng buộc: nhãn đúng của nhóm đó là basic_rag, router làm đúng, nhưng phần RAG lấy thiếu tin (truy xuất trượt). Graph lọc đủ điều kiện bằng Cypher nên đúng hết. Bài học: nhãn router cho câu ràng buộc thuần cột nên là graph.`],
+    ['Kết quả có ý nghĩa thống kê không?',`Một phần. Mỗi nhóm chỉ ${V.perCat} câu nên từng nhóm không đủ để kết luận. Ở toàn tập: Hybrid − Basic RAG ${V.pwHR[0]} điểm %, CI ${V.pwHR[1]} … ${V.pwHR[2]} (đáng tin); Basic RAG − LLM thuần ${V.pwRL[0]}, CI ${V.pwRL[1]} … ${V.pwRL[2]} chứa số không (chưa đủ bằng chứng). Nói thẳng điều này được đánh giá cao hơn bảo vệ con số.`],
+    ['Sao không có Faithfulness/RAGAS?','Lượt đánh giá không có LLM giám khảo (hết hạn mức, không có ngân sách), nên chấm bằng luật so với đáp án SQL và để trống Faithfulness. Công thức đã cài đặt và có ví dụ nhỏ ở cell P4-09. Thêm nữa, bám nguồn không có nghĩa là đúng: câu “không đủ dữ liệu” của Basic RAG không bịa gì nhưng vẫn sai.'],
+    ['Chấm bằng luật có tin được không?','Lặp lại được, không phụ thuộc giám khảo. Nhưng cứng: TM02 đúng tháng mà ghi “07/2025” nên bị 0 điểm; CP02 Basic RAG nói “không đủ dữ liệu” mà vẫn được điểm. Nên đọc kết quả theo hình dạng, kèm khoảng tin cậy, và đọc tay các câu đáng ngờ.'],
+    ['Graph đúng nhiều nhất, sao không dùng Graph cho mọi câu?',`Trên tập con này Graph đúng ${V.accGraph}%, nhưng tập con ít câu mô tả mờ. Đồ thị không hiểu “gần trường”, “view hồ” nếu không có cột hay node tiện ích; và Cypher có thể sai mà vẫn chạy (MH04). Hybrid giữ được RAG cho câu mô tả và có đường lui.`],
+    ['Đáp án chuẩn lấy từ đâu, có gõ tay không?',`Không gõ tay. Mỗi câu có một câu SQL (<code>gt_sql</code>) chạy bằng DuckDB trên toàn bộ bảng sạch; câu tìm tin trả danh sách mã tin, câu ra số trả một giá trị kèm cỡ nhóm. Ví dụ AG01: ${V.ag01Gt} triệu/m² trên ${V.ag01N} tin.`],
+    ['Vì sao lọc trước quan trọng vậy?',`Ablation trên chỉ mục đầy đủ: lọc trước nâng Recall@5 của dense từ ${V.ab_dense[0]} lên ${V.ab_dense_prefilter[0]}, của BM25 từ ${V.ab_bm25[0]} lên ${V.ab_bm25_prefilter[0]}. Embedding không bảo đảm điều kiện cứng như giá, số phòng; chỉ lọc trên cột mới bảo đảm.`],
+    ['Nếu có thêm thời gian, nhóm sẽ cải thiện gì?',`Chạy đủ ${V.nBench} câu khi có hạn mức; thêm LLM giám khảo cho Faithfulness; gửi câu ràng buộc thuần cột sang graph; dặn Text2Cypher luôn sắp xếp và khớp tên dự án chặt hơn; nới luật chấm cho định dạng tháng; thử rerank; ghi tỷ lệ lui về Basic RAG vào kết quả.`]
+  ];
+  let know=new Set(store('p4_qa')||[]);
+  const L=document.getElementById('qaList'),C=document.getElementById('qaCount');
+  const upd=()=>{C.innerHTML=`Đã tự tin trả lời: <b>${know.size}/${Q.length}</b>`;store('p4_qa',[...know])};
+  L.innerHTML=Q.map((q,i)=>`<div class="card"><b>❓ ${q[0]}</b><div class="btns"><button class="btn" data-s="${i}">👀 Xem gợi ý</button><button class="btn" data-k="${i}">${know.has(i)?'✅ Đã trả lời được':'Mình trả lời được'}</button></div><div class="small" id="qa${i}" style="display:none;border-left:3px solid var(--accent);padding-left:10px">${q[1]}</div></div>`).join('');
+  L.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{const d=document.getElementById('qa'+b.dataset.s);d.style.display=d.style.display==='none'?'block':'none'});
+  L.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{const i=+b.dataset.k;know.has(i)?know.delete(i):know.add(i);b.textContent=know.has(i)?'✅ Đã trả lời được':'Mình trả lời được';upd()});
+  upd();
+})();
+</script>
+
+<section class="sec" id="quiz" data-sec>
+  <div class="sec-head"><span class="num">14</span><h2 style="margin:0">Kiểm tra cuối: mười câu</h2><span class="slidetag">đúng tám câu trở lên là sẵn sàng</span></div>
+  <div id="quizBox"></div>
+  <div class="card center" id="quizScore" style="margin-top:12px"></div>
+  <div class="btns" style="justify-content:center"><button class="btn" id="quizReset">↺ Làm lại</button></div>
+  <div class="done-row"><button class="btn ok" data-done="quiz">✓ Mình hiểu rồi</button></div>
+</section>
+<script>
+(function(){
+  const Q=[
+    ['GraphRAG khác RAG thường ở chỗ nào?',['Dùng LLM to hơn','Đơn vị bằng chứng là đồ thị con / kết quả truy vấn thay cho đoạn văn','Không cần LLM nữa','Không cần dữ liệu'],1,'Chỉ hai ô giữa đổi: truy xuất và ngữ cảnh.'],
+    ['Vì sao Basic RAG trả lời “không đủ dữ liệu” cho câu trung vị giá/m² căn hộ Cầu Giấy?',['Embedding kém tiếng Việt',`Top-k chỉ thấy ${V.topK} trên ${V.ag01N} tin, không tính được trung vị`,'Qdrant bị lỗi','Câu hỏi sai chính tả'],1,`${V.ag01Seen}% dữ liệu thì không thể tính trung vị.`],
+    ['Trạm nào chặn được lệnh ghi ngay cả khi regex bị lọt?',['Thêm LIMIT','Timeout','Giao dịch chỉ đọc của Neo4j','Thử lại'],2,'Neo4j từ chối với lỗi AccessMode.'],
+    ['Câu MH04 qua đủ năm lớp an toàn. Điều đó có nghĩa là gì?',['Câu trả lời chắc chắn đúng','Dữ liệu an toàn, nhưng kết quả vẫn có thể sai','Cypher không có LIMIT','Router chọn sai'],1,'CONTAINS khớp nhầm dự án con, LIMIT không sắp xếp: an toàn mà vẫn sai.'],
+    ['Router thật sai kiểu nào?',['Câu tổng hợp bị gửi sang RAG','Câu nhãn basic_rag bị gửi sang hybrid','Câu định giá bị gửi sang graph','Sai đều mọi loại'],1,`Cả ${V.routerRagToHybrid} câu sai đều là basic_rag → hybrid; router đúng ${V.routerAcc}%.`],
+    ['Ba tin đúng, top-5 trúng hai. Recall@5 = ?',['0,40','0,50','0,67','1,00'],2,'Hai phần ba, làm tròn hai chữ số.'],
+    ['Trong ablation, thay đổi nào tăng Recall@5 nhiều nhất?',['Đổi dense sang BM25','Lọc trước theo cột','Gộp hybrid','Rerank'],1,`Ví dụ dense ${V.ab_dense[0]} → ${V.ab_dense_prefilter[0]}; rerank không có trong lượt đo.`],
+    ['Vì sao lượt đánh giá để trống Faithfulness?',['Faithfulness luôn bằng một','Không có LLM giám khảo, chấm bằng luật','Mô hình sinh không trả lời','Thiếu đáp án chuẩn'],1,'llm.judge = null; đáp án chuẩn bằng SQL vẫn có đủ.'],
+    ['Hệ nào đúng nhiều nhất trên tập con?',['Basic RAG','Graph','Hybrid','LLM thuần'],1,`Graph ${V.accGraph}%, Hybrid ${V.accHybrid}%, Basic RAG ${V.accRag}%, LLM thuần ${V.accLlm}%.`],
+    ['Basic RAG hơn LLM thuần, khoảng tin cậy chứa số không. Đọc thế nào?',['Basic RAG chắc chắn tốt hơn','Chưa đủ bằng chứng trên tập con này','LLM thuần tốt hơn','Phép đo bị lỗi'],1,`Chênh lệch ${V.pwRL[0]} điểm %, CI ${V.pwRL[1]} … ${V.pwRL[2]}.`]
+  ];
+  const box=document.getElementById('quizBox'),sc=document.getElementById('quizScore');let ans={};
+  function render(){
+    box.innerHTML=Q.map((q,i)=>`<div class="card" style="margin-bottom:10px"><b>${i+1}. ${q[0]}</b><div class="btns" style="flex-direction:column;align-items:stretch">${q[1].map((o,j)=>`<button class="btn" style="text-align:left" data-q="${i}" data-o="${j}">${String.fromCharCode(65+j)}. ${o}</button>`).join('')}</div><div class="fb" id="qf${i}"></div></div>`).join('');
+    box.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{const i=+b.dataset.q,j=+b.dataset.o;if(i in ans)return;ans[i]=j;const q=Q[i],ok=j===q[2];
+      b.style.background=ok?'var(--good)':'var(--bad)';b.style.color='#fff';
+      if(!ok){box.querySelector(`[data-q="${i}"][data-o="${q[2]}"]`).style.outline='3px solid var(--good)'}
+      const f=document.getElementById('qf'+i);f.className='fb show '+(ok?'ok':'no');f.textContent=(ok?'✓ ':'✗ ')+q[3];score()});
+    score();
+  }
+  function score(){const n=Object.keys(ans).length,c=Object.entries(ans).filter(([i,j])=>Q[i][2]===j).length;
+    sc.innerHTML=n<Q.length?`Đã làm ${n}/${Q.length} câu`:`<div class="big-num">${c}/${Q.length}</div>${c>=Math.ceil(Q.length*.8)?'🎉 Sẵn sàng lên trình bày!':'📖 Xem lại các mục có câu sai rồi làm lại nhé.'}`}
+  document.getElementById('quizReset').onclick=()=>{ans={};render()};
+  render();
+})();
+</script>
+
+</div></main>
+
+<button class="btn themebtn" id="themeBtn" title="Đổi giao diện sáng/tối">🌓</button>
+<script>
+(function(){
+  /* chú giải thuật ngữ */
+  fillV(document);bindTerms(document);
+  /* lật thẻ */
+  document.querySelectorAll('[data-flip]').forEach(el=>el.addEventListener('click',()=>el.classList.toggle('on')));
+  /* tiến độ */
+  const secs=[...document.querySelectorAll('section[data-sec]')];
+  let done=new Set(store('p4_done')||[]);
+  function paint(){
+    document.querySelectorAll('nav#side a').forEach(a=>{const id=a.getAttribute('href').slice(1),ok=done.has(id);a.classList.toggle('done',ok);a.querySelector('.tick').textContent=ok?'✓':'○'});
+    document.querySelectorAll('[data-done]').forEach(b=>{const ok=done.has(b.dataset.done);b.textContent=ok?'✓ Đã hiểu (bấm để bỏ)':'✓ Mình hiểu rồi';b.classList.toggle('ok',!ok)});
+    const n=secs.filter(s=>done.has(s.id)).length;
+    document.getElementById('meter').textContent=`Đã hiểu ${n}/${secs.length} mục`;
+    document.getElementById('progress').style.width=(n/secs.length*100)+'%';
+    store('p4_done',[...done]);
+  }
+  document.querySelectorAll('[data-done]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.done;done.has(id)?done.delete(id):done.add(id);paint();
+    if(done.has(id)){const i=secs.findIndex(s=>s.id===id);if(secs[i+1])setTimeout(()=>secs[i+1].scrollIntoView({behavior:'smooth'}),250)}}));
+  paint();
+  /* mục lục đang đọc */
+  const links=new Map([...document.querySelectorAll('nav#side a')].map(a=>[a.getAttribute('href').slice(1),a]));
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.remove('active'));const a=links.get(e.target.id);if(a)a.classList.add('active')}}),{rootMargin:'-40% 0px -55% 0px'});
+  secs.forEach(s=>io.observe(s));
+  /* hiện dần khi cuộn */
+  const rv=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');rv.unobserve(e.target)}}),{threshold:.08});
+  document.querySelectorAll('.box').forEach(b=>{b.classList.add('reveal');rv.observe(b)});
+  /* menu điện thoại */
+  const nav=document.getElementById('side');
+  document.getElementById('menuBtn').onclick=e=>{e.stopPropagation();nav.classList.toggle('open')};
+  nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>nav.classList.remove('open')));
+  document.addEventListener('click',e=>{if(!nav.contains(e.target))nav.classList.remove('open')});
+  /* sáng / tối */
+  const root=document.documentElement,saved=store('p4_theme');if(saved)root.dataset.theme=saved;
+  document.getElementById('themeBtn').onclick=()=>{
+    const dark=root.dataset.theme?root.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme=dark?'light':'dark';store('p4_theme',root.dataset.theme);dispatchEvent(new Event('themechange'))};
+})();
+</script>
+</body>
+</html>
