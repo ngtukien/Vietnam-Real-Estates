@@ -182,11 +182,9 @@ def test_valuate_contract_errors(tmp_path):
 
     settings = load_settings(data_root=tmp_path)
     with pytest.raises(RuntimeError):
-        predict.valuate({"property_type": "Nhà", "province": "Hà Nội", "district": "Ba Đình", "area_m2": 50}, settings,
-                        "tabular")
+        predict.valuate({"property_type": "Nhà", "province": "Hà Nội", "district": "Ba Đình", "area_m2": 50}, settings)
     with pytest.raises(ValueError):
         predict.valuate("not a dict")  # type: ignore[arg-type]
-    assert predict.resolve_variant(settings, "sale") == "tabular"
 
 
 def _api_schemas():

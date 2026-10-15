@@ -19,6 +19,7 @@ from vre.valuation.train import baseline_predict, paths
 
 MAX_AREA_M2 = 100_000
 MONTH_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+SERVING_VARIANT: F.Variant = "tabular"  # api-contract §7 (sửa 2026-10-15)
 RESULT_KEYS = ("predicted_price_m2_mil", "predicted_price_vnd", "interval_price_vnd", "baseline_ward_median_price_m2_mil",
                "comparables_n", "verdict", "shap", "model")
 
@@ -61,12 +62,9 @@ def validate(inp: dict[str, Any], enc: dict[str, Any]) -> None:
         raise ValueError("asking_price_vnd phải > 0")
 
 
-def _features(row: pd.DataFrame, enc: dict[str, Any], variant: F.Variant) -> pd.DataFrame:
+def _features(row: pd.DataFrame, enc: dict[str, Any]) -> pd.DataFrame:
     te = F.target_encode_apply(row, enc["te"])
-    pca = None
-    if variant == "full":  # tin mới không có embedding ⇒ PCA thiếu (XGBoost xử lý missing)
-        pca = pd.DataFrame(np.nan, index=row.index, columns=[f"pca_{i:02d}" for i in range(int(enc["pca_dim"]))])
-    x = F.build_matrix(row, te, enc["categories"], variant, pca)
+    x = F.build_matrix(row, te, enc["categories"], SERVING_VARIANT, None)
     if list(x.columns) != enc["feature_names"]:
         raise RuntimeError("Cột đặc trưng không khớp model — encoders và model lệch phiên bản")
     return x
@@ -80,33 +78,24 @@ def _verdict(asking: float | None, low: float, high: float) -> str | None:
     return "above_market" if asking > high else "fair"
 
 
-def resolve_variant(settings: Settings, deal: str) -> F.Variant:
-    """`full` nếu model + encoder của nó đã có, không thì `tabular` (api-contract §7)."""
-    model_path, enc_path = paths(settings.data_root, "full", deal)
-    return "full" if model_path.is_file() and enc_path.is_file() else "tabular"
-
-
-def valuate(payload: dict[str, Any], settings: Settings | None = None, variant: F.Variant | None = None) -> dict[str, Any]:
+def valuate(payload: dict[str, Any], settings: Settings | None = None) -> dict[str, Any]:
     """Định giá một BĐS (api-contract §7): payload `ValuationInput` → `ValuationResult`.
     `ValueError` = input sai (400); `RuntimeError` (`ModelUnavailableError`) = chưa có model (503).
 
-    Dạng hợp đồng `valuate(payload)`: ưu tiên `full`, lùi về `tabular` (ghi `model.variant`).
-    Dạng cũ `valuate(input, settings)` (settings truyền vào, không nêu variant) giữ mặc định lịch sử `tabular`
-    cho người gọi cũ; truyền `variant` để chọn rõ."""
+    Luôn dùng model `tabular` (ghi `model.variant`): `full` cần vector embedding của chính tin đăng, BĐS nhập từ API
+    không có ⇒ `full` chỉ để báo cáo `valuation_metrics`. `settings` chỉ để test tiêm cấu hình."""
     if not isinstance(payload, dict):
         raise ValueError("payload phải là object ValuationInput")
-    legacy_default = settings is not None and variant is None
     settings = settings or get_settings()
     inp = dict(payload)
     deal = inp.get("deal_type") or "sale"
     if deal not in ("sale", "rent"):
         raise ValueError(f"deal_type lạ {deal!r}")
-    if variant is None:
-        variant = "tabular" if legacy_default else resolve_variant(settings, deal)
+    variant = SERVING_VARIANT
     booster, enc, model_path = load_model(settings, variant, deal)
     validate(inp, enc)
     row = F.frame_from_input(inp, enc["max_month"])
-    x = _features(row, enc, variant)
+    x = _features(row, enc)
     price_m2 = float(np.exp(booster.predict(xgb.DMatrix(x, enable_categorical=True))[0]))
     area = float(inp["area_m2"])
     price_vnd = price_m2 * 1e6 * area
