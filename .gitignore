@@ -20,3 +20,6 @@ results/**/*.parquet
 results/handoff/
 .claude/
 .cache/
+
+# Phase 4: bản sao lưu deck (không commit)
+slide/_backup/

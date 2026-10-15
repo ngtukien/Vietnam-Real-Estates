@@ -1,0 +1,10 @@
+# Map kiểm số cho deck (scripts/slide_numbers.py). Mục số được SINH TỰ ĐỘNG khi dựng deck
+# (slide/build/build_deck.py → numbers_map.d/generated.yaml); file này chỉ giữ whitelist toàn cục.
+# Số không phải dữ liệu trong nội dung slide phải đi qua d.A("…", "lý do"), không thêm regex ở đây.
+whitelist:
+  - {re: '(?<!\d)(?:19|20)\d\d(?!\d)', reason: "năm (trích dẫn, mốc thời gian)"}
+  - {re: '\b\d{1,2}/(?:\d{1,2}/)?20\d\d\b', reason: "ngày/tháng"}
+  - {re: '(?:Hình|Bảng|Công thức|Bước|Chặng|Phần|Mức) \(?\d+\)?', reason: "đánh số hình/bảng/công thức/bước"}
+  - {re: '\[\d+\]', reason: "số thứ tự tài liệu tham khảo"}
+  - {re: '(?:top|Top)-\d+', reason: "tên phép top-k"}
+include: [numbers_map.d/generated.yaml]
