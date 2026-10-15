@@ -13,6 +13,7 @@ Luật (ghi nguyên văn vào `eval_summary.scoring_rules`):
 
 from __future__ import annotations
 
+import hashlib
 import re
 import unicodedata
 from typing import Any
@@ -142,7 +143,8 @@ def score_row(q: Question, gt: dict, row: dict, cluster_of: dict[int, int], dige
     """Một dòng scores.jsonl theo luật (cùng khoá với bản chấm LLM của `runner.score_one`, thêm `scoring`)."""
     out: dict[str, Any] = {"id": q.id, "system": row["system"], "category": q.category, "gt_kind": q.gt_kind,
                            "answer_digest": digest, "points": 0, "reason": None, "predicted_value": None,
-                           "faithfulness": None, "judge_error": None, "scoring": SCORING}
+                           "faithfulness": None, "judge_error": None, "scoring": SCORING,
+                           "rules_version": rules_version()}
     answer = (row.get("answer") or "").strip()
     sources = [int(s) for s in row.get("sources") or []]
     if q.gt_kind == "ids":
@@ -165,3 +167,11 @@ def score_row(q: Question, gt: dict, row: dict, cluster_of: dict[int, int], dige
         out["reason"] = f"so với gt_value {gt.get('gt_value')}"
     out["correct"] = out["points"] == 2
     return out
+
+
+def rules_version() -> str:
+    """Dấu vân tay của bộ luật + cụm từ: đổi luật ⇒ `eval score --offline` chấm lại mọi dòng."""
+    payload = "
+".join([*RULES, *REFUSAL_PHRASES, UP_WORDS.pattern, DOWN_WORDS.pattern, str(FULL_RECALL),
+                          str(COMPARE_WINDOW), _MONEY.pattern])
+    return hashlib.sha256(payload.encode()).hexdigest()[:12]

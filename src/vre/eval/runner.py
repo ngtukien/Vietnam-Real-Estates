@@ -374,7 +374,8 @@ def run_scores(settings: Settings, *, ragas: bool = True, workers: int = WORKERS
     old = read_jsonl(path)
     todo = [r for k, r in answers.items()
             if not (k in old and old[k].get("answer_digest") == answer_digest(r) and not old[k].get("judge_error")
-                    and old[k].get("scoring", "llm_judge") == scoring)]
+                    and old[k].get("scoring", "llm_judge") == scoring
+                    and (not offline or old[k].get("rules_version") == rule_score.rules_version()))]
     cluster_of = cluster_map(settings, (s for r in todo for s in r.get("sources") or []))
     cache_before = _cache_entries()
     started = perf_counter()
