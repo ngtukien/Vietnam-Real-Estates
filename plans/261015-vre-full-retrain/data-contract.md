@@ -384,6 +384,8 @@ Không có khối `gpu`, không có ETA hay dự báo thời gian.
 - `category` ∈ `lookup, constraint, aggregate, multihop, temporal, comparison, project_street, valuation, unanswerable`.
 - `route_gold` ∈ `basic_rag, graph, hybrid, valuation`.
 - `gt_kind=ids`: SQL trả cột `listing_id`; `value`: SQL trả 1 dòng (cột đầu = đáp án chính, các cột sau là thành phần); `refusal`: `gt_sql` = null.
+- `valuation_input` (thêm 2026-10-15, chỉ `category=valuation`, các câu khác bỏ trống/null): object theo `ValuationInput` (api-contract §3) mô tả BĐS giả định của câu hỏi (bắt buộc `property_type`, `province`, `district`, `area_m2`); GT = `area_m2 × median(price_m2_mil)` (tỷ đồng, cột `est_price_bn`) của tin bán cùng tỉnh × quận × loại, diện tích ±20%, `month` 2026-02…03, `value_tolerance=0.15`.
+- Quy ước GT (`vre.eval.ground_truth`): `gt_value` = cột đầu (số thực làm tròn 2 chữ số), `gt_rows` = dòng đầy đủ; mọi ô khác null; cột cỡ nhóm tên `n` / `n_<nhóm>` phải ≥ 20; lookup ≤ 5 `dup_cluster_id`.
 
 `results/benchmark_gt.json`: `{schema_version, generated_at, git_sha, data_fingerprint:{n_listings, price_vnd_sum}, items:[{id, gt_ids:[int]|null, gt_dup_clusters:[int]|null, gt_value:str|null, gt_rows:[object]|null, sql_seconds}]}`.
 
