@@ -1,41 +1,14 @@
-"""vre.eval.ablation: subcorpus chứa 100% tin GT, tất định theo seed; chỉ số theo cụm; cỡ chunk hiệu dụng."""
+"""vre.eval.ablation: chỉ số theo cụm, kế hoạch run, kiểm cache HF, `corpus` từ manifest, resume (không Qdrant/LLM)."""
 
+import json
 import math
+from unittest import mock
 
-import numpy as np
+import pandas as pd
 import pytest
 
+from vre.config import Settings
 from vre.eval import ablation
-
-
-@pytest.fixture
-def all_ids():
-    return np.arange(10_000, 60_000, 3, dtype=np.int64)  # bảng sạch giả, id rời rạc
-
-
-def test_subcorpus_contains_all_gt(all_ids):
-    gt = [int(all_ids[5]), int(all_ids[-1]), int(all_ids[12_345])]
-    ids = ablation.subcorpus_ids(all_ids, gt, n_random=100, seed=42)
-    assert set(gt) <= set(ids.tolist())
-    assert len(ids) >= 100 and len(ids) <= 103
-    assert np.all(np.diff(ids) > 0)  # tăng dần, duy nhất
-    assert set(ids.tolist()) <= set(all_ids.tolist())
-
-
-def test_subcorpus_deterministic_with_seed(all_ids):
-    gt = [int(all_ids[7])]
-    a = ablation.subcorpus_ids(all_ids, gt, 500, seed=42)
-    b = ablation.subcorpus_ids(all_ids, gt, 500, seed=42)
-    c = ablation.subcorpus_ids(all_ids, gt, 500, seed=43)
-    assert np.array_equal(a, b)
-    assert ablation.ids_digest(a) == ablation.ids_digest(b)
-    assert not np.array_equal(a, c)
-
-
-def test_subcorpus_caps_at_corpus_and_rejects_unknown_gt(all_ids):
-    assert len(ablation.subcorpus_ids(all_ids, [], 10**9)) == len(all_ids)
-    with pytest.raises(ValueError, match="không có trong bảng sạch"):
-        ablation.subcorpus_ids(all_ids, [1], 10)
 
 
 def test_score_run_cluster_metrics():
@@ -58,14 +31,48 @@ def test_dedup_clusters_keeps_order():
     assert ablation.dedup_clusters([5, 3, 5, 1, 3]) == [5, 3, 1]
 
 
-def test_effective_chunk_tokens_fits_e5_max_length():
-    assert ablation.effective_chunk_tokens(256, 512, 3) == 256
-    assert ablation.effective_chunk_tokens(400, 512, 3) == 400
-    assert ablation.effective_chunk_tokens(512, 512, 3) == 507  # [bos] + 3 tiền tố + 507 + [eos] = 512
+def test_plan_runs_rerank_only_when_cached():
+    assert len(ablation.plan_runs(False)) == 6 and not any(r for _, _, r in ablation.plan_runs(False))
+    names = {ablation.run_name(*r) for r in ablation.plan_runs(True)}
+    assert len(names) == 12 and "full_hybrid_prefilter_rerank" in names
 
 
-def test_run_names_unique():
-    names = {ablation.run_name(None, r, p, k) for r in ablation.RETRIEVALS for p in (False, True) for k in (False, True)}
-    names |= {ablation.run_name(s, "hybrid", True, False) for s in ablation.CHUNK_SIZES}
-    assert len(names) == 15
-    assert ablation.run_name(512, "hybrid", True, False) == "c512_hybrid_prefilter"
+def test_hf_cached(tmp_path):
+    assert not ablation.hf_cached("org/model", tmp_path)
+    snap = tmp_path / "hub" / "models--org--model" / "snapshots" / "abc"
+    snap.mkdir(parents=True)
+    assert not ablation.hf_cached("org/model", tmp_path)
+    (snap / "config.json").write_text("{}")
+    assert ablation.hf_cached("org/model", tmp_path)
+
+
+def _fake_env(tmp_path):
+    settings = Settings(data_root=tmp_path)
+    settings.index_dir.mkdir(parents=True)
+    (settings.index_dir / f"manifest_{settings.collection}.json").write_text(json.dumps({"n_listings": 123}))
+    items = [ablation.Item("Q1", "căn hộ q7", (11, 12), frozenset({11})),
+             ablation.Item("Q2", "nhà hn", (21,), frozenset({21}))]
+    hits = pd.DataFrame({"listing_id": [11, 30], "dup_cluster_id": [11, 30]})
+    return settings, items, hits
+
+
+def test_run_shape_and_resume(tmp_path):
+    settings, items, hits = _fake_env(tmp_path)
+    out = tmp_path / "ablation.json"
+    search = mock.Mock(return_value=(hits, False))
+    with mock.patch.object(ablation, "load_items", return_value=items), \
+            mock.patch.object(ablation, "extract_filters", return_value=({"Q1": None, "Q2": None}, 0)), \
+            mock.patch.object(ablation, "hf_cached", return_value=False), \
+            mock.patch.object(ablation, "search", search), mock.patch.object(ablation, "release_gpu"):
+        doc = ablation.run(settings, out=out, log=lambda m: None)
+        assert search.call_count == 12  # 6 run × 2 câu
+        ablation.run(settings, out=out, log=lambda m: None)  # resume: không truy vấn lại
+        assert search.call_count == 12
+    assert doc["corpus"] == {"n_listings": 123, "n_gt_listings": 3, "seed": 42}
+    assert len(doc["runs"]) == 6 and any("rerank runs omitted" in n for n in doc["notes"])
+    keys = {"name", "embedding", "chunk_size", "retrieval", "prefilter", "rerank", "recall_at_5", "recall_at_10",
+            "mrr", "ndcg_at_10", "n_questions", "latency_ms_p50"}
+    for r in doc["runs"]:
+        assert set(r) == keys and r["embedding"] == "e5_large" and r["chunk_size"] == 400
+        assert r["recall_at_5"] == pytest.approx(0.5) and r["n_questions"] == 2
+    assert json.loads(out.read_text(encoding="utf-8"))["runs"] == doc["runs"]
