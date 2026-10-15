@@ -22,15 +22,16 @@ _encoder = None
 class Encoder:
     def __init__(self, settings, device: str = "cuda"):
         import torch
-        from transformers import AutoModel
 
         from vre.index import tokenize
+        from vre.index.weights import build_model_fp16
 
         self.torch, self.device = torch, device
         self.tokenizer = tokenize.load_tokenizer()
         self.special = tokenize.special_ids(self.tokenizer)
-        self.model = AutoModel.from_pretrained(tokenize.model_name(), dtype=torch.float16, attn_implementation="sdpa",
-                                               local_files_only=True).to(device).eval()
+        # Không `AutoModel.from_pretrained`: backend mmap COW của safetensors làm sập tiến trình khi commit thấp
+        # (plans/reports/p3-encoder-crash.md). Loader dùng chung đọc theo lát, thiếu bộ nhớ thì nổ MemoryError.
+        self.model = build_model_fp16().to(device).eval()
         if device == "cuda":
             total = torch.cuda.get_device_properties(0).total_memory
             torch.cuda.set_per_process_memory_fraction(min(1.0, VRAM_CAP_GB * 1e9 / total))
