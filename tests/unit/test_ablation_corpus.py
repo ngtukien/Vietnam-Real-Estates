@@ -1,14 +1,18 @@
-"""vre.eval.ablation: chỉ số theo cụm, kế hoạch run, kiểm cache HF, `corpus` từ manifest, resume (không Qdrant/LLM)."""
+"""vre.eval.ablation(+_subcorpus): subcorpus chứa 100% tin GT, tất định theo seed; chỉ số theo cụm; kế hoạch run;
+kiểm cache HF; `corpus`/`subcorpus`; resume theo scope (không Qdrant/LLM/GPU)."""
 
+import contextlib
 import json
 import math
 from unittest import mock
 
+import numpy as np
 import pandas as pd
 import pytest
 
 from vre.config import Settings
 from vre.eval import ablation
+from vre.eval import ablation_subcorpus as sub
 
 
 def test_score_run_cluster_metrics():
@@ -46,6 +50,58 @@ def test_hf_cached(tmp_path):
     assert ablation.hf_cached("org/model", tmp_path)
 
 
+@pytest.fixture
+def all_ids():
+    return np.arange(10_000, 60_000, 3, dtype=np.int64)  # bảng sạch giả, id rời rạc
+
+
+def test_subcorpus_contains_all_gt(all_ids):
+    gt = [int(all_ids[5]), int(all_ids[-1]), int(all_ids[12_345])]
+    ids = sub.subcorpus_ids(all_ids, gt, n_random=100, seed=42)
+    assert set(gt) <= set(ids.tolist())  # 100% tin GT
+    assert 100 <= len(ids) <= 103
+    assert np.all(np.diff(ids) > 0)  # tăng dần, duy nhất
+    assert set(ids.tolist()) <= set(all_ids.tolist())
+
+
+def test_subcorpus_deterministic_with_seed(all_ids):
+    gt = [int(all_ids[7])]
+    a = sub.subcorpus_ids(all_ids, gt, 500, seed=42)
+    b = sub.subcorpus_ids(all_ids, gt, 500, seed=42)
+    c = sub.subcorpus_ids(all_ids, gt, 500, seed=43)
+    assert np.array_equal(a, b) and sub.ids_digest(a) == sub.ids_digest(b)
+    assert not np.array_equal(a, c)
+    assert sub.descriptor(a, 1, 500) == sub.descriptor(b, 1, 500)
+
+
+def test_subcorpus_caps_at_corpus_and_rejects_unknown_gt(all_ids):
+    assert len(sub.subcorpus_ids(all_ids, [], 10**9)) == len(all_ids)
+    with pytest.raises(ValueError, match="không có trong bảng sạch"):
+        sub.subcorpus_ids(all_ids, [1], 10)
+
+
+def test_effective_chunk_tokens_fits_e5_max_length():
+    assert sub.effective_chunk_tokens(256, 512, 3) == 256
+    assert sub.effective_chunk_tokens(400, 512, 3) == 400
+    assert sub.effective_chunk_tokens(512, 512, 3) == 507  # [bos] + 3 tiền tố + 507 + [eos] = 512
+
+
+def test_run_names_unique_and_collection_names():
+    order = ablation.canonical_order()
+    assert len(order) == len(set(order)) == 12 + 18
+    assert ablation.sub_run_name(512, "hybrid", True) == "c512_hybrid_prefilter"
+    assert sub.collection_name(256) == "vre_ablation_e5_large_c256"
+
+
+def test_kept_runs_matches_scope_reference():
+    corpus, subc = {"n_listings": 1}, {"digest": "a"}
+    old = {"corpus": corpus, "subcorpus": {"digest": "b"},
+           "runs": [{"name": "full_bm25", "n_questions": 2}, {"name": "c256_bm25", "n_questions": 2},
+                    {"name": "full_dense", "n_questions": 3}]}
+    assert set(ablation.kept_runs(old, corpus, subc, 2)) == {"full_bm25"}
+    assert set(ablation.kept_runs({**old, "subcorpus": subc}, corpus, subc, 2)) == {"full_bm25", "c256_bm25"}
+
+
 def _fake_env(tmp_path):
     settings = Settings(data_root=tmp_path)
     settings.index_dir.mkdir(parents=True)
@@ -56,26 +112,68 @@ def _fake_env(tmp_path):
     return settings, items, hits
 
 
+def _patches(items, hits, search, cached=False):
+    return [mock.patch.object(ablation, "load_items", return_value=items),
+            mock.patch.object(ablation, "extract_filters", return_value=({"Q1": None, "Q2": None}, 0, [])),
+            mock.patch.object(ablation, "hf_cached", return_value=cached),
+            mock.patch.object(ablation, "load_reranker"),
+            mock.patch.object(sub, "all_listing_ids", return_value=np.array([11, 12, 21, 30, 40], dtype=np.int64)),
+            mock.patch.object(ablation, "search", search), mock.patch.object(ablation, "release_gpu")]
+
+
+RUN_KEYS = {"name", "embedding", "chunk_size", "retrieval", "prefilter", "rerank", "recall_at_5", "recall_at_10",
+            "mrr", "ndcg_at_10", "n_questions", "latency_ms_p50"}
+
+
 def test_run_shape_and_resume(tmp_path):
     settings, items, hits = _fake_env(tmp_path)
     out = tmp_path / "ablation.json"
     search = mock.Mock(return_value=(hits, False))
-    with mock.patch.object(ablation, "load_items", return_value=items), \
-            mock.patch.object(ablation, "extract_filters", return_value=({"Q1": None, "Q2": None}, 0, [])), \
-            mock.patch.object(ablation, "hf_cached", return_value=False), \
-            mock.patch.object(ablation, "search", search), mock.patch.object(ablation, "release_gpu"):
-        doc = ablation.run(settings, out=out, log=lambda m: None)
+    with contextlib.ExitStack() as stack:
+        for p in _patches(items, hits, search):
+            stack.enter_context(p)
+        doc = ablation.run(settings, scope="full", subcorpus_size=2, out=out, log=lambda m: None)
         assert search.call_count == 12  # 6 run × 2 câu
-        ablation.run(settings, out=out, log=lambda m: None)  # resume: không truy vấn lại
+        ablation.run(settings, scope="full", subcorpus_size=2, out=out, log=lambda m: None)  # resume
         assert search.call_count == 12
     assert doc["corpus"] == {"n_listings": 123, "n_gt_listings": 3, "seed": 42}
+    assert doc["subcorpus"]["n_gt_listings"] == 3 and doc["subcorpus"]["n_random"] == 2
     assert len(doc["runs"]) == 6 and any("rerank runs omitted" in n for n in doc["notes"])
-    keys = {"name", "embedding", "chunk_size", "retrieval", "prefilter", "rerank", "recall_at_5", "recall_at_10",
-            "mrr", "ndcg_at_10", "n_questions", "latency_ms_p50"}
     for r in doc["runs"]:
-        assert set(r) == keys and r["embedding"] == "e5_large" and r["chunk_size"] == 400
+        assert set(r) == RUN_KEYS and r["embedding"] == "e5_large" and r["chunk_size"] == 400
         assert r["recall_at_5"] == pytest.approx(0.5) and r["n_questions"] == 2
     assert json.loads(out.read_text(encoding="utf-8"))["runs"] == doc["runs"]
+
+
+def test_sub_scope_builds_measures_drops_and_keeps_full_runs(tmp_path):
+    settings, items, hits = _fake_env(tmp_path)
+    out = tmp_path / "ablation.json"
+    search = mock.Mock(return_value=(hits, False))
+    build = mock.Mock(side_effect=lambda s, size, ids, log: (sub.make_layout(s, size), {0: ids},
+                                                             {"chunk_tokens": min(size, 507)}))
+    with contextlib.ExitStack() as stack:
+        for p in _patches(items, hits, search, cached=True):
+            stack.enter_context(p)
+        stack.enter_context(mock.patch.object(sub, "build_artifacts", build))
+        stack.enter_context(mock.patch.object(sub, "load_collection", return_value={"n_points": 7}))
+        drop = stack.enter_context(mock.patch.object(sub, "drop", return_value=True))
+        stack.enter_context(mock.patch.object(sub, "use_collection", return_value=contextlib.nullcontext()))
+        ablation.run(settings, scope="full", subcorpus_size=2, out=out, log=lambda m: None)
+        assert search.call_count == 24  # 12 run full (rerank có trong cache) × 2 câu
+        doc = ablation.run(settings, scope="sub", chunk_sizes=(256, 512), subcorpus_size=2, out=out,
+                           log=lambda m: None)
+        assert search.call_count == 24 + 24  # 2 cỡ × 6 run × 2 câu
+        assert drop.call_count == 2 and build.call_count == 2
+        ablation.run(settings, scope="sub", chunk_sizes=(256,), subcorpus_size=2, out=out, log=lambda m: None)
+        assert build.call_count == 2  # resume: không dựng lại
+    names = [r["name"] for r in doc["runs"]]
+    assert names == ablation.canonical_order()[:12] + [n for n in ablation.canonical_order()[12:]
+                                                       if n[:4] in ("c256", "c512")]
+    assert all(set(r) == RUN_KEYS for r in doc["runs"])
+    assert {r["chunk_size"] for r in doc["runs"] if r["name"].startswith("c512")} == {512}
+    assert doc["subcorpus_builds"]["c512"]["collection_deleted"] is True
+    assert any("c512: header+body capped at 507" in n for n in doc["notes"])
+    assert set(doc["subcorpus"]) == {"n_listings", "n_gt_listings", "n_random", "seed", "digest"}
 
 
 def test_extract_filters_offline_skips_misses_and_never_calls(monkeypatch):
