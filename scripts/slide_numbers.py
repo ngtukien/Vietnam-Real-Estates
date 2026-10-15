@@ -13,6 +13,7 @@ Mục cho phép: {slide, allow: "lý do", shape?, text?}. Chart: {slide, chart: 
 from __future__ import annotations
 
 import argparse
+import functools
 import glob
 import re
 import sys
@@ -50,7 +51,7 @@ def expected(entry: dict, res: Resolver) -> list[str]:
     keys = entry.get("keys") or [entry["key"]]
     fmts = entry.get("fmt", "int")
     fmts = fmts if isinstance(fmts, list) else [fmts] * len(keys)
-    return [fmt(res.get(k), f) for k, f in zip(keys, fmts)]
+    return [fmt(res.get(k), f) for k, f in zip(keys, fmts, strict=False)]
 
 
 def _slide_ok(entry, fr) -> bool:
@@ -105,7 +106,7 @@ def run_entries(items, texts, res, rep, apply_fn=None):
                     covered.add((id(fr), m.start(), m.end()))
                     continue
                 slots = [(m.start(i + 1), m.end(i + 1), m.group(i + 1)) for i in range(len(want))]
-                for (a, b, got), w in zip(reversed(slots), reversed(want)):
+                for (a, b, got), w in zip(reversed(slots), reversed(want), strict=False):
                     if got != w:
                         if apply_fn:
                             apply_fn(fr, a, b, w)
@@ -125,7 +126,7 @@ def check_pptx(prs, m, res, rep, apply=False):
     frs = frames(prs)
     entries = [e for e in m.get("entries", []) if "chart" not in e]
     for e in entries:
-        e["_match"] = (lambda e: lambda fr: _scope(e, fr))(e)
+        e["_match"] = functools.partial(_scope, e)
     texts = [(f"slide {fr.slide}({fr.slide_name}) {fr.where} shape {fr.shape_id}", fr.slide_name, fr, fr.text) for fr in frs]
     spans = run_entries(entries, texts, res, rep, (lambda fr, a, b, w: fr.replace(a, b, w)) if apply else None)
     if apply:
@@ -172,7 +173,7 @@ def check_chart(chart, e, res, rep, where, name, apply):
     got = [(se.name, list(se.values)) for pl in chart.plots for se in pl.series]
     if got_cats != [str(c) for c in cats]:
         rep.fail("wrong", where, f"nhãn {got_cats} ≠ {cats}", name)
-    for (gn, gv), (wn, wv) in zip(got, series):
+    for (gn, gv), (wn, wv) in zip(got, series, strict=False):
         if gn != wn or [round(v, 6) for v in gv] != [round(v, 6) for v in wv]:
             rep.fail("wrong", where, f"series {gn}={gv} ≠ {wn}={wv}", name)
     if len(got) != len(series):

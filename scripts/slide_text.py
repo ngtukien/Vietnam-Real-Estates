@@ -27,7 +27,7 @@ class Frame:
     segments: list = field(default_factory=list, repr=False)  # (start, end, run|None)
     text: str = ""
 
-    def build(self) -> "Frame":
+    def build(self) -> Frame:
         parts, pos, self.segments = [], 0, []
         for pi, p in enumerate(self.text_frame.paragraphs):
             if pi:
