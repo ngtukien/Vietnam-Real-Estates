@@ -32,7 +32,7 @@ _FAKE_TAG = re.compile(r"<\s*(/?)\s*tai_lieu\s*>", re.I)
 
 
 def format_context(hits: pd.DataFrame) -> list[str]:
-    return [f"[Tin#{int(row.listing_id)}] {row.text}" for row in hits.itertuples()]
+    return [f"[Tin#{int(lid)}] {text}" for lid, text in zip(hits["listing_id"], hits["text"], strict=True)]
 
 
 def wrap_documents(contexts: list[str]) -> str:
@@ -43,12 +43,12 @@ def wrap_documents(contexts: list[str]) -> str:
     return "\n\n".join(f"<tai_lieu>\n{c}\n</tai_lieu>" for c in safe)
 
 
-def build_prompt(question: str, contexts: list[str], note: str = "") -> str:
+def build_prompt(question: str, contexts: list[str], note: str | None = None) -> str:
     prompt = "NGỮ CẢNH:\n" + wrap_documents(contexts) + f"\n\nCÂU HỎI: {question}"
     return f"{FILTER_DROPPED_PROMPT}\n\n{prompt}" if note == FILTER_DROPPED else prompt
 
 
-def generate(question: str, contexts: list[str], note: str = "", system: str = ANSWER_SYSTEM) -> LLMResult:
+def generate(question: str, contexts: list[str], note: str | None = None, system: str = ANSWER_SYSTEM) -> LLMResult:
     result = ask_llm(build_prompt(question, contexts, note), system=system)
     return replace(result, text=normalize_citations(result.text))
 
@@ -74,7 +74,7 @@ def ask_rag(question: str, k: int | None = None, use_filters: bool = True) -> di
     cited, unsupported = check_citations(answer.text, sources)
     return dict(system="basic_rag", question=question, answer=answer.text, sources=sources, contexts=contexts,
                 cited=cited, unsupported_citations=unsupported,
-                filters=filters.model_dump(exclude_none=True) if filters else {}, note=found["note"],
+                filters=filters.model_dump(exclude_none=True) if filters else {}, note=found["note"] or "",
                 latency=perf_counter() - start,
                 input_tokens=sum(r.input_tokens for r in calls),
                 output_tokens=sum(r.output_tokens for r in calls))
