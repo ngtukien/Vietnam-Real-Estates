@@ -67,7 +67,22 @@ def listing_header(row: dict) -> str:
 def chunk_rows(rows: list[dict], tokenizer, special, settings) -> tuple[pd.DataFrame, list[list[int]], int]:
     """Chunk một lô tin. Trả (bảng chunk, input_ids từng chunk, số tin bị cắt ở `max_chunks_per_listing`)."""
     records, sequences, truncated = [], [], 0
+    for rec, seqs, trunc in iter_chunk_batches(rows, tokenizer, special, settings):
+        records += rec
+        sequences += seqs
+        truncated += trunc
+    return chunk_table(records), sequences, truncated
+
+
+def chunk_table(records: list[tuple]) -> pd.DataFrame:
+    table = pd.DataFrame.from_records(records, columns=["point_id", "listing_id", "chunk_index", "text", "n_tokens"])
+    return table.astype({"point_id": "int64", "listing_id": "int64", "chunk_index": "int16", "n_tokens": "int16"})
+
+
+def iter_chunk_batches(rows: list[dict], tokenizer, special, settings):
+    """Từng lô `TOKENIZE_BATCH` tin: (bản ghi chunk, input_ids, số tin bị cắt). Chỉ một lô nằm dưới dạng list Python."""
     for start in range(0, len(rows), TOKENIZE_BATCH):
+        records, sequences, truncated = [], [], 0
         batch = rows[start:start + TOKENIZE_BATCH]
         headers = [listing_header(r) for r in batch]
         bodies = [_text(r.get("description")) or "" for r in batch]
@@ -89,9 +104,7 @@ def chunk_rows(rows: list[dict], tokenizer, special, settings) -> tuple[pd.DataF
                 ids = head_ids + list(b_ids[s:s + budget]) + [special.eos]
                 sequences.append(ids)
                 records.append((point_id(lid, index), lid, index, text, len(ids) - 2 - len(special.passage_prefix)))
-    table = pd.DataFrame.from_records(records, columns=["point_id", "listing_id", "chunk_index", "text", "n_tokens"])
-    return table.astype({"point_id": "int64", "listing_id": "int64", "chunk_index": "int16", "n_tokens": "int16"}), \
-        sequences, truncated
+        yield records, sequences, truncated
 
 
 def n_parts(n_listings: int, part_size: int) -> int:
@@ -127,10 +140,16 @@ def chunk_part(settings, layout, part: int) -> dict:
     """Việc của một tiến trình tokenize: đọc part, ghi `chunks/` + `tok/`. Trả số chunk, số tin bị cắt."""
     from vre.index import tokenize
 
-    tok = tokenize.load_tokenizer()
+    tok = tokenize.load_fast_tokenizer()  # không kéo torch vào worker (commit)
     rows = read_part(settings.clean_path, part, settings.part_size, PART_COLUMNS).to_pylist()
-    table, sequences, truncated = chunk_rows(rows, tok, tokenize.special_ids(tok), settings)
-    tokenize.save_tokens(layout.tok(part), sequences)
+    records, flats, lengths, truncated = [], [], [], 0
+    for rec, seqs, trunc in iter_chunk_batches(rows, tok, tokenize.special_ids(tok), settings):
+        records += rec
+        truncated += trunc
+        lengths.append(np.fromiter((len(q) for q in seqs), dtype=np.int64, count=len(seqs)))
+        flats.append(np.fromiter((t for q in seqs for t in q), dtype=np.int32, count=int(lengths[-1].sum())))
+    table = chunk_table(records)
+    tokenize.save_tokens(layout.tok(part), np.concatenate(flats), np.concatenate(lengths))
     write_parquet_atomic(table, layout.chunks(part))  # ghi sau cùng: chunks có mặt ⇒ tok đã có
     return {"part": part, "n_chunks": len(table), "truncated": truncated,
             "n_tokens_max": int(np.max(table["n_tokens"])) if len(table) else 0}

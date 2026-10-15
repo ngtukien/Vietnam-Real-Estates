@@ -52,8 +52,9 @@ def test_chunk_ids_match_stored_text(models):
     rows = [{"listing_id": i, "title": f"Bán nhà số {i}", "property_type": "Nhà", "province": "Hồ Chí Minh",
              "district": "Quận 7", "ward": "Tân Phong", "price_vnd": 7.45e9, "area_m2": 80.0, "bedrooms": 3,
              "description": text} for i, text in enumerate(_sentences()[:64])]
-    tok = tokenize.load_tokenizer()
-    table, sequences, _ = chunk.chunk_rows(rows, tok, tokenize.special_ids(tok), settings)
+    tok = tokenize.load_tokenizer()  # tokenizer transformers: chuẩn để so
+    fast = tokenize.load_fast_tokenizer()  # tokenizer mà worker chunk thật sự dùng
+    table, sequences, _ = chunk.chunk_rows(rows, fast, tokenize.special_ids(fast), settings)
     for ids, text in zip(sequences, table["text"], strict=True):
         assert ids == tok("passage: " + text)["input_ids"]
     offsets = np.zeros(len(sequences) + 1, dtype=np.int64)
