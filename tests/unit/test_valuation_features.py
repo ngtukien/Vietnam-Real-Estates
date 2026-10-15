@@ -110,6 +110,33 @@ def test_target_encoding_shared_key_uses_only_other_folds():
     assert unseen["te_province"].iloc[0] == pytest.approx(train[F.TARGET].mean())
 
 
+def test_target_encoding_train_ignores_validation_targets():
+    rng = np.random.default_rng(3)
+    n = 600
+    train = pd.DataFrame({c: rng.choice(["a", "b", "c"], n) for c in F.TE_COLS})
+    train["month"] = rng.choice(["2025-06", "2025-09", F.VALID_MONTH], n)
+    train[F.TARGET] = rng.normal(5, 1, n)
+    train.index = train.index + 1000  # chỉ số không bắt đầu từ 0
+    valid = F.split(train)["valid"]
+    te, enc = F.target_encode_train(train, valid, seed=11)
+    perturbed = train.copy()
+    perturbed.loc[valid, F.TARGET] += 100.0  # đổi mọi target tháng validation
+    te_p, enc_p = F.target_encode_train(perturbed, valid, seed=11)
+    pd.testing.assert_frame_equal(te, te_p)  # dòng fit (OOF) lẫn dòng valid không đổi
+    fit_oof, fit_enc = F.target_encode_oof(train[~valid], seed=11)
+    pd.testing.assert_frame_equal(te[~valid], fit_oof)
+    pd.testing.assert_frame_equal(te[valid], F.target_encode_apply(train[valid], fit_enc))
+    # Encoder lưu cho test/predict: fit trên cả cửa sổ train (fit ∪ valid)
+    assert enc["prior"] == pytest.approx(train[F.TARGET].mean()) and enc_p["prior"] != enc["prior"]
+
+
+def test_count_rent_respects_limit(settings):
+    from vre.valuation import train
+
+    full = train.count_rent(settings)
+    assert full > 5 and train.count_rent(settings, 5) == 5 and train.count_rent(settings, 10**9) == full
+
+
 def test_full_variant_joins_fake_pca_by_listing_id(settings):
     df = F.load_frame(settings)
     pca = write_fake_pca(settings, df["listing_id"].to_numpy()[:-5])  # 5 tin cuối không có embedding

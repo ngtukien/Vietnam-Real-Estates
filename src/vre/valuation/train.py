@@ -107,7 +107,7 @@ def train_deal(df: pd.DataFrame, variant: F.Variant, settings: Settings, device:
     train, test = df[masks["train"]], df[masks["test"]]
     if masks["fit"].sum() == 0 or masks["valid"].sum() == 0 or len(test) == 0:
         raise ValueError(f"Thiếu dữ liệu cho split: fit={int(masks['fit'].sum())} valid={int(masks['valid'].sum())} test={len(test)}")
-    te_train, enc = F.target_encode_oof(train, settings.seed)
+    te_train, enc = F.target_encode_train(train, masks["valid"], settings.seed)
     cats = F.categories(train)
     pca = F.join_pca(df, F.pca_path(settings), settings.pca_dim) if variant == "full" else None
     x_train = F.build_matrix(train, te_train, cats, variant, None if pca is None else pca.loc[train.index])
@@ -117,10 +117,13 @@ def train_deal(df: pd.DataFrame, variant: F.Variant, settings: Settings, device:
     # QuantileDMatrix: dựng thẳng bin của `hist`, không giữ bản sao float — bộ nhớ (commit) nhỏ hơn nhiều.
     dfit = xgb.QuantileDMatrix(x_train[fit], y[fit], enable_categorical=True)
     dval = xgb.QuantileDMatrix(x_train[val], y[val], ref=dfit, enable_categorical=True)
-    feature_names = list(x_train.columns)
+    feature_names, x_val, valid = list(x_train.columns), x_train[val], train[val]
     del x_train
     booster, params = search(dfit, dval, device, settings)
     yhat = np.exp(booster.predict(xgb.DMatrix(x_test, enable_categorical=True)))
+    # Khoảng p10/p90 hiệu chỉnh trên tháng validation — test chỉ để báo cáo.
+    yhat_valid = np.exp(booster.predict(xgb.DMatrix(x_val, enable_categorical=True)))
+    del x_val
     m = metrics(test, yhat, len(train))
     m["train_seconds"] = round(time.perf_counter() - t0, 1)
     m["shap_top"] = explain.shap_top(booster, x_test, settings.seed)
@@ -128,7 +131,7 @@ def train_deal(df: pd.DataFrame, variant: F.Variant, settings: Settings, device:
     encoders = {"variant": variant, "trained_at": utc_now(), "te": enc, "categories": cats,
                 "feature_names": feature_names, "amenities": F.amenity_keys(), "max_month": str(df["month"].max()),
                 "pca_dim": settings.pca_dim if variant == "full" else None, "baseline": base,
-                "interval_ratio_q": intervals(test, yhat), "test_mape": m["mape"], "params": params}
+                "interval_ratio_q": intervals(valid, yhat_valid), "test_mape": m["mape"], "params": params}
     return {"booster": booster, "encoders": encoders, "metrics": m, "test": test, "train": train}
 
 
@@ -156,15 +159,17 @@ def rent_model(settings: Settings, variant: F.Variant, root: Path, n_rent: int, 
     return {"trained": True, "n_rent": n_rent, "reason": None}
 
 
-def count_rent(settings: Settings) -> int:
+def count_rent(settings: Settings, limit: int | None = None) -> int:
+    """Số tin thuê có giá trong cửa sổ; có `limit` (smoke) ⇒ số dòng khung giới hạn = min(count, limit)."""
     from vre.data.duck import connect
 
     con = connect(settings)
     try:
-        return int(con.execute("SELECT count(*) FROM v_listings WHERE deal_type='rent' AND price_m2_mil IS NOT NULL "
-                               "AND month BETWEEN ? AND ?", [F.TRAIN_MONTHS[0], F.TEST_MONTHS[1]]).fetchone()[0])
+        n = int(con.execute("SELECT count(*) FROM v_listings WHERE deal_type='rent' AND price_m2_mil IS NOT NULL "
+                            "AND month BETWEEN ? AND ?", [F.TRAIN_MONTHS[0], F.TEST_MONTHS[1]]).fetchone()[0])
     finally:
         con.close()
+    return n if limit is None else min(n, int(limit))
 
 
 def run(settings: Settings, variant: F.Variant, limit: int | None = None, output_root: Path | None = None) -> dict:
@@ -183,7 +188,7 @@ def run(settings: Settings, variant: F.Variant, limit: int | None = None, output
     device = settings.xgb_device_tabular if variant == "tabular" else settings.xgb_device_full
     res = train_deal(F.load_frame(settings, "sale", limit), variant, settings, device)
     save(res, model_path, enc_path, root)
-    rent = rent_model(settings, variant, root, count_rent(settings), existing.get("rent_model"), limit)
+    rent = rent_model(settings, variant, root, count_rent(settings, limit), existing.get("rent_model"), limit)
     variants = {"tabular": None, "full": None, **(existing.get("variants") or {})}
     variants[variant] = res["metrics"]
     variants["baseline_ward_median"] = baseline_metrics(res)

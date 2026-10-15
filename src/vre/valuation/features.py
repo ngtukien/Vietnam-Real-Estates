@@ -101,9 +101,27 @@ def target_encode_oof(train: pd.DataFrame, seed: int) -> tuple[pd.DataFrame, dic
             mapping = _smoothed(train[col][~held], y[~held], prior)
             enc[held] = train[col][held].map(mapping).astype(float).fillna(prior).to_numpy()
         out[f"te_{col}"] = enc
+    return out, fit_encoder(train)
+
+
+def fit_encoder(df: pd.DataFrame) -> dict[str, Any]:
+    """Mapping làm trơn trên toàn bộ `df` (prior = trung bình target của `df`)."""
+    y = df[TARGET]
     prior = float(y.mean())
-    maps = {col: _smoothed(train[col], y, prior) for col in TE_COLS}
-    return out, {"prior": prior, "maps": maps}
+    return {"prior": prior, "maps": {col: _smoothed(df[col], y, prior) for col in TE_COLS}}
+
+
+def target_encode_train(train: pd.DataFrame, valid: pd.Series, seed: int) -> tuple[pd.DataFrame, dict[str, Any]]:
+    """te_* cho cửa sổ train không rò tháng validation vào chọn model.
+
+    Dòng `fit`: OOF K-fold chỉ trên `fit`; dòng `valid`: mapping fit-only. Encoder trả về (lưu, dùng cho test/predict)
+    fit trên cả cửa sổ train (fit ∪ valid) — không bao giờ thấy target test.
+    """
+    valid = valid.loc[train.index].to_numpy(bool)
+    fit = train[~valid]
+    te_fit, enc_fit = target_encode_oof(fit, seed)
+    te = pd.concat([te_fit, target_encode_apply(train[valid], enc_fit)]).loc[train.index]
+    return te, fit_encoder(train)
 
 
 def target_encode_apply(df: pd.DataFrame, enc: dict[str, Any]) -> pd.DataFrame:
