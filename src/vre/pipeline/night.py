@@ -174,9 +174,9 @@ def run(settings, resume: bool = True, dry_run: bool = False) -> int:
                    threading.Thread(target=job.upload, args=(uploads, upload_pool), daemon=True)]
         for thread in threads:
             thread.start()
-        from vre.index.embed import get_encoder
-
-        job.encoder = get_encoder(settings, "cuda")
+        if not all(job.ledger.done(p, "embedded") for p in range(job.n_parts)):  # model ~6 GB commit: chỉ nạp khi cần
+            from vre.index.embed import get_encoder
+            job.encoder = get_encoder(settings, "cuda")
         job.embed_all(tokens, uploads)
         uploads.put(None)
         for t in threads:
