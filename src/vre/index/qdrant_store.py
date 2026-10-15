@@ -57,7 +57,7 @@ def set_alias(qc, alias: str, collection: str) -> None:
     """Trỏ alias về collection trong một thao tác nguyên tử (xoá alias cũ nếu có)."""
     from qdrant_client import models
 
-    ops = []
+    ops: list[models.DeleteAliasOperation | models.CreateAliasOperation] = []
     if any(a.alias_name == alias for a in qc.get_aliases().aliases):
         ops.append(models.DeleteAliasOperation(delete_alias=models.DeleteAlias(alias_name=alias)))
     ops.append(models.CreateAliasOperation(create_alias=models.CreateAlias(collection_name=collection,

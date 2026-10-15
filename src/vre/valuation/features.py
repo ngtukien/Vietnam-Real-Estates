@@ -79,7 +79,7 @@ def split(df: pd.DataFrame) -> dict[str, pd.Series]:
     return {"train": train, "fit": train & ~valid, "valid": valid, "test": df["month"].between(*TEST_MONTHS)}
 
 
-def _smoothed(keys: pd.Series, y: pd.Series, prior: float) -> dict[str, float]:
+def _smoothed(keys: pd.Series, y: pd.Series, prior: float) -> dict[Any, float]:
     stats = y.groupby(keys).agg(["sum", "count"])
     return ((stats["sum"] + SMOOTHING_M * prior) / (stats["count"] + SMOOTHING_M)).to_dict()
 
@@ -117,10 +117,10 @@ def target_encode_train(train: pd.DataFrame, valid: pd.Series, seed: int) -> tup
     Dòng `fit`: OOF K-fold chỉ trên `fit`; dòng `valid`: mapping fit-only. Encoder trả về (lưu, dùng cho test/predict)
     fit trên cả cửa sổ train (fit ∪ valid) — không bao giờ thấy target test.
     """
-    valid = valid.loc[train.index].to_numpy(bool)
-    fit = train[~valid]
+    is_valid = valid.loc[train.index].to_numpy(bool)
+    fit = train[~is_valid]
     te_fit, enc_fit = target_encode_oof(fit, seed)
-    te = pd.concat([te_fit, target_encode_apply(train[valid], enc_fit)]).loc[train.index]
+    te = pd.concat([te_fit, target_encode_apply(train[is_valid], enc_fit)]).loc[train.index]
     return te, fit_encoder(train)
 
 

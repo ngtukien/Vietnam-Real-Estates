@@ -106,7 +106,9 @@ def clean_frame(raw: pd.DataFrame, shard: int, row_offset: int = 0) -> pd.DataFr
     out["title"], out["description"] = mask_pii(title), mask_pii(description)
     ptype = raw["property_type_name"].map(normalize_text)
     no_text = title.isna() & description.isna()
-    out["drop_reason"] = np.where(no_text, "dropped_no_text", np.where(~ptype.isin(PROPERTY_TYPES), "dropped_bad_type", None))
+    keep = np.array(None, dtype=object)  # ô "giữ" = None (cột object), như np.where(..., None) cũ
+    bad_type = np.where((~ptype.isin(PROPERTY_TYPES)).to_numpy(bool), "dropped_bad_type", keep)
+    out["drop_reason"] = np.where(no_text.to_numpy(bool), "dropped_no_text", bad_type)
     out["property_type"] = ptype
     price = parse_price(raw["price"])
     for col, new in NUMERIC.items():

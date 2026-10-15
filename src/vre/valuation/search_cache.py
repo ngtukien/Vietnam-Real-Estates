@@ -28,8 +28,8 @@ SEARCH_SEED = 42
 MAX_ROUNDS = 3000
 EARLY_STOPPING = 100
 # max_depth ≤ 10, min_child_weight ≥ 5: depth 12 + mcw 1 cho model 750 MB (JSON), quá nặng cho API; lợi ~3% RMSE.
-SPACE = {"max_depth": [6, 8, 10], "eta": [0.03, 0.05, 0.1], "subsample": [0.7, 0.8, 0.9, 1.0],
-         "colsample_bytree": [0.6, 0.8, 1.0], "min_child_weight": [5, 10, 20], "lambda": [1.0, 3.0, 10.0]}
+SPACE: dict[str, list[int | float]] = {"max_depth": [6, 8, 10], "eta": [0.03, 0.05, 0.1], "subsample": [0.7, 0.8, 0.9, 1.0],
+                                     "colsample_bytree": [0.6, 0.8, 1.0], "min_child_weight": [5, 10, 20], "lambda": [1.0, 3.0, 10.0]}
 SEARCH_DIRNAME = "_search"
 LABEL_SUM_DECIMALS = 6
 

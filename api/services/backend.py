@@ -7,11 +7,14 @@ import json
 import logging
 import time
 from collections.abc import Iterator
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from api.deps import ApiSettings
 from api.errors import ApiError
 from api.schemas import ErrorCode, SystemId
+
+if TYPE_CHECKING:
+    from vre.qa import SystemId as QaSystemId
 
 log = logging.getLogger("vre.api")
 
@@ -71,7 +74,8 @@ class RealBackend:
                       stream_tokens: bool) -> Iterator[tuple[str, dict[str, Any]]]:
         from vre.qa import stream_answer
 
-        return iter(stream_answer(system, question, filters=filters, top_k=top_k, use_rerank=use_rerank,
+        # router đã kiểm `system` theo enum api.schemas.SystemId (cùng 4 giá trị với vre.qa.SystemId)
+        return iter(stream_answer(cast("QaSystemId", system), question, filters=filters, top_k=top_k, use_rerank=use_rerank,
                                   stream_tokens=stream_tokens))
 
     def valuate(self, payload: dict[str, Any]) -> dict[str, Any]:
