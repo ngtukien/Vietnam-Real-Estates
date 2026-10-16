@@ -5,8 +5,10 @@ Thư mục: `Settings.results_dir / "cache" / "llm"` (= `results/cache/llm/` cũ
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import json
+import logging
 import threading
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -18,6 +20,8 @@ from vre.config import get_settings
 # Theo ngữ cảnh (luồng / task), không phải biến toàn cục: `fresh()` ở một luồng đo không làm luồng chatbot khác
 # bỏ qua cache (bug B1). ThreadPoolExecutor KHÔNG chép ngữ cảnh sang luồng con — dùng `contextvars.copy_context().run`.
 _read_cache: ContextVar[bool] = ContextVar("vre_llm_read_cache", default=True)
+_readonly_warned = False
+logger = logging.getLogger(__name__)
 
 
 def cache_dir() -> Path:
@@ -39,12 +43,24 @@ def read(key: str) -> dict | None:
 
 
 def write(key: str, payload: dict) -> None:
-    """Ghi nguyên tử: luồng khác không bao giờ đọc phải file dở."""
+    """Ghi nguyên tử: luồng khác không bao giờ đọc phải file dở.
+
+    Thư mục chỉ đọc (container API mount `results/` read-only) ⇒ bỏ ghi, cảnh báo một lần; câu trả lời vẫn trả về.
+    """
+    global _readonly_warned
     directory = cache_dir()
-    directory.mkdir(parents=True, exist_ok=True)
     path = directory / f"{key}.json"
     tmp = path.with_suffix(f".{threading.get_ident()}.tmp")
-    tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    try:
+        directory.mkdir(parents=True, exist_ok=True)
+        tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    except OSError as exc:
+        if exc.errno != errno.EROFS:
+            raise
+        if not _readonly_warned:
+            _readonly_warned = True
+            logger.warning("Cache LLM %s chỉ đọc: không lưu kết quả mới", directory)
+        return
     tmp.replace(path)
 
 

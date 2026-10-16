@@ -31,14 +31,16 @@ export function GraphPanel({ listingId }: { listingId: number }) {
   const { data, isLoading, error } = useSubgraph(listingId);
   const box = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(480);
+  const hasData = data !== undefined;
 
+  // Khung chỉ render khi đã có `data` ⇒ gắn observer lại lúc khung xuất hiện (deps rỗng thì box.current còn null).
   useEffect(() => {
     const el = box.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => entry && setWidth(Math.max(240, entry.contentRect.width)));
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [hasData]);
 
   const graph = useMemo(
     () => ({
