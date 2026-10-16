@@ -164,8 +164,9 @@ def test_sub_scope_builds_measures_drops_and_keeps_full_runs(tmp_path):
                            log=lambda m: None)
         assert search.call_count == 24 + 24  # 2 cỡ × 6 run × 2 câu
         assert drop.call_count == 2 and build.call_count == 2
-        ablation.run(settings, scope="sub", chunk_sizes=(256,), subcorpus_size=2, out=out, log=lambda m: None)
+        again = ablation.run(settings, scope="sub", chunk_sizes=(256,), subcorpus_size=2, out=out, log=lambda m: None)
         assert build.call_count == 2  # resume: không dựng lại
+    assert any(n.startswith("c512: header+body capped") for n in again["notes"])  # ghi chú của tiến trình trước
     names = [r["name"] for r in doc["runs"]]
     assert names == ablation.canonical_order()[:12] + [n for n in ablation.canonical_order()[12:]
                                                        if n[:4] in ("c256", "c512")]
@@ -210,3 +211,4 @@ def test_build_only_builds_without_filters_or_json(tmp_path):
     assert doc["subcorpus_builds"] == {"c256": {"chunk_tokens": 256}} and not out.exists()
     filters.assert_not_called()
     assert build.call_args.kwargs == {"embed_token_budget": 8192, "vram_cap_gb": 2.0}
+

@@ -301,6 +301,9 @@ def run(settings: Settings, limit: int | None = None, *, scope: str = "all",
     corpus = index_corpus(settings, len({i for it in items for i in it.gt_ids}))
     runs = kept_runs(old, corpus, subcorpus, len(items))
     builds = dict(old.get("subcorpus_builds") or {}) if old.get("subcorpus") == subcorpus else {}
+    # mỗi cỡ chunk đo trong tiến trình riêng: giữ ghi chú gắn với run/build còn hợp lệ của lần chạy trước
+    owners = set(runs) | set(builds)
+    notes += [n for n in old.get("notes", []) if n.split(":", 1)[0] in owners]
     rerank_ok = hf_cached(settings.rerank_model)
     if not rerank_ok:
         notes.append(f"rerank runs omitted: RERANK_MODEL {settings.rerank_model} not in HF cache "
