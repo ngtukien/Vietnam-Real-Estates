@@ -195,7 +195,7 @@ def limits(d: Deck) -> None:
          "faithfulness. Mô hình sinh " if full else
          f"Về đánh giá, benchmark có {n_b} câu nhưng lượt chạy chỉ dùng tập con {n_q} câu vì hạn "
          "mức API miễn phí, chấm bằng luật so với đáp án SQL và chưa đo faithfulness bằng mô hình giám khảo. Mô hình sinh ")
-        + 
+        +
         f"là {gen}, khác {planned} dự kiến ban đầu. Về dữ liệu, giá là giá rao, không phải giá giao dịch; địa giới có cả "
         "tên cũ và tên sau sáp nhập năm 2025; tin không có toạ độ; nhiều cột thiếu, ví dụ đường thiếu "
         f"{d.N(mp + '.street', 'dec0')}% và dự án thiếu {d.N(mp + '.project', 'dec0')}%. Giấy phép dữ liệu chỉ cho "
