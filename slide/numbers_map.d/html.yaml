@@ -598,14 +598,9 @@ html:
   - examples.json:graph[id=AG01].latency_ms
   fmt:
   - dec1
-- text: exAg03Ms:'{}'
+- text: exLk01Ms:'{}'
   keys:
-  - examples.json:graph[id=AG03].latency_ms
-  fmt:
-  - int
-- text: exAg03Gt:'{}'
-  keys:
-  - examples.json:graph[id=AG03].rows[0].n_listings
+  - examples.json:graph[id=LK01].latency_ms
   fmt:
   - int
 - text: exLk01Hits:'{}'
@@ -693,3 +688,89 @@ html:
   allow: đáp án trắc nghiệm của ví dụ Recall minh hoạ (2/3), không phải số đo
 - text: rootMargin:'{*}'
   allow: tham số IntersectionObserver
+- text: ab_dense_rerank:['{}','{}','{}']
+  keys:
+  - ablation.json:runs[name=full_dense_rerank].recall_at_5
+  - ablation.json:runs[name=full_dense_rerank].mrr
+  - ablation.json:runs[name=full_dense_rerank].latency_ms_p50
+  fmt:
+  - dec2
+  - dec2
+  - dec1
+- text: ab_dense_prefilter_rerank:['{}','{}','{}']
+  keys:
+  - ablation.json:runs[name=full_dense_prefilter_rerank].recall_at_5
+  - ablation.json:runs[name=full_dense_prefilter_rerank].mrr
+  - ablation.json:runs[name=full_dense_prefilter_rerank].latency_ms_p50
+  fmt:
+  - dec2
+  - dec2
+  - dec1
+- text: ab_bm25_rerank:['{}','{}','{}']
+  keys:
+  - ablation.json:runs[name=full_bm25_rerank].recall_at_5
+  - ablation.json:runs[name=full_bm25_rerank].mrr
+  - ablation.json:runs[name=full_bm25_rerank].latency_ms_p50
+  fmt:
+  - dec2
+  - dec2
+  - dec1
+- text: ab_bm25_prefilter_rerank:['{}','{}','{}']
+  keys:
+  - ablation.json:runs[name=full_bm25_prefilter_rerank].recall_at_5
+  - ablation.json:runs[name=full_bm25_prefilter_rerank].mrr
+  - ablation.json:runs[name=full_bm25_prefilter_rerank].latency_ms_p50
+  fmt:
+  - dec2
+  - dec2
+  - dec1
+- text: ab_hybrid_rerank:['{}','{}','{}']
+  keys:
+  - ablation.json:runs[name=full_hybrid_rerank].recall_at_5
+  - ablation.json:runs[name=full_hybrid_rerank].mrr
+  - ablation.json:runs[name=full_hybrid_rerank].latency_ms_p50
+  fmt:
+  - dec2
+  - dec2
+  - dec1
+- text: ab_hybrid_prefilter_rerank:['{}','{}','{}']
+  keys:
+  - ablation.json:runs[name=full_hybrid_prefilter_rerank].recall_at_5
+  - ablation.json:runs[name=full_hybrid_prefilter_rerank].mrr
+  - ablation.json:runs[name=full_hybrid_prefilter_rerank].latency_ms_p50
+  fmt:
+  - dec2
+  - dec2
+  - dec1
+- text: ckSizes:['{}','{}','{}']
+  keys:
+  - ablation.json:runs[name=c256_hybrid].chunk_size
+  - ablation.json:runs[name=c400_hybrid].chunk_size
+  - ablation.json:runs[name=c512_hybrid].chunk_size
+  fmt:
+  - int
+  - int
+  - int
+- text: ck_hybrid:['{}','{}','{}']
+  keys:
+  - ablation.json:runs[name=c256_hybrid].recall_at_5
+  - ablation.json:runs[name=c400_hybrid].recall_at_5
+  - ablation.json:runs[name=c512_hybrid].recall_at_5
+  fmt:
+  - dec2
+  - dec2
+  - dec2
+- text: ck_hybrid_prefilter:['{}','{}','{}']
+  keys:
+  - ablation.json:runs[name=c256_hybrid_prefilter].recall_at_5
+  - ablation.json:runs[name=c400_hybrid_prefilter].recall_at_5
+  - ablation.json:runs[name=c512_hybrid_prefilter].recall_at_5
+  fmt:
+  - dec2
+  - dec2
+  - dec2
+- text: subN:'{}'
+  keys:
+  - ablation.json:subcorpus.n_listings
+  fmt:
+  - int

@@ -185,20 +185,29 @@ def limits(d: Deck) -> None:
     n_q, n_b = d.N(ES + ":n_questions"), d.N("benchmark_gt.json:items|len")
     gen = d.T(ES + ":llm.generator")
     planned = d.A("gpt-oss-120b", "tên model sinh dự kiến ban đầu trong plan")
-    s = d.slide("end-limits", SEC_E, "Hạn chế: đánh giá mới trên tập con và dữ liệu là giá rao; hướng tiếp theo đã rõ",
+    full = bool(d.V(ES + ":complete")) and d.V(ES + ":n_questions") == d.V("benchmark_gt.json:items|len")
+    s = d.slide("end-limits", SEC_E,
+                ("Hạn chế: chấm bằng luật, không giám khảo LLM, dữ liệu là giá rao; hướng tiếp theo đã rõ" if full else
+                 "Hạn chế: đánh giá mới trên tập con và dữ liệu là giá rao; hướng tiếp theo đã rõ"),
                 notes=(
-        f"Về đánh giá, benchmark có {n_b} câu nhưng lượt chạy chỉ dùng tập con {n_q} câu vì hạn "
-        "mức API miễn phí, chấm bằng luật so với đáp án SQL và chưa đo faithfulness bằng mô hình giám khảo. Mô hình sinh "
+        (f"Về đánh giá, lượt chạy dùng đủ {n_q} câu benchmark với cả bốn hệ, nhưng câu trả lời chấm bằng luật so với "
+         "đáp án SQL. Nhóm chủ động không dùng LLM làm giám khảo và không chạy RAGAS để tiết kiệm chi phí, nên chưa đo "
+         "faithfulness. Mô hình sinh " if full else
+         f"Về đánh giá, benchmark có {n_b} câu nhưng lượt chạy chỉ dùng tập con {n_q} câu vì hạn "
+         "mức API miễn phí, chấm bằng luật so với đáp án SQL và chưa đo faithfulness bằng mô hình giám khảo. Mô hình sinh ")
+        +
         f"là {gen}, khác {planned} dự kiến ban đầu. Về dữ liệu, giá là giá rao, không phải giá giao dịch; địa giới có cả "
         "tên cũ và tên sau sáp nhập năm 2025; tin không có toạ độ; nhiều cột thiếu, ví dụ đường thiếu "
         f"{d.N(mp + '.street', 'dec0')}% và dự án thiếu {d.N(mp + '.project', 'dec0')}%. Giấy phép dữ liệu chỉ cho "
-        "phép dùng phi thương mại. Cột bên phải là việc làm tiếp. Slide sau: những điều cần nhớ."))
+        "phép dùng phi thương mại. Image Docker của API và web đã dựng và kiểm qua nginx: trang chủ, health, chat "
+        "stream và định giá đều trả về thành công. Cột bên phải là việc làm tiếp. Slide sau: những điều cần nhớ."))
     cols = [
         ("Đánh giá", "coral", [
-            f"Tập con {n_q} câu trên {n_b} câu benchmark",
-            "Chấm bằng luật so với đáp án SQL; chưa có faithfulness bằng LLM",
+            (f"Đủ {n_q} câu benchmark, bốn hệ" if full else f"Tập con {n_q} câu trên {n_b} câu benchmark"),
+            "Chấm bằng luật so với đáp án SQL; không giám khảo LLM, không RAGAS (tiết kiệm chi phí)",
             [("Mô hình sinh: ", {}), (gen, {"bold": True})],
-            f"Khác {planned} dự kiến, do hạn mức và rate limit API"]),
+            f"Khác {planned} dự kiến, do hạn mức và rate limit API",
+            "Docker api + web đã dựng, kiểm qua nginx"]),
         ("Dữ liệu", "amber", [
             "Giá rao ≠ giá giao dịch",
             "Địa giới cũ lẫn tên sau sáp nhập 2025",
@@ -207,8 +216,8 @@ def limits(d: Deck) -> None:
             f"dự án {d.N(mp + '.project', 'dec0')}%",
             d.A("Giấy phép CC-BY-NC 4.0: chỉ phi thương mại", "tên giấy phép dataset")]),
         ("Hướng phát triển", "teal", [
-            "Chạy đủ benchmark, thêm giám khảo LLM và RAGAS",
-            "Rerank cross-encoder sau truy xuất",
+            ("Thêm giám khảo LLM và RAGAS khi có ngân sách" if full else "Chạy đủ benchmark, thêm giám khảo LLM và RAGAS"),
+            "Rerank trên GPU để bật mặc định mà không tăng độ trễ",
             "Chuẩn hoá địa giới mới, gắn toạ độ",
             "Định giá cho thuê khi đủ dữ liệu"]),
     ]

@@ -1,59 +1,71 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-15T19:12:11Z",
-  "git_sha": "79fe53b",
+  "generated_at": "2026-10-16T01:29:22Z",
+  "git_sha": "dirty",
   "counts": {
     "basic_rag": {
-      "insufficient_context": 23,
-      "retrieval_miss": 4,
-      "refusal_missing": 1
+      "insufficient_context": 55,
+      "retrieval_miss": 13,
+      "refusal_missing": 4
     },
     "llm_only": {
-      "insufficient_context": 29,
-      "refusal_missing": 3
-    },
-    "hybrid": {
-      "insufficient_context": 5,
-      "retrieval_miss": 4,
-      "cypher_wrong_result": 1,
-      "refusal_missing": 1
+      "insufficient_context": 81,
+      "refusal_missing": 8
     },
     "graph": {
-      "cypher_wrong_result": 4,
-      "refusal_missing": 1,
-      "insufficient_context": 1
+      "cypher_wrong_result": 12,
+      "insufficient_context": 3,
+      "retrieval_miss": 8,
+      "refusal_missing": 2
+    },
+    "hybrid": {
+      "cypher_wrong_result": 5,
+      "insufficient_context": 10,
+      "retrieval_miss": 10,
+      "cypher_error": 1,
+      "refusal_missing": 2
     }
   },
   "examples": [
     {
-      "id": "MH04",
-      "system": "graph",
-      "category": "multihop",
-      "cause": "cypher_wrong_result",
-      "question": "Giá/m² trung vị căn hộ ở Vinhomes Central Park cao gấp bao nhiêu lần trung vị căn hộ của quận chứa dự án đó?",
-      "answer_excerpt": "Giá/m² trung vị căn hộ tại dự án The LandMark - Vinhomes Central Park (Quận Bình Thạnh) là 180,5 triệu đồng/m², cao gấp 1,96 lần so với mức trung vị căn hộ chung cư của toàn quận Bình Thạnh (92,21 triệu đồng/m²).",
-      "gt_value": "1.36",
-      "cypher": "MATCH (mp:MarketStat {scope: 'project', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'})-[:STAT_OF]->(p:Project)-[:IN_DISTRICT]->(d:District) WHERE toLower(p.name) CONTAINS 'vinhomes central park' AND mp.n >= 20 MATCH (md:MarketStat {scope: 'district', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'})-[:STAT_OF]->(d) RETURN p.name AS project, d.name AS district, round(mp.median_price_m2_mil, 2) AS project_median_m2_mil, round(md.median_price_m2_mil, 2) AS district_median_m2_mil, round(mp.median_price_m2_mil / md.median_price_m2_mil, 2) AS ratio LIMIT 1"
-    },
-    {
-      "id": "MH04",
+      "id": "TM08",
       "system": "hybrid",
-      "category": "multihop",
-      "cause": "cypher_wrong_result",
-      "question": "Giá/m² trung vị căn hộ ở Vinhomes Central Park cao gấp bao nhiêu lần trung vị căn hộ của quận chứa dự án đó?",
-      "answer_excerpt": "Giá/m² trung vị của căn hộ tại dự án Vinhomes Central Park (Bình Thạnh) cao gấp 1,96 lần so với mức trung vị căn hộ của toàn quận Bình Thạnh [Cypher].",
-      "gt_value": "1.36",
-      "cypher": "MATCH (mp:MarketStat {scope: 'project', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'})-[:STAT_OF]->(p:Project)-[:IN_DISTRICT]->(d:District) WHERE toLower(p.name) CONTAINS 'vinhomes central park' AND mp.n >= 20 MATCH (md:MarketStat {scope: 'district', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'})-[:STAT_OF]->(d) RETURN p.name AS project, d.name AS district, round(mp.median_price_m2_mil, 2) AS project_median_m2_mil, round(md.median_price_m2_mil, 2) AS district_median_m2_mil, round(mp.median_price_m2_mil / md.median_price_m2_mil, 2) AS ratio LIMIT 1"
+      "category": "temporal",
+      "cause": "cypher_error",
+      "question": "Giá/m² căn hộ Cầu Giấy quý 1/2026 so với quý 4/2025 thay đổi bao nhiêu %?",
+      "answer_excerpt": "Không đủ dữ liệu để trả lời vì ngữ cảnh không cung cấp thông tin về giá/m² căn hộ Cầu Giấy trong quý 1/2026.",
+      "gt_value": "1.19",
+      "cypher": "MATCH (m:MarketStat {scope: 'district', area_key: 'Hà Nội|Cầu Giấy', property_type: 'Căn hộ chung cư', deal_type: 'sale'}) WHERE m.month IN ['2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03'] WITH collect(m) AS stats WITH [s IN stats WHERE s.month STARTS WITH '2025'] AS q4, [s IN stats WHERE s.month STARTS WITH '2026'] AS q1 UNWIND [q4] AS s4 UNWIND [q1] AS s1 WITH apoc.math.avg([x IN s4 | x.median_price_m2_mil]) AS q4_avg, apoc.math.avg([x IN s1 | x.median_price_m2_mil]) AS q1_avg RETURN round(q4_avg, 2) AS q4_median_price_m2_mil, round(q1_avg, 2) AS q1_median_price_m2_mil, round((q1_avg / q4_avg - 1) * 100, 2) AS percent_change\nLIMIT 50"
     },
     {
-      "id": "VA01",
+      "id": "AG07",
       "system": "graph",
-      "category": "valuation",
+      "category": "aggregate",
       "cause": "cypher_wrong_result",
-      "question": "Căn hộ 75m2, 2 phòng ngủ ở Cầu Giấy, Hà Nội hiện đáng giá khoảng bao nhiêu?",
-      "answer_excerpt": "Căn hộ diện tích 75m² tại quận Cầu Giấy, Hà Nội có giá trung bình khoảng 91,26 triệu đồng/m², ước tính tổng giá trị khoảng 6,84 tỷ đồng (dựa trên dữ liệu từ 22.783 tin đăng).",
-      "gt_value": "7.33",
-      "cypher": "MATCH (m:MarketStat {scope: 'district', area_key: 'Hà Nội|Cầu Giấy', property_type: 'Căn hộ chung cư', month: 'ALL', deal_type: 'sale'}) RETURN round(m.median_price_m2_mil * 75, 2) AS estimated_price_vnd_million, round(m.median_price_m2_mil, 2) AS median_price_m2_mil, m.n AS n\nLIMIT 50"
+      "question": "Diện tích trung vị của các lô đất rao bán ở Củ Chi là bao nhiêu m2?",
+      "answer_excerpt": "Diện tích trung vị của các lô đất rao bán ở Củ Chi là 175 m².",
+      "gt_value": "186.95",
+      "cypher": "MATCH (m:MarketStat {scope: 'district', area_key: 'Hồ Chí Minh|Củ Chi', property_type: 'Đất', month: 'ALL', deal_type: 'sale'}) RETURN m.median_area_m2 AS median_area_m2, m.n AS n\nLIMIT 50"
+    },
+    {
+      "id": "AG07",
+      "system": "hybrid",
+      "category": "aggregate",
+      "cause": "cypher_wrong_result",
+      "question": "Diện tích trung vị của các lô đất rao bán ở Củ Chi là bao nhiêu m2?",
+      "answer_excerpt": "Diện tích trung vị của các lô đất rao bán ở Củ Chi là 175,0 m² [Cypher].",
+      "gt_value": "186.95",
+      "cypher": "MATCH (m:MarketStat {scope: 'district', area_key: 'Hồ Chí Minh|Củ Chi', property_type: 'Đất', month: 'ALL', deal_type: 'sale'}) RETURN m.median_area_m2 AS median_area_m2, m.n AS n\nLIMIT 50"
+    },
+    {
+      "id": "AG11",
+      "system": "hybrid",
+      "category": "aggregate",
+      "cause": "cypher_wrong_result",
+      "question": "Bao nhiêu phần trăm tin bán nhà ở Hà Nội có nhắc tới thang máy?",
+      "answer_excerpt": "Dựa trên ngữ cảnh được cung cấp, có tổng cộng 5 tin bán nhà ở Hà Nội [Tin#23587937002235], [Tin#4393422043995319], [Tin#8349473416230589], [Tin#4986449907693198], [Tin#6822590988665047] và cả 5 tin này đều nhắc tới thang máy (đạt 100%).",
+      "gt_value": "31.19",
+      "cypher": "MATCH (pr:Province {key: 'Hà Nội'}) WITH pr MATCH (l:Listing)-[:IN_WARD|IN_DISTRICT*1..3]->(pr) WHERE l.property_type = 'Nhà' AND l.deal_type = 'sale' WITH count(l) AS total_houses, sum(CASE WHEN EXISTS((l)-[:HAS_AMENITY]->(:Amenity {key: 'thang_may'})) THEN 1 ELSE 0 END) AS houses_with_elevator WHERE total_houses > 0 RETURN round(100.0 * houses_with_elevator / total_houses, 2) AS percentage\nLIMIT 50"
     },
     {
       "id": "CS01",
@@ -76,14 +88,14 @@
       "cypher": null
     },
     {
-      "id": "CS02",
-      "system": "basic_rag",
+      "id": "CS11",
+      "system": "graph",
       "category": "constraint",
       "cause": "retrieval_miss",
-      "question": "Nhà hxh Gò Vấp từ 4 tầng trở lên, diện tích từ 60m2, giá dưới 7 tỷ.",
-      "answer_excerpt": "Dựa trên ngữ cảnh được cung cấp, không có căn nhà nào ở Gò Vấp có hẻm xe hơi (HXH), từ 4 tầng trở lên, diện tích từ 60m2 và giá dưới 7 tỷ đồng. \n\nCác căn nhà trong ngữ cảnh có chiều cao từ 4 tầng trở lên (như Tin#6133338198713407 cao 4 tầng [Tin#6133338198713407] và Tin#1404055190520717 cao 5 tầng [",
+      "question": "Nhà ở Long Biên ô tô vào được nhà, diện tích từ 50m2, giá dưới 8 tỷ.",
+      "answer_excerpt": "Dưới đây là các căn nhà tại quận Long Biên có hẻm ô tô vào, diện tích từ 50m² và giá dưới 8 tỷ đồng:\n\n- Nhà \"Tân phú -hẻm ô tô-ngang 4.5m x 12 3 lầu - nhà mới đẹp...\", diện tích 52m², giá 5,9 tỷ đồng (khoảng 113,46 triệu đồng/m²). [Tin#3284550684706015]\n- Nhà \"Nhà đẹp 3 tầng -trung tâm tân phú- hẻm ",
       "gt_value": null,
-      "cypher": null
+      "cypher": "MATCH (d:District {key: 'Hà Nội|Long Biên'}) WITH d MATCH (l:Listing)-[:IN_WARD|IN_DISTRICT*1..2]->(d) MATCH (l)-[:HAS_AMENITY]->(:Amenity {key: 'hem_xe_hoi'}) WHERE l.property_type = 'Nhà' AND l.area_m2 >= 50 AND l.price_vnd < 8e9 AND l.deal_type = 'sale' RETURN l.listing_id AS listing_id, l.title AS title, l.price_vnd AS price_vnd, l.area_m2 AS area_m2, l.price_m2_mil AS price_m2_mil ORDER BY l.price_vnd ASC LIMIT 20"
     },
     {
       "id": "UN04",
@@ -126,6 +138,16 @@
       "cypher": null
     },
     {
+      "id": "AG11",
+      "system": "graph",
+      "category": "aggregate",
+      "cause": "insufficient_context",
+      "question": "Bao nhiêu phần trăm tin bán nhà ở Hà Nội có nhắc tới thang máy?",
+      "answer_excerpt": "Không tìm thấy dữ liệu.",
+      "gt_value": "31.19",
+      "cypher": "MATCH (pr:Province {key: 'Hà Nội'}) WITH pr MATCH (l:Listing)-[:IN_WARD|IN_DISTRICT*1..3]->(pr) WHERE l.property_type = 'Nhà' AND l.deal_type = 'sale' WITH count(l) AS total_houses, sum(CASE WHEN EXISTS((l)-[:HAS_AMENITY]->(:Amenity {key: 'thang_may'})) THEN 1 ELSE 0 END) AS houses_with_elevator WHERE total_houses > 0 RETURN round(100.0 * houses_with_elevator / total_houses, 2) AS percentage\nLIMIT 50"
+    },
+    {
       "id": "CP02",
       "system": "hybrid",
       "category": "comparison",
@@ -134,16 +156,6 @@
       "answer_excerpt": "Không đủ dữ liệu để so sánh giá đất theo m2 giữa Quận 3 và Phú Nhuận vì ngữ cảnh không cung cấp thông tin về giá bất động sản tại quận Phú Nhuận.",
       "gt_value": "Quận 3",
       "cypher": null
-    },
-    {
-      "id": "VA02",
-      "system": "graph",
-      "category": "valuation",
-      "cause": "insufficient_context",
-      "question": "Nhà 60m2, 4 tầng ở Gò Vấp, TP.HCM định giá khoảng bao nhiêu tiền?",
-      "answer_excerpt": "Không tìm thấy dữ liệu.",
-      "gt_value": "7.71",
-      "cypher": "MATCH (m:MarketStat {scope: 'district', area_key: 'Hồ Chí Minh|Quận Gò Vấp', property_type: 'Nhà', month: 'ALL', deal_type: 'sale'}) RETURN round(m.median_price_m2_mil * 60, 2) AS estimated_price_mil_vnd, round(m.median_price_m2_mil, 2) AS median_price_m2_mil, m.n AS sample_size\nLIMIT 50"
     }
   ],
   "notes": [

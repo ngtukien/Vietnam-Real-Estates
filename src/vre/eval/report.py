@@ -278,6 +278,8 @@ def results_block(settings: Settings) -> str:
         lines += [f"| {r['name']} | {_fmt(r.get('recall_at_5'))} | {_fmt(r.get('mrr'))} | {_fmt(r.get('ndcg_at_10'))} | "
                   f"{r.get('n_questions')} |" for r in ablation["runs"]]
         lines.append("")
+        lines += [f"> {note}" for note in ablation.get("notes") or []]
+        lines.append("")
     if not lines:
         lines = ["_Chưa có kết quả trong `results/`._", ""]
     return "\n".join(lines).rstrip() + "\n"

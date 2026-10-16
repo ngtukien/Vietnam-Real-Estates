@@ -45,8 +45,10 @@ def three_needs(d: Deck) -> None:
 
 
 def _ex(d: Deck) -> str:
-    """Ví dụ truy xuất của câu CS01 (đủ quận, số phòng, giá tối đa) trong examples.rag."""
-    return d.pick("examples.json:rag", "CS01") or "examples.json:rag[0]"
+    """Ví dụ truy xuất trong examples.rag: CS01 nếu có, không thì ví dụ đầu (report xếp câu ràng buộc có đủ bộ lọc trước)."""
+    rag = d.V("examples.json:rag") or []
+    return next((f"examples.json:rag[{i}]" for i, r in enumerate(rag) if r.get("question") == d.Q("CS01")["question"]),
+                "examples.json:rag[0]")
 
 
 def filters(d: Deck) -> None:
@@ -84,7 +86,7 @@ def cosine(d: Deck) -> None:
         "Cosine đo hướng nên không phụ thuộc độ dài: vector dài gấp đôi nhưng cùng hướng vẫn cho điểm bằng một, vector "
         "vuông góc cho không. Với vector đã chuẩn hoá L2 như của e5, cosine chính là tích vô hướng, nên Qdrant chỉ cần nhân. "
         "Dense hiểu nghĩa nhưng không đảm bảo điều kiện cứng: điểm cosine các tin dồn sát nhau nên tin đứng đầu có thể "
-        "sai quận hay sai số phòng. Bên phải là ba tin Basic RAG đưa vào ngữ cảnh cho câu CS01 trong lượt chạy thật, sau "
+        "sai quận hay sai số phòng. Bên phải là ba tin Basic RAG đưa vào ngữ cảnh cho một câu ràng buộc trong lượt chạy thật, sau "
         "khi đã lọc trước và gộp với BM25; dòng chữ dưới bảng cho biết chúng có thoả điều kiện không. Slide sau: ghép dense với BM25."))
     s.text(MX, 1.95, 6.0, 0.4, "Công thức", size=SIZE["caption"], bold=True, color="teal")
     s.text(MX, 2.35, 6.0, 0.9, "cos(θ) = (q · d) / (‖q‖ ‖d‖)", size=32, bold=True, color="ink", font="Cambria Math")
@@ -140,22 +142,30 @@ def hybrid(d: Deck) -> None:
 
 
 def prefilter(d: Deck) -> None:
-    on, off = "ablation.json:runs[retrieval=hybrid,prefilter=True]", "ablation.json:runs[retrieval=hybrid,prefilter=False]"
+    # Chỉ run chỉ mục đầy đủ (`full_*`); run c256/c400/c512 đo trên subcorpus, không so với số này.
+    on, off = "ablation.json:runs[name=full_hybrid_prefilter]", "ablation.json:runs[name=full_hybrid]"
+    rr = "ablation.json:runs[name=full_hybrid_prefilter_rerank]"
+    has_rr = "full_hybrid_prefilter_rerank" in (d.V("ablation.json:runs[*].name") or [])
+    rr_note = (f"Rerank bằng cross-encoder chấm lại các ứng viên đầu: với hybrid có lọc, Recall@5 lên "
+               f"{d.N(rr + '.recall_at_5', 'dec2')} nhưng độ trễ trung vị từ {d.N(on + '.latency_ms_p50')} lên "
+               f"{d.N(rr + '.latency_ms_p50')} mili giây trên CPU, nên chatbot để rerank tuỳ chọn. " if has_rr
+               else "Rerank bằng cross-encoder chính xác hơn nhưng chậm, nên để tuỳ chọn. ")
     s = d.slide("ret-prefilter", SEC, "Điều kiện cứng phải lọc trước khi tìm vector, không lọc sau", notes=(
         "Pre-filter lọc trên payload index của Qdrant trước khi tìm lân cận, nên mọi tin trả về đều thoả điều kiện. "
         "Post-filter lấy top-k theo nghĩa rồi mới lọc, điều kiện càng chặt càng rơi nhiều tin. Trên benchmark, cùng cấu "
         f"hình hybrid, Recall@5 là {d.N(on + '.recall_at_5', 'dec2')} khi lọc trước và {d.N(off + '.recall_at_5', 'dec2')} "
-        "khi không lọc. Rerank bằng cross-encoder chính xác hơn nhưng chậm; trong lượt đo này rerank tắt vì model không "
-        "có trong cache. Slide sau: ba điểm RAG có thể hỏng."))
+        "khi không lọc. " + rr_note + "Slide sau: ba điểm RAG có thể hỏng."))
     steps = [("Câu hỏi", "điều kiện cứng đã trích"), ("Pre-filter", "payload index trong Qdrant"),
              ("BM25 + dense", "trên tập đã lọc"), ("RRF", "gộp thứ hạng"), ("Top-k", "vào prompt")]
     s.flow(steps, 2.0, h=1.35, fills=["soft", "amber_bg", "blue_bg", "teal_bg", "soft"])
     for i, (key, label, col) in enumerate(((on, "Lọc trước", "teal"), (off, "Không lọc", "muted"))):
         s.stat(MX + i * 3.3, 3.8, 3.0, d.N(key + ".recall_at_5", "dec2"), f"Recall@5 · hybrid · {label}", accent=col)
     s.text(7.4, 3.8, 5.3, 2.4, ["Post-filter: lấy top-k rồi mới lọc, điều kiện càng chặt càng mất tin",
-                                "Rerank cross-encoder: chính xác hơn nhưng chậm, để tuỳ chọn"],
+                                (f"Rerank cross-encoder: Recall@5 lên {d.N(rr + '.recall_at_5', 'dec2')}, độ trễ "
+                                 f"{d.N(on + '.latency_ms_p50')} → {d.N(rr + '.latency_ms_p50')} ms; để tuỳ chọn"
+                                 if has_rr else "Rerank cross-encoder: chính xác hơn nhưng chậm, để tuỳ chọn")],
            size=18, bullets=True)
-    s.caption(f"Nguồn: ablation truy xuất, {d.N(on + '.n_questions')} câu có tập tin đúng.")
+    s.caption(f"Nguồn: ablation truy xuất trên chỉ mục đầy đủ, {d.N(on + '.n_questions')} câu có tập tin đúng.")
 
 
 def failures(d: Deck) -> None:
@@ -270,7 +280,7 @@ def practice(d: Deck) -> None:
         "Ba nhóm câu chạy thật qua pipeline Basic RAG trong lượt eval. "
         f"Tra cứu đúng {d.N(cat + '.lookup.basic_rag.accuracy', 'pct0')}%, ràng buộc "
         f"{d.N(cat + '.constraint.basic_rag.accuracy', 'pct0')}%, tổng hợp {d.N(cat + '.aggregate.basic_rag.accuracy', 'pct0')}%. "
-        f"Mỗi nhóm chỉ có {d.N(cat + '.lookup.basic_rag.n')} câu trong tập con đã chạy, nên một câu đúng sai làm số thay đổi "
+        f"Mỗi nhóm chỉ có khoảng {d.N(cat + '.lookup.basic_rag.n')} câu, nên một câu đúng sai làm số thay đổi "
         "rất nhiều; khoảng tin cậy trên slide cho thấy điều đó. Đọc xu hướng, không đọc từng điểm phần trăm. "
         "Câu chuyển: Basic RAG tìm tin giỏi nhưng không hiểu quan hệ; chặng 3 dựng Knowledge Graph để biểu diễn quan hệ đó."))
     s.chart(MX, 1.9, 7.4, 4.4, "column", [label for _, label in cats],
@@ -281,5 +291,7 @@ def practice(d: Deck) -> None:
         s.stat(8.5, 1.9 + i * 1.5, 4.2, f"{d.N(k + '.accuracy', 'pct0')}%",
                f"{label} · n = {d.N(k + '.n')} · CI95 {d.N(k + '.ci95[0]', 'pct0')}–{d.N(k + '.ci95[1]', 'pct0')}%",
                accent="blue", h=1.3)
-    s.caption(f"Chấm bằng luật trên tập con {d.N('eval_summary.json:n_questions')} câu; "
+    full = bool(d.V("eval_summary.json:complete")) and d.V("eval_summary.json:n_questions") == d.V(
+        "benchmark_gt.json:items|len")
+    s.caption(f"Chấm bằng luật trên {'toàn bộ' if full else 'tập con'} {d.N('eval_summary.json:n_questions')} câu; "
               f"mô hình sinh {d.T('eval_summary.json:llm.generator')}.")

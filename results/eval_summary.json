@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-15T19:12:11Z",
-  "git_sha": "79fe53b",
+  "generated_at": "2026-10-16T01:29:22Z",
+  "git_sha": "dirty",
   "index": {
     "collection": "vre_chunks_e5_large",
     "model_slug": "e5_large",
@@ -21,99 +21,163 @@
     "hybrid"
   ],
   "scoring": "rule_based",
-  "n_questions": 36,
-  "n_questions_scored": 36,
+  "n_questions": 100,
+  "n_questions_scored": 100,
   "n_questions_total": 100,
   "benchmark_subset": [
     "AG01",
     "AG02",
     "AG03",
     "AG04",
+    "AG05",
+    "AG06",
+    "AG07",
+    "AG08",
+    "AG09",
+    "AG10",
+    "AG11",
+    "AG12",
     "CP01",
     "CP02",
     "CP03",
     "CP04",
+    "CP05",
+    "CP06",
+    "CP07",
+    "CP08",
+    "CP09",
+    "CP10",
     "CS01",
     "CS02",
     "CS03",
     "CS04",
+    "CS05",
+    "CS06",
+    "CS07",
+    "CS08",
+    "CS09",
+    "CS10",
+    "CS11",
+    "CS12",
     "LK01",
     "LK02",
     "LK03",
     "LK04",
+    "LK05",
+    "LK06",
+    "LK07",
+    "LK08",
+    "LK09",
+    "LK10",
+    "LK11",
+    "LK12",
     "MH01",
     "MH02",
     "MH03",
     "MH04",
+    "MH05",
+    "MH06",
+    "MH07",
+    "MH08",
+    "MH09",
+    "MH10",
+    "MH11",
+    "MH12",
     "PS01",
     "PS02",
     "PS03",
     "PS04",
+    "PS05",
+    "PS06",
+    "PS07",
+    "PS08",
+    "PS09",
+    "PS10",
     "TM01",
     "TM02",
     "TM03",
     "TM04",
+    "TM05",
+    "TM06",
+    "TM07",
+    "TM08",
+    "TM09",
+    "TM10",
     "UN01",
     "UN02",
     "UN03",
     "UN04",
+    "UN05",
+    "UN06",
+    "UN07",
+    "UN08",
+    "UN09",
+    "UN10",
+    "UN11",
+    "UN12",
     "VA01",
     "VA02",
     "VA03",
-    "VA04"
+    "VA04",
+    "VA05",
+    "VA06",
+    "VA07",
+    "VA08",
+    "VA09",
+    "VA10"
   ],
   "complete": true,
   "coverage": {
     "lookup": {
       "n_benchmark": 12,
-      "n_answered_any": 4,
-      "n_answered_all_systems": 4
+      "n_answered_any": 12,
+      "n_answered_all_systems": 12
     },
     "constraint": {
       "n_benchmark": 12,
-      "n_answered_any": 4,
-      "n_answered_all_systems": 4
+      "n_answered_any": 12,
+      "n_answered_all_systems": 12
     },
     "aggregate": {
       "n_benchmark": 12,
-      "n_answered_any": 4,
-      "n_answered_all_systems": 4
+      "n_answered_any": 12,
+      "n_answered_all_systems": 12
     },
     "multihop": {
       "n_benchmark": 12,
-      "n_answered_any": 4,
-      "n_answered_all_systems": 4
+      "n_answered_any": 12,
+      "n_answered_all_systems": 12
     },
     "temporal": {
       "n_benchmark": 10,
-      "n_answered_any": 4,
-      "n_answered_all_systems": 4
+      "n_answered_any": 10,
+      "n_answered_all_systems": 10
     },
     "comparison": {
       "n_benchmark": 10,
-      "n_answered_any": 4,
-      "n_answered_all_systems": 4
+      "n_answered_any": 10,
+      "n_answered_all_systems": 10
     },
     "project_street": {
       "n_benchmark": 10,
-      "n_answered_any": 4,
-      "n_answered_all_systems": 4
+      "n_answered_any": 10,
+      "n_answered_all_systems": 10
     },
     "valuation": {
       "n_benchmark": 10,
-      "n_answered_any": 4,
-      "n_answered_all_systems": 4
+      "n_answered_any": 10,
+      "n_answered_all_systems": 10
     },
     "unanswerable": {
       "n_benchmark": 12,
-      "n_answered_any": 4,
-      "n_answered_all_systems": 4
+      "n_answered_any": 12,
+      "n_answered_all_systems": 12
     }
   },
   "by_category": {
     "lookup": {
       "llm_only": {
-        "n": 4,
+        "n": 12,
         "accuracy": 0.0,
         "mean_points": 0.0,
         "ci95": [
@@ -123,7 +187,7 @@
         "n_unscored": 0
       },
       "basic_rag": {
-        "n": 4,
+        "n": 12,
         "accuracy": 1.0,
         "mean_points": 2.0,
         "ci95": [
@@ -133,17 +197,17 @@
         "n_unscored": 0
       },
       "graph": {
-        "n": 4,
-        "accuracy": 1.0,
-        "mean_points": 2.0,
+        "n": 12,
+        "accuracy": 0.4167,
+        "mean_points": 0.9167,
         "ci95": [
-          1.0,
-          1.0
+          0.1667,
+          0.6667
         ],
         "n_unscored": 0
       },
       "hybrid": {
-        "n": 4,
+        "n": 12,
         "accuracy": 1.0,
         "mean_points": 2.0,
         "ci95": [
@@ -155,7 +219,7 @@
     },
     "constraint": {
       "llm_only": {
-        "n": 4,
+        "n": 12,
         "accuracy": 0.0,
         "mean_points": 0.0,
         "ci95": [
@@ -165,73 +229,73 @@
         "n_unscored": 0
       },
       "basic_rag": {
-        "n": 4,
-        "accuracy": 0.0,
-        "mean_points": 0.5,
+        "n": 12,
+        "accuracy": 0.1667,
+        "mean_points": 1.0,
         "ci95": [
           0.0,
-          0.0
+          0.4167
         ],
         "n_unscored": 0
       },
       "graph": {
-        "n": 4,
-        "accuracy": 1.0,
-        "mean_points": 2.0,
+        "n": 12,
+        "accuracy": 0.9167,
+        "mean_points": 1.8333,
         "ci95": [
-          1.0,
+          0.75,
           1.0
         ],
         "n_unscored": 0
       },
       "hybrid": {
-        "n": 4,
-        "accuracy": 0.0,
-        "mean_points": 0.5,
+        "n": 12,
+        "accuracy": 0.1667,
+        "mean_points": 1.0,
         "ci95": [
           0.0,
-          0.0
+          0.4167
         ],
         "n_unscored": 0
       }
     },
     "aggregate": {
       "llm_only": {
-        "n": 4,
-        "accuracy": 0.25,
-        "mean_points": 0.5,
+        "n": 12,
+        "accuracy": 0.1667,
+        "mean_points": 0.5833,
         "ci95": [
           0.0,
-          0.75
+          0.4167
         ],
         "n_unscored": 0
       },
       "basic_rag": {
-        "n": 4,
-        "accuracy": 0.0,
-        "mean_points": 0.0,
+        "n": 12,
+        "accuracy": 0.1667,
+        "mean_points": 0.3333,
         "ci95": [
           0.0,
-          0.0
+          0.4167
         ],
         "n_unscored": 0
       },
       "graph": {
-        "n": 4,
-        "accuracy": 1.0,
-        "mean_points": 2.0,
+        "n": 12,
+        "accuracy": 0.8333,
+        "mean_points": 1.75,
         "ci95": [
-          1.0,
+          0.5833,
           1.0
         ],
         "n_unscored": 0
       },
       "hybrid": {
-        "n": 4,
-        "accuracy": 1.0,
-        "mean_points": 2.0,
+        "n": 12,
+        "accuracy": 0.8333,
+        "mean_points": 1.75,
         "ci95": [
-          1.0,
+          0.5833,
           1.0
         ],
         "n_unscored": 0
@@ -239,7 +303,7 @@
     },
     "multihop": {
       "llm_only": {
-        "n": 4,
+        "n": 12,
         "accuracy": 0.0,
         "mean_points": 0.0,
         "ci95": [
@@ -249,7 +313,7 @@
         "n_unscored": 0
       },
       "basic_rag": {
-        "n": 4,
+        "n": 12,
         "accuracy": 0.0,
         "mean_points": 0.0,
         "ci95": [
@@ -259,21 +323,21 @@
         "n_unscored": 0
       },
       "graph": {
-        "n": 4,
-        "accuracy": 0.75,
-        "mean_points": 1.5,
+        "n": 12,
+        "accuracy": 0.8333,
+        "mean_points": 1.6667,
         "ci95": [
-          0.25,
+          0.5833,
           1.0
         ],
         "n_unscored": 0
       },
       "hybrid": {
-        "n": 4,
-        "accuracy": 0.75,
-        "mean_points": 1.5,
+        "n": 12,
+        "accuracy": 0.8333,
+        "mean_points": 1.6667,
         "ci95": [
-          0.25,
+          0.5833,
           1.0
         ],
         "n_unscored": 0
@@ -281,9 +345,9 @@
     },
     "temporal": {
       "llm_only": {
-        "n": 4,
+        "n": 10,
         "accuracy": 0.0,
-        "mean_points": 0.0,
+        "mean_points": 0.1,
         "ci95": [
           0.0,
           0.0
@@ -291,31 +355,31 @@
         "n_unscored": 0
       },
       "basic_rag": {
-        "n": 4,
-        "accuracy": 0.25,
-        "mean_points": 0.5,
+        "n": 10,
+        "accuracy": 0.1,
+        "mean_points": 0.2,
         "ci95": [
           0.0,
-          0.75
+          0.3
         ],
         "n_unscored": 0
       },
       "graph": {
-        "n": 4,
-        "accuracy": 1.0,
-        "mean_points": 2.0,
+        "n": 10,
+        "accuracy": 0.7,
+        "mean_points": 1.5,
         "ci95": [
-          1.0,
+          0.4,
           1.0
         ],
         "n_unscored": 0
       },
       "hybrid": {
-        "n": 4,
-        "accuracy": 1.0,
-        "mean_points": 2.0,
+        "n": 10,
+        "accuracy": 0.7,
+        "mean_points": 1.4,
         "ci95": [
-          1.0,
+          0.4,
           1.0
         ],
         "n_unscored": 0
@@ -323,27 +387,27 @@
     },
     "comparison": {
       "llm_only": {
-        "n": 4,
-        "accuracy": 0.5,
-        "mean_points": 1.0,
+        "n": 10,
+        "accuracy": 0.4,
+        "mean_points": 0.8,
         "ci95": [
-          0.0,
-          1.0
+          0.1,
+          0.7
         ],
         "n_unscored": 0
       },
       "basic_rag": {
-        "n": 4,
-        "accuracy": 0.0,
-        "mean_points": 0.0,
+        "n": 10,
+        "accuracy": 0.1,
+        "mean_points": 0.2,
         "ci95": [
           0.0,
-          0.0
+          0.3
         ],
         "n_unscored": 0
       },
       "graph": {
-        "n": 4,
+        "n": 10,
         "accuracy": 1.0,
         "mean_points": 2.0,
         "ci95": [
@@ -353,11 +417,11 @@
         "n_unscored": 0
       },
       "hybrid": {
-        "n": 4,
-        "accuracy": 0.75,
-        "mean_points": 1.5,
+        "n": 10,
+        "accuracy": 0.9,
+        "mean_points": 1.8,
         "ci95": [
-          0.25,
+          0.7,
           1.0
         ],
         "n_unscored": 0
@@ -365,9 +429,9 @@
     },
     "project_street": {
       "llm_only": {
-        "n": 4,
+        "n": 10,
         "accuracy": 0.0,
-        "mean_points": 0.0,
+        "mean_points": 0.1,
         "ci95": [
           0.0,
           0.0
@@ -375,9 +439,9 @@
         "n_unscored": 0
       },
       "basic_rag": {
-        "n": 4,
+        "n": 10,
         "accuracy": 0.0,
-        "mean_points": 0.0,
+        "mean_points": 0.3,
         "ci95": [
           0.0,
           0.0
@@ -385,7 +449,7 @@
         "n_unscored": 0
       },
       "graph": {
-        "n": 4,
+        "n": 10,
         "accuracy": 1.0,
         "mean_points": 2.0,
         "ci95": [
@@ -395,7 +459,7 @@
         "n_unscored": 0
       },
       "hybrid": {
-        "n": 4,
+        "n": 10,
         "accuracy": 1.0,
         "mean_points": 2.0,
         "ci95": [
@@ -407,83 +471,83 @@
     },
     "valuation": {
       "llm_only": {
-        "n": 4,
-        "accuracy": 0.0,
-        "mean_points": 0.25,
+        "n": 10,
+        "accuracy": 0.1,
+        "mean_points": 0.4,
         "ci95": [
           0.0,
-          0.0
+          0.3
         ],
         "n_unscored": 0
       },
       "basic_rag": {
-        "n": 4,
-        "accuracy": 0.0,
-        "mean_points": 0.5,
+        "n": 10,
+        "accuracy": 0.2,
+        "mean_points": 0.7,
         "ci95": [
           0.0,
-          0.0
+          0.5
         ],
         "n_unscored": 0
       },
       "graph": {
-        "n": 4,
-        "accuracy": 0.0,
-        "mean_points": 0.0,
+        "n": 10,
+        "accuracy": 0.2,
+        "mean_points": 0.4,
         "ci95": [
           0.0,
-          0.0
+          0.5
         ],
         "n_unscored": 0
       },
       "hybrid": {
-        "n": 4,
-        "accuracy": 0.0,
-        "mean_points": 0.75,
+        "n": 10,
+        "accuracy": 0.2,
+        "mean_points": 1.1,
         "ci95": [
           0.0,
-          0.0
+          0.5
         ],
         "n_unscored": 0
       }
     },
     "unanswerable": {
       "llm_only": {
-        "n": 4,
-        "accuracy": 0.25,
-        "mean_points": 0.5,
+        "n": 12,
+        "accuracy": 0.3333,
+        "mean_points": 0.6667,
         "ci95": [
-          0.0,
-          0.75
+          0.0833,
+          0.5833
         ],
         "n_unscored": 0
       },
       "basic_rag": {
-        "n": 4,
-        "accuracy": 0.75,
-        "mean_points": 1.5,
+        "n": 12,
+        "accuracy": 0.6667,
+        "mean_points": 1.3333,
         "ci95": [
-          0.25,
-          1.0
+          0.4167,
+          0.9167
         ],
         "n_unscored": 0
       },
       "graph": {
-        "n": 4,
-        "accuracy": 0.75,
-        "mean_points": 1.5,
+        "n": 12,
+        "accuracy": 0.8333,
+        "mean_points": 1.6667,
         "ci95": [
-          0.25,
+          0.5833,
           1.0
         ],
         "n_unscored": 0
       },
       "hybrid": {
-        "n": 4,
-        "accuracy": 0.75,
-        "mean_points": 1.5,
+        "n": 12,
+        "accuracy": 0.8333,
+        "mean_points": 1.6667,
         "ci95": [
-          0.25,
+          0.5833,
           1.0
         ],
         "n_unscored": 0
@@ -492,112 +556,112 @@
   },
   "overall": {
     "llm_only": {
-      "n": 36,
-      "accuracy": 0.1111,
-      "mean_points": 0.25,
+      "n": 100,
+      "accuracy": 0.11,
+      "mean_points": 0.29,
       "ci95": [
-        0.0278,
-        0.2222
+        0.05,
+        0.17
       ],
       "n_unscored": 0
     },
     "basic_rag": {
-      "n": 36,
-      "accuracy": 0.2222,
-      "mean_points": 0.5556,
+      "n": 100,
+      "accuracy": 0.28,
+      "mean_points": 0.7,
       "ci95": [
-        0.0833,
-        0.3611
+        0.2,
+        0.37
       ],
       "n_unscored": 0
     },
     "graph": {
-      "n": 36,
-      "accuracy": 0.8333,
-      "mean_points": 1.6667,
+      "n": 100,
+      "accuracy": 0.75,
+      "mean_points": 1.53,
       "ci95": [
-        0.6944,
-        0.9444
+        0.66,
+        0.83
       ],
       "n_unscored": 0
     },
     "hybrid": {
-      "n": 36,
-      "accuracy": 0.6944,
-      "mean_points": 1.5278,
+      "n": 100,
+      "accuracy": 0.72,
+      "mean_points": 1.6,
       "ci95": [
-        0.5278,
-        0.8333
+        0.63,
+        0.81
       ],
       "n_unscored": 0
     }
   },
   "overall_common": {
     "llm_only": {
-      "n": 36,
-      "accuracy": 0.1111,
-      "mean_points": 0.25,
+      "n": 100,
+      "accuracy": 0.11,
+      "mean_points": 0.29,
       "ci95": [
-        0.0278,
-        0.2222
+        0.05,
+        0.17
       ],
       "n_unscored": 0
     },
     "basic_rag": {
-      "n": 36,
-      "accuracy": 0.2222,
-      "mean_points": 0.5556,
+      "n": 100,
+      "accuracy": 0.28,
+      "mean_points": 0.7,
       "ci95": [
-        0.0833,
-        0.3611
+        0.2,
+        0.37
       ],
       "n_unscored": 0
     },
     "graph": {
-      "n": 36,
-      "accuracy": 0.8333,
-      "mean_points": 1.6667,
+      "n": 100,
+      "accuracy": 0.75,
+      "mean_points": 1.53,
       "ci95": [
-        0.6944,
-        0.9444
+        0.66,
+        0.83
       ],
       "n_unscored": 0
     },
     "hybrid": {
-      "n": 36,
-      "accuracy": 0.6944,
-      "mean_points": 1.5278,
+      "n": 100,
+      "accuracy": 0.72,
+      "mean_points": 1.6,
       "ci95": [
-        0.5278,
-        0.8333
+        0.63,
+        0.81
       ],
       "n_unscored": 0
     }
   },
   "retrieval": {
     "basic_rag": {
-      "n": 8,
+      "n": 27,
       "top_k": 5,
-      "recall_at_5": 0.575,
-      "recall_at_10": 0.5375,
-      "mrr": 0.75,
-      "ndcg_at_10": 0.5724
+      "recall_at_5": 0.6296,
+      "recall_at_10": 0.537,
+      "mrr": 0.6975,
+      "ndcg_at_10": 0.5461
     },
     "graph": {
-      "n": 8,
+      "n": 27,
       "top_k": 5,
-      "recall_at_5": 1.0,
-      "recall_at_10": 1.0,
-      "mrr": 0.9167,
-      "ndcg_at_10": 0.9523
+      "recall_at_5": 0.7222,
+      "recall_at_10": 0.7963,
+      "mrr": 0.7275,
+      "ndcg_at_10": 0.7378
     },
     "hybrid": {
-      "n": 8,
+      "n": 27,
       "top_k": 5,
-      "recall_at_5": 0.575,
-      "recall_at_10": 0.5375,
-      "mrr": 0.75,
-      "ndcg_at_10": 0.5724
+      "recall_at_5": 0.7111,
+      "recall_at_10": 0.6333,
+      "mrr": 0.7623,
+      "ndcg_at_10": 0.6383
     }
   },
   "ragas": {
@@ -622,11 +686,11 @@
   },
   "cost": {
     "llm_only": {
-      "n": 36,
-      "latency_ms_p50": 4029.1,
-      "latency_ms_p95": 11840.8,
-      "input_tokens_mean": 82.3056,
-      "output_tokens_mean": 158.0278,
+      "n": 100,
+      "latency_ms_p50": 1770.0,
+      "latency_ms_p95": 9567.6,
+      "input_tokens_mean": 82.71,
+      "output_tokens_mean": 160.4,
       "usd_per_question": 0.0,
       "bad_citation_rate": 0.0,
       "error_rate": 0.0,
@@ -634,23 +698,23 @@
       "cached_rate": 0.0
     },
     "basic_rag": {
-      "n": 36,
-      "latency_ms_p50": 10468.5,
-      "latency_ms_p95": 36999.8,
-      "input_tokens_mean": 1942.3056,
-      "output_tokens_mean": 260.4722,
+      "n": 100,
+      "latency_ms_p50": 3479.7,
+      "latency_ms_p95": 22945.0,
+      "input_tokens_mean": 1886.95,
+      "output_tokens_mean": 267.78,
       "usd_per_question": 0.0,
       "bad_citation_rate": 0.0,
       "error_rate": 0.0,
       "fallback_rate": 0.0,
-      "cached_rate": 0.0
+      "cached_rate": 0.01
     },
     "graph": {
-      "n": 36,
-      "latency_ms_p50": 8854.9,
-      "latency_ms_p95": 23016.2,
-      "input_tokens_mean": 3842.8056,
-      "output_tokens_mean": 307.7778,
+      "n": 100,
+      "latency_ms_p50": 3434.5,
+      "latency_ms_p95": 20077.5,
+      "input_tokens_mean": 4016.33,
+      "output_tokens_mean": 325.81,
       "usd_per_question": 0.0,
       "bad_citation_rate": 0.0,
       "error_rate": 0.0,
@@ -658,16 +722,16 @@
       "cached_rate": 0.0
     },
     "hybrid": {
-      "n": 36,
-      "latency_ms_p50": 8989.4,
-      "latency_ms_p95": 21686.0,
-      "input_tokens_mean": 4063.1389,
-      "output_tokens_mean": 397.5,
+      "n": 100,
+      "latency_ms_p50": 2700.2,
+      "latency_ms_p95": 19180.8,
+      "input_tokens_mean": 4154.08,
+      "output_tokens_mean": 406.77,
       "usd_per_question": 0.0,
       "bad_citation_rate": 0.0,
-      "error_rate": 0.0,
-      "fallback_rate": 0.0556,
-      "cached_rate": 0.0278
+      "error_rate": 0.01,
+      "fallback_rate": 0.07,
+      "cached_rate": 0.01
     }
   },
   "pairwise": [
@@ -676,392 +740,392 @@
       "b": "basic_rag",
       "scope": "overall",
       "metric": "accuracy",
-      "diff": 0.4722,
+      "diff": 0.44,
       "ci95": [
-        0.3056,
-        0.6389
+        0.33,
+        0.54
       ],
       "p_value": 0.0,
       "n_boot": 10000,
-      "n": 36
+      "n": 100
     },
     {
       "a": "hybrid",
       "b": "basic_rag",
       "scope": "overall",
       "metric": "mean_points",
-      "diff": 0.9722,
+      "diff": 0.9,
+      "ci95": [
+        0.7,
+        1.09
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 100
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "lookup",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "lookup",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "constraint",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "constraint",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "aggregate",
+      "metric": "accuracy",
+      "diff": 0.6667,
+      "ci95": [
+        0.25,
+        1.0
+      ],
+      "p_value": 0.0013,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "aggregate",
+      "metric": "mean_points",
+      "diff": 1.4167,
+      "ci95": [
+        0.75,
+        2.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "multihop",
+      "metric": "accuracy",
+      "diff": 0.8333,
+      "ci95": [
+        0.5833,
+        1.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "multihop",
+      "metric": "mean_points",
+      "diff": 1.6667,
+      "ci95": [
+        1.1667,
+        2.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "temporal",
+      "metric": "accuracy",
+      "diff": 0.6,
+      "ci95": [
+        0.3,
+        0.9
+      ],
+      "p_value": 0.0004,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "temporal",
+      "metric": "mean_points",
+      "diff": 1.2,
+      "ci95": [
+        0.6,
+        1.8
+      ],
+      "p_value": 0.0004,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "comparison",
+      "metric": "accuracy",
+      "diff": 0.8,
+      "ci95": [
+        0.5,
+        1.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "comparison",
+      "metric": "mean_points",
+      "diff": 1.6,
+      "ci95": [
+        1.0,
+        2.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "project_street",
+      "metric": "accuracy",
+      "diff": 1.0,
+      "ci95": [
+        1.0,
+        1.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "project_street",
+      "metric": "mean_points",
+      "diff": 1.7,
+      "ci95": [
+        1.4,
+        2.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "valuation",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        -0.3,
+        0.3
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "valuation",
+      "metric": "mean_points",
+      "diff": 0.4,
+      "ci95": [
+        -0.1,
+        0.9
+      ],
+      "p_value": 0.0777,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "unanswerable",
+      "metric": "accuracy",
+      "diff": 0.1667,
+      "ci95": [
+        0.0,
+        0.4167
+      ],
+      "p_value": 0.1126,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "basic_rag",
+      "scope": "unanswerable",
+      "metric": "mean_points",
+      "diff": 0.3333,
+      "ci95": [
+        0.0,
+        0.8333
+      ],
+      "p_value": 0.1126,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "overall",
+      "metric": "accuracy",
+      "diff": 0.17,
+      "ci95": [
+        0.06,
+        0.28
+      ],
+      "p_value": 0.0016,
+      "n_boot": 10000,
+      "n": 100
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "overall",
+      "metric": "mean_points",
+      "diff": 0.41,
+      "ci95": [
+        0.19,
+        0.64
+      ],
+      "p_value": 0.0003,
+      "n_boot": 10000,
+      "n": 100
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "lookup",
+      "metric": "accuracy",
+      "diff": 1.0,
+      "ci95": [
+        1.0,
+        1.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "lookup",
+      "metric": "mean_points",
+      "diff": 2.0,
+      "ci95": [
+        2.0,
+        2.0
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "constraint",
+      "metric": "accuracy",
+      "diff": 0.1667,
+      "ci95": [
+        0.0,
+        0.4167
+      ],
+      "p_value": 0.1076,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "constraint",
+      "metric": "mean_points",
+      "diff": 1.0,
       "ci95": [
         0.6667,
-        1.3056
+        1.3333
       ],
       "p_value": 0.0,
       "n_boot": 10000,
-      "n": 36
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "lookup",
-      "metric": "accuracy",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "lookup",
-      "metric": "mean_points",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "constraint",
-      "metric": "accuracy",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "constraint",
-      "metric": "mean_points",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "aggregate",
-      "metric": "accuracy",
-      "diff": 1.0,
-      "ci95": [
-        1.0,
-        1.0
-      ],
-      "p_value": 0.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "aggregate",
-      "metric": "mean_points",
-      "diff": 2.0,
-      "ci95": [
-        2.0,
-        2.0
-      ],
-      "p_value": 0.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "multihop",
-      "metric": "accuracy",
-      "diff": 0.75,
-      "ci95": [
-        0.25,
-        1.0
-      ],
-      "p_value": 0.003,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "multihop",
-      "metric": "mean_points",
-      "diff": 1.5,
-      "ci95": [
-        0.5,
-        2.0
-      ],
-      "p_value": 0.003,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "temporal",
-      "metric": "accuracy",
-      "diff": 0.75,
-      "ci95": [
-        0.25,
-        1.0
-      ],
-      "p_value": 0.0037,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "temporal",
-      "metric": "mean_points",
-      "diff": 1.5,
-      "ci95": [
-        0.5,
-        2.0
-      ],
-      "p_value": 0.0037,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "comparison",
-      "metric": "accuracy",
-      "diff": 0.75,
-      "ci95": [
-        0.25,
-        1.0
-      ],
-      "p_value": 0.0037,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "comparison",
-      "metric": "mean_points",
-      "diff": 1.5,
-      "ci95": [
-        0.5,
-        2.0
-      ],
-      "p_value": 0.0037,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "project_street",
-      "metric": "accuracy",
-      "diff": 1.0,
-      "ci95": [
-        1.0,
-        1.0
-      ],
-      "p_value": 0.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "project_street",
-      "metric": "mean_points",
-      "diff": 2.0,
-      "ci95": [
-        2.0,
-        2.0
-      ],
-      "p_value": 0.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "valuation",
-      "metric": "accuracy",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "valuation",
-      "metric": "mean_points",
-      "diff": 0.25,
-      "ci95": [
-        0.0,
-        0.75
-      ],
-      "p_value": 0.3101,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "unanswerable",
-      "metric": "accuracy",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "basic_rag",
-      "scope": "unanswerable",
-      "metric": "mean_points",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "basic_rag",
-      "b": "llm_only",
-      "scope": "overall",
-      "metric": "accuracy",
-      "diff": 0.1111,
-      "ci95": [
-        -0.0833,
-        0.3056
-      ],
-      "p_value": 0.1538,
-      "n_boot": 10000,
-      "n": 36
-    },
-    {
-      "a": "basic_rag",
-      "b": "llm_only",
-      "scope": "overall",
-      "metric": "mean_points",
-      "diff": 0.3056,
-      "ci95": [
-        -0.0833,
-        0.6944
-      ],
-      "p_value": 0.0662,
-      "n_boot": 10000,
-      "n": 36
-    },
-    {
-      "a": "basic_rag",
-      "b": "llm_only",
-      "scope": "lookup",
-      "metric": "accuracy",
-      "diff": 1.0,
-      "ci95": [
-        1.0,
-        1.0
-      ],
-      "p_value": 0.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "basic_rag",
-      "b": "llm_only",
-      "scope": "lookup",
-      "metric": "mean_points",
-      "diff": 2.0,
-      "ci95": [
-        2.0,
-        2.0
-      ],
-      "p_value": 0.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "basic_rag",
-      "b": "llm_only",
-      "scope": "constraint",
-      "metric": "accuracy",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "basic_rag",
-      "b": "llm_only",
-      "scope": "constraint",
-      "metric": "mean_points",
-      "diff": 0.5,
-      "ci95": [
-        0.0,
-        1.0
-      ],
-      "p_value": 0.0633,
-      "n_boot": 10000,
-      "n": 4
+      "n": 12
     },
     {
       "a": "basic_rag",
       "b": "llm_only",
       "scope": "aggregate",
       "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        -0.3333,
+        0.3333
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "aggregate",
+      "metric": "mean_points",
       "diff": -0.25,
       "ci95": [
-        -0.75,
-        0.0
+        -0.8333,
+        0.4167
       ],
-      "p_value": 0.3202,
+      "p_value": 0.2533,
       "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "basic_rag",
-      "b": "llm_only",
-      "scope": "aggregate",
-      "metric": "mean_points",
-      "diff": -0.5,
-      "ci95": [
-        -1.5,
-        0.0
-      ],
-      "p_value": 0.3202,
-      "n_boot": 10000,
-      "n": 4
+      "n": 12
     },
     {
       "a": "basic_rag",
@@ -1075,7 +1139,7 @@
       ],
       "p_value": 1.0,
       "n_boot": 10000,
-      "n": 4
+      "n": 12
     },
     {
       "a": "basic_rag",
@@ -1089,413 +1153,413 @@
       ],
       "p_value": 1.0,
       "n_boot": 10000,
-      "n": 4
+      "n": 12
     },
     {
       "a": "basic_rag",
       "b": "llm_only",
       "scope": "temporal",
       "metric": "accuracy",
-      "diff": 0.25,
+      "diff": 0.1,
       "ci95": [
         0.0,
+        0.3
+      ],
+      "p_value": 0.3501,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "temporal",
+      "metric": "mean_points",
+      "diff": 0.1,
+      "ci95": [
+        -0.3,
+        0.6
+      ],
+      "p_value": 0.4544,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "comparison",
+      "metric": "accuracy",
+      "diff": -0.3,
+      "ci95": [
+        -0.6,
+        0.0
+      ],
+      "p_value": 0.0257,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "comparison",
+      "metric": "mean_points",
+      "diff": -0.6,
+      "ci95": [
+        -1.2,
+        0.0
+      ],
+      "p_value": 0.0257,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "project_street",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "project_street",
+      "metric": "mean_points",
+      "diff": 0.2,
+      "ci95": [
+        -0.2,
+        0.6
+      ],
+      "p_value": 0.2205,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "valuation",
+      "metric": "accuracy",
+      "diff": 0.1,
+      "ci95": [
+        -0.2,
+        0.4
+      ],
+      "p_value": 0.3803,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "valuation",
+      "metric": "mean_points",
+      "diff": 0.3,
+      "ci95": [
+        -0.4,
+        1.0
+      ],
+      "p_value": 0.2443,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "basic_rag",
+      "b": "llm_only",
+      "scope": "unanswerable",
+      "metric": "accuracy",
+      "diff": 0.3333,
+      "ci95": [
+        -0.1667,
         0.75
       ],
-      "p_value": 0.3201,
+      "p_value": 0.1249,
       "n_boot": 10000,
-      "n": 4
+      "n": 12
     },
     {
       "a": "basic_rag",
       "b": "llm_only",
-      "scope": "temporal",
+      "scope": "unanswerable",
       "metric": "mean_points",
-      "diff": 0.5,
+      "diff": 0.6667,
       "ci95": [
-        0.0,
+        -0.3333,
         1.5
       ],
-      "p_value": 0.3201,
+      "p_value": 0.1249,
       "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "basic_rag",
-      "b": "llm_only",
-      "scope": "comparison",
-      "metric": "accuracy",
-      "diff": -0.5,
-      "ci95": [
-        -1.0,
-        0.0
-      ],
-      "p_value": 0.0602,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "basic_rag",
-      "b": "llm_only",
-      "scope": "comparison",
-      "metric": "mean_points",
-      "diff": -1.0,
-      "ci95": [
-        -2.0,
-        0.0
-      ],
-      "p_value": 0.0602,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "basic_rag",
-      "b": "llm_only",
-      "scope": "project_street",
-      "metric": "accuracy",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "basic_rag",
-      "b": "llm_only",
-      "scope": "project_street",
-      "metric": "mean_points",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "basic_rag",
-      "b": "llm_only",
-      "scope": "valuation",
-      "metric": "accuracy",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "basic_rag",
-      "b": "llm_only",
-      "scope": "valuation",
-      "metric": "mean_points",
-      "diff": 0.25,
-      "ci95": [
-        0.0,
-        0.75
-      ],
-      "p_value": 0.3202,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "basic_rag",
-      "b": "llm_only",
-      "scope": "unanswerable",
-      "metric": "accuracy",
-      "diff": 0.5,
-      "ci95": [
-        -0.5,
-        1.0
-      ],
-      "p_value": 0.2609,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "basic_rag",
-      "b": "llm_only",
-      "scope": "unanswerable",
-      "metric": "mean_points",
-      "diff": 1.0,
-      "ci95": [
-        -1.0,
-        2.0
-      ],
-      "p_value": 0.2609,
-      "n_boot": 10000,
-      "n": 4
+      "n": 12
     },
     {
       "a": "hybrid",
       "b": "graph",
       "scope": "overall",
       "metric": "accuracy",
-      "diff": -0.1389,
+      "diff": -0.03,
+      "ci95": [
+        -0.12,
+        0.07
+      ],
+      "p_value": 0.2979,
+      "n_boot": 10000,
+      "n": 100
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "overall",
+      "metric": "mean_points",
+      "diff": 0.07,
+      "ci95": [
+        -0.09,
+        0.24
+      ],
+      "p_value": 0.2164,
+      "n_boot": 10000,
+      "n": 100
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "lookup",
+      "metric": "accuracy",
+      "diff": 0.5833,
+      "ci95": [
+        0.3333,
+        0.8333
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "lookup",
+      "metric": "mean_points",
+      "diff": 1.0833,
+      "ci95": [
+        0.5,
+        1.5833
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "constraint",
+      "metric": "accuracy",
+      "diff": -0.75,
+      "ci95": [
+        -1.0,
+        -0.5
+      ],
+      "p_value": 0.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "constraint",
+      "metric": "mean_points",
+      "diff": -0.8333,
+      "ci95": [
+        -1.25,
+        -0.3333
+      ],
+      "p_value": 0.0006,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "aggregate",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "aggregate",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "multihop",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "multihop",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 12
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "temporal",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "temporal",
+      "metric": "mean_points",
+      "diff": -0.1,
+      "ci95": [
+        -0.3,
+        0.0
+      ],
+      "p_value": 0.344,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "comparison",
+      "metric": "accuracy",
+      "diff": -0.1,
+      "ci95": [
+        -0.3,
+        0.0
+      ],
+      "p_value": 0.3501,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "comparison",
+      "metric": "mean_points",
+      "diff": -0.2,
+      "ci95": [
+        -0.6,
+        0.0
+      ],
+      "p_value": 0.3501,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "project_street",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "project_street",
+      "metric": "mean_points",
+      "diff": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "valuation",
+      "metric": "accuracy",
+      "diff": 0.0,
+      "ci95": [
+        -0.4,
+        0.4
+      ],
+      "p_value": 1.0,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "valuation",
+      "metric": "mean_points",
+      "diff": 0.7,
+      "ci95": [
+        0.1,
+        1.3
+      ],
+      "p_value": 0.0232,
+      "n_boot": 10000,
+      "n": 10
+    },
+    {
+      "a": "hybrid",
+      "b": "graph",
+      "scope": "unanswerable",
+      "metric": "accuracy",
+      "diff": 0.0,
       "ci95": [
         -0.25,
-        -0.0278
-      ],
-      "p_value": 0.0044,
-      "n_boot": 10000,
-      "n": 36
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "overall",
-      "metric": "mean_points",
-      "diff": -0.1389,
-      "ci95": [
-        -0.3611,
-        0.0556
-      ],
-      "p_value": 0.1329,
-      "n_boot": 10000,
-      "n": 36
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "lookup",
-      "metric": "accuracy",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
+        0.25
       ],
       "p_value": 1.0,
       "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "lookup",
-      "metric": "mean_points",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "constraint",
-      "metric": "accuracy",
-      "diff": -1.0,
-      "ci95": [
-        -1.0,
-        -1.0
-      ],
-      "p_value": 0.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "constraint",
-      "metric": "mean_points",
-      "diff": -1.5,
-      "ci95": [
-        -2.0,
-        -1.0
-      ],
-      "p_value": 0.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "aggregate",
-      "metric": "accuracy",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "aggregate",
-      "metric": "mean_points",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "multihop",
-      "metric": "accuracy",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "multihop",
-      "metric": "mean_points",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "temporal",
-      "metric": "accuracy",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "temporal",
-      "metric": "mean_points",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "comparison",
-      "metric": "accuracy",
-      "diff": -0.25,
-      "ci95": [
-        -0.75,
-        0.0
-      ],
-      "p_value": 0.3201,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "comparison",
-      "metric": "mean_points",
-      "diff": -0.5,
-      "ci95": [
-        -1.5,
-        0.0
-      ],
-      "p_value": 0.3201,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "project_street",
-      "metric": "accuracy",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "project_street",
-      "metric": "mean_points",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "valuation",
-      "metric": "accuracy",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "valuation",
-      "metric": "mean_points",
-      "diff": 0.75,
-      "ci95": [
-        0.25,
-        1.0
-      ],
-      "p_value": 0.0032,
-      "n_boot": 10000,
-      "n": 4
-    },
-    {
-      "a": "hybrid",
-      "b": "graph",
-      "scope": "unanswerable",
-      "metric": "accuracy",
-      "diff": 0.0,
-      "ci95": [
-        0.0,
-        0.0
-      ],
-      "p_value": 1.0,
-      "n_boot": 10000,
-      "n": 4
+      "n": 12
     },
     {
       "a": "hybrid",
@@ -1504,88 +1568,88 @@
       "metric": "mean_points",
       "diff": 0.0,
       "ci95": [
-        0.0,
-        0.0
+        -0.5,
+        0.5
       ],
       "p_value": 1.0,
       "n_boot": 10000,
-      "n": 4
+      "n": 12
     }
   ],
   "router": {
-    "accuracy": 0.9167,
-    "n": 36,
-    "accuracy_excl_unanswerable": 0.9375,
-    "n_excl_unanswerable": 32,
+    "accuracy": 0.96,
+    "n": 100,
+    "accuracy_excl_unanswerable": 0.9773,
+    "n_excl_unanswerable": 88,
     "by_category": {
       "lookup": {
-        "n": 4,
-        "accuracy": 0.5
+        "n": 12,
+        "accuracy": 0.8333
       },
       "constraint": {
-        "n": 4,
+        "n": 12,
         "accuracy": 1.0
       },
       "aggregate": {
-        "n": 4,
+        "n": 12,
         "accuracy": 1.0
       },
       "multihop": {
-        "n": 4,
+        "n": 12,
         "accuracy": 1.0
       },
       "temporal": {
-        "n": 4,
+        "n": 10,
         "accuracy": 1.0
       },
       "comparison": {
-        "n": 4,
+        "n": 10,
         "accuracy": 1.0
       },
       "project_street": {
-        "n": 4,
+        "n": 10,
         "accuracy": 1.0
       },
       "valuation": {
-        "n": 4,
+        "n": 10,
         "accuracy": 1.0
       },
       "unanswerable": {
-        "n": 4,
-        "accuracy": 0.75
+        "n": 12,
+        "accuracy": 0.8333
       }
     },
     "confusion": {
       "basic_rag": {
-        "basic_rag": 7,
-        "graph": 0,
+        "basic_rag": 25,
+        "graph": 1,
         "hybrid": 3,
         "valuation": 0
       },
       "graph": {
         "basic_rag": 0,
-        "graph": 22,
+        "graph": 58,
         "hybrid": 0,
         "valuation": 0
       },
       "hybrid": {
         "basic_rag": 0,
         "graph": 0,
-        "hybrid": 0,
+        "hybrid": 3,
         "valuation": 0
       },
       "valuation": {
         "basic_rag": 0,
         "graph": 0,
         "hybrid": 0,
-        "valuation": 4
+        "valuation": 10
       }
     }
   },
   "notes": [
-    "ragas: answer_relevancy và context_precision bỏ để tiết kiệm lời gọi LLM (chỉ đo faithfulness)",
+    "ragas: không chạy (chấm theo luật, không LLM giám khảo — chọn để tiết kiệm chi phí); faithfulness để trống",
     "retrieval: nguồn = top_k=5 tin mà hệ thống đưa vào ngữ cảnh; recall_at_10 vì thế ≤ recall_at_5 khi có hơn 5 cụm đúng (truy xuất thuần ở ablation.json)",
-    "benchmark đầy đủ có 100 câu; bản tóm tắt này chấm 36 câu (benchmark_subset)",
+    "benchmark đầy đủ có 100 câu; bản tóm tắt này chấm 100 câu (benchmark_subset)",
     "pairwise chỉ dùng câu cả hai hệ thống đều có điểm; overall_common chỉ dùng câu mọi hệ thống đều có điểm; mọi CI có n kèm theo"
   ],
   "scoring_rules": [

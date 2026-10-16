@@ -266,13 +266,34 @@ def report_readme() -> None:
 
 
 @app.command()
-def ablation(limit: int | None = typer.Option(None, "--limit", help="chỉ N câu")) -> None:
+def ablation(limit: int | None = typer.Option(None, "--limit", help="chỉ N câu"),
+             scope: str = typer.Option("all", "--scope", help="all | full (chỉ mục đầy đủ) | sub (quét chunk_size)"),
+             chunk_sizes: str = typer.Option("256,400,512", "--chunk-sizes", help="cỡ chunk của scope sub"),
+             subcorpus_size: int = typer.Option(200_000, "--subcorpus-size", help="số tin ngẫu nhiên (smoke: nhỏ)"),
+             rerank_device: str = typer.Option("cpu", "--rerank-device", help="cpu | cuda cho cross-encoder"),
+             build_only: bool = typer.Option(False, "--build-only", help="scope sub: chỉ dựng artifact (GPU) rồi thoát"),
+             embed_token_budget: int | None = typer.Option(None, "--embed-token-budget", help="thu nhỏ lô encoder"),
+             vram_cap_gb: float | None = typer.Option(None, "--vram-cap-gb", help="hạ trần CUDA của encoder"),
+             out: Path | None = typer.Option(None, "--out", help="ghi đè đường dẫn kết quả (smoke)"),
+             download_rerank: bool = typer.Option(False, "--download-rerank",
+                                                  help="chỉ tải RERANK_MODEL vào HF_HOME rồi thoát")) -> None:
     """Ablation truy xuất e5-large → results/ablation.json (code của lane ablation: `vre.eval.ablation`)."""
     settings = get_settings()
-    require(settings, "qdrant_healthy", "clean_data_ready")
-    from vre.eval.ablation import run
+    from vre.eval import ablation as ab
 
-    _echo(run(settings, limit=limit))
+    if download_rerank:
+        typer.echo(ab.download_rerank_model(settings))
+        return
+    require(settings, "qdrant_healthy", "clean_data_ready")
+    sizes = [int(c) for c in chunk_sizes.split(",") if c.strip()]
+    doc = ab.run(settings, limit=limit, scope=scope, chunk_sizes=sizes, subcorpus_size=subcorpus_size,
+                 rerank_device=rerank_device, build_only=build_only, embed_token_budget=embed_token_budget,
+                 vram_cap_gb=vram_cap_gb, out=out)
+    if build_only:
+        _echo(doc)
+        return
+    _echo({"corpus": doc["corpus"], "subcorpus": doc["subcorpus"],
+           "runs": {r["name"]: round(r["recall_at_5"], 4) for r in doc["runs"]}, "notes": doc["notes"]})
 
 
 @app.command()

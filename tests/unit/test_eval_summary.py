@@ -120,3 +120,11 @@ def test_cost_has_fallback_rate():
     rows = [{"fallback": True}, {"fallback": False}, {}, {"fallback": True}]
     assert _cost(rows, 0.0, 0.0)["fallback_rate"] == 0.5
     assert _cost([], 0.0, 0.0)["fallback_rate"] is None
+
+
+def test_summary_rule_based_without_faithfulness_says_ragas_not_run(tmp_path):
+    answers, scores = _fixture()
+    scores = {k: {**v, "scoring": "rule_based", "faithfulness": None} for k, v in scores.items()}
+    doc = summary.build(load_settings(data_root=tmp_path), answers, scores, QUESTIONS, {}, None)
+    assert summary.RAGAS_OFF_NOTE in doc["notes"] and summary.RAGAS_NOTE not in doc["notes"]
+    assert all(v["n"] == 0 and v["faithfulness"] is None for v in doc["ragas"].values())
