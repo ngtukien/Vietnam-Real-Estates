@@ -131,19 +131,14 @@ entries:
 - slide: intro-llm-vs-rag
   in: body
   shape: 5
-  text: Mình thấy tin bán căn hộ 3 phòng ngủ 80m2 ở Sun Feliza Suites Cầu Giấy giá 8 tỷ, căn đó có mấy WC vậy?
-  allow: đề bài benchmark LK01
-- slide: intro-llm-vs-rag
-  in: body
-  shape: 9
-  text: Dựa trên thiết kế tiêu chuẩn của các dự án căn hộ cao cấp tại Hà Nội (với diện tích khoảng 80m2 cho 3 phòng ngủ), các căn hộ này thường được bố trí 2 nhà vệ sinh (1 WC chung và 1 WC nằm trong phòng
-    ngủ master) để đảm bảo công năng sử dụng. Tuy nhiên, thiết kế chi tiết có thể thay đổi tùy theo mặt bằng thực tế của chủ đầu tư tại dự án Sun Feliza Suites Cầu Giấy. Để chính xác …
-  allow: trích examples.json:answers[id=LK01,system=llm_only].answer (bỏ ký hiệu markdown)
+  text: Diện tích trung vị của các lô đất rao bán ở Củ Chi là bao nhiêu m2?
+  allow: đề bài benchmark AG07
 - slide: intro-llm-vs-rag
   in: body
   shape: 13
-  text: Căn hộ 3 phòng ngủ tại Sun Feliza Suites có 2 WC [Tin#3092923782945354].
-  allow: trích examples.json:answers[id=LK01,system=basic_rag].answer (bỏ ký hiệu markdown)
+  text: 'Dựa trên các tài liệu được cung cấp, diện tích của các lô đất ở Củ Chi lần lượt là: 220 m² [Tin#2045133780349874], 84,2 m² [Tin#6996937738248262], 3.000 m² [Tin#759967255344203], 180 m² [Tin#1167455787622469],
+    và 3.043 m² [Tin#8273646489036237]. Sắp xếp theo thứ tự tăng dần: 84,2 m², 180 m², 220 m², 3.000 m², 3.043 m². Giá trị trung vị (ở giữa) là 220 m² [Tin#2045133780349874].'
+  allow: trích examples.json:answers[id=AG07,system=basic_rag].answer (bỏ ký hiệu markdown)
 - slide: rag-two-phases
   in: notes
   shape: 0
@@ -1043,13 +1038,13 @@ entries:
 - slide: ret-filters
   in: body
   shape: 6
-  text: Tìm căn hộ 2 phòng ngủ ở Quận 7 giá dưới 3 tỷ, chung cư có hồ bơi.
-  allow: nguyên văn examples.json:rag[4].question
+  text: can ho 1pn o thu duc gia duoi 2 ty
+  allow: nguyên văn examples.json:rag[0].question
 - slide: ret-filters
   in: body
   shape: 9
-  text: "{\n \"province\": \"Hồ Chí Minh\",\n \"district\": \"Quận 7\",\n \"property_type\": \"Căn hộ chung cư\",\n \"deal_type\": \"sale\",\n \"bedrooms\": 2,\n \"max_price_mil\": 3000.0\n}"
-  allow: nguyên văn examples.json:rag[4].filters
+  text: "{\n \"province\": \"Hồ Chí Minh\",\n \"district\": \"Thủ Đức\",\n \"property_type\": \"Căn hộ chung cư\",\n \"deal_type\": \"sale\",\n \"bedrooms\": 1,\n \"max_price_mil\": 2000.0\n}"
+  allow: nguyên văn examples.json:rag[0].filters
 - slide: ret-filters
   in: body
   shape: 12
@@ -1079,17 +1074,9 @@ entries:
   full: true
   text: …{}
   keys:
-  - examples.json:rag[4].hits[0].listing_id
+  - examples.json:rag[0].hits[0].listing_id
   fmt:
   - last6
-- slide: ret-cosine
-  in: body
-  shape: 10
-  cell:
-  - 1
-  - 1
-  text: Quận 7
-  allow: nguyên văn examples.json:rag[4].hits[0].district
 - slide: ret-cosine
   in: body
   shape: 10
@@ -1099,7 +1086,7 @@ entries:
   full: true
   text: '{} tỷ'
   keys:
-  - examples.json:rag[4].hits[0].price_vnd
+  - examples.json:rag[0].hits[0].price_vnd
   fmt:
   - bn2
 - slide: ret-cosine
@@ -1111,17 +1098,9 @@ entries:
   full: true
   text: …{}
   keys:
-  - examples.json:rag[4].hits[1].listing_id
+  - examples.json:rag[0].hits[1].listing_id
   fmt:
   - last6
-- slide: ret-cosine
-  in: body
-  shape: 10
-  cell:
-  - 2
-  - 1
-  text: Quận 7
-  allow: nguyên văn examples.json:rag[4].hits[1].district
 - slide: ret-cosine
   in: body
   shape: 10
@@ -1131,7 +1110,7 @@ entries:
   full: true
   text: '{} tỷ'
   keys:
-  - examples.json:rag[4].hits[1].price_vnd
+  - examples.json:rag[0].hits[1].price_vnd
   fmt:
   - bn2
 - slide: ret-cosine
@@ -1143,17 +1122,9 @@ entries:
   full: true
   text: …{}
   keys:
-  - examples.json:rag[4].hits[2].listing_id
+  - examples.json:rag[0].hits[2].listing_id
   fmt:
   - last6
-- slide: ret-cosine
-  in: body
-  shape: 10
-  cell:
-  - 3
-  - 1
-  text: Quận 7
-  allow: nguyên văn examples.json:rag[4].hits[2].district
 - slide: ret-cosine
   in: body
   shape: 10
@@ -1163,7 +1134,7 @@ entries:
   full: true
   text: '{} tỷ'
   keys:
-  - examples.json:rag[4].hits[2].price_vnd
+  - examples.json:rag[0].hits[2].price_vnd
   fmt:
   - bn2
 - slide: ret-cosine
@@ -1258,21 +1229,27 @@ entries:
   shape: 0
   full: true
   text: 'Pre-filter lọc trên payload index của Qdrant trước khi tìm lân cận, nên mọi tin trả về đều thoả điều kiện. Post-filter lấy top-k theo nghĩa rồi mới lọc, điều kiện càng chặt càng rơi nhiều tin.
-    Trên benchmark, cùng cấu hình hybrid, Recall@5 là {} khi lọc trước và {} khi không lọc. Rerank bằng cross-encoder chính xác hơn nhưng chậm; trong lượt đo này rerank tắt vì model không có trong cache.
-    Slide sau: ba điểm RAG có thể hỏng.'
+    Trên benchmark, cùng cấu hình hybrid, Recall@5 là {} khi lọc trước và {} khi không lọc. Rerank bằng cross-encoder chấm lại các ứng viên đầu: với hybrid có lọc, Recall@5 lên {} nhưng độ trễ trung vị
+    từ {} lên {} mili giây trên CPU, nên chatbot để rerank tuỳ chọn. Slide sau: ba điểm RAG có thể hỏng.'
   keys:
-  - ablation.json:runs[retrieval=hybrid,prefilter=True].recall_at_5
-  - ablation.json:runs[retrieval=hybrid,prefilter=False].recall_at_5
+  - ablation.json:runs[name=full_hybrid_prefilter].recall_at_5
+  - ablation.json:runs[name=full_hybrid].recall_at_5
+  - ablation.json:runs[name=full_hybrid_prefilter_rerank].recall_at_5
+  - ablation.json:runs[name=full_hybrid_prefilter].latency_ms_p50
+  - ablation.json:runs[name=full_hybrid_prefilter_rerank].latency_ms_p50
   fmt:
   - dec2
   - dec2
+  - dec2
+  - int
+  - int
 - slide: ret-prefilter
   in: body
   shape: 25
   full: true
   text: '{}'
   keys:
-  - ablation.json:runs[retrieval=hybrid,prefilter=True].recall_at_5
+  - ablation.json:runs[name=full_hybrid_prefilter].recall_at_5
   fmt:
   - dec2
 - slide: ret-prefilter
@@ -1281,16 +1258,31 @@ entries:
   full: true
   text: '{}'
   keys:
-  - ablation.json:runs[retrieval=hybrid,prefilter=False].recall_at_5
+  - ablation.json:runs[name=full_hybrid].recall_at_5
   fmt:
   - dec2
 - slide: ret-prefilter
   in: body
+  shape: 30
+  full: true
+  text: '•  Post-filter: lấy top-k rồi mới lọc, điều kiện càng chặt càng mất tin
+
+    •  Rerank cross-encoder: Recall@5 lên {}, độ trễ {} → {} ms; để tuỳ chọn'
+  keys:
+  - ablation.json:runs[name=full_hybrid_prefilter_rerank].recall_at_5
+  - ablation.json:runs[name=full_hybrid_prefilter].latency_ms_p50
+  - ablation.json:runs[name=full_hybrid_prefilter_rerank].latency_ms_p50
+  fmt:
+  - dec2
+  - int
+  - int
+- slide: ret-prefilter
+  in: body
   shape: 31
   full: true
-  text: 'Nguồn: ablation truy xuất, {} câu có tập tin đúng.'
+  text: 'Nguồn: ablation truy xuất trên chỉ mục đầy đủ, {} câu có tập tin đúng.'
   keys:
-  - ablation.json:runs[retrieval=hybrid,prefilter=True].n_questions
+  - ablation.json:runs[name=full_hybrid_prefilter].n_questions
   fmt:
   - int
 - slide: ret-prompt
@@ -1335,28 +1327,27 @@ entries:
   in: body
   shape: 17
   text: Giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy là bao nhiêu?
-  allow: nguyên văn error_analysis.json:examples[9].question
+  allow: nguyên văn error_analysis.json:examples[10].question
 - slide: ret-basic-fails
   in: body
   shape: 20
   text: Không đủ dữ liệu để tính toán giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy.
-  allow: trích nguyên văn error_analysis.json:examples[9].answer_excerpt
+  allow: trích nguyên văn error_analysis.json:examples[10].answer_excerpt
 - slide: ret-basic-fails
   in: body
   shape: 22
   full: true
   text: Đáp án chuẩn (SQL)  {}
   keys:
-  - error_analysis.json:examples[9].gt_value
+  - error_analysis.json:examples[10].gt_value
   fmt:
   - dec2
 - slide: ret-practice-2
   in: notes
   shape: 0
   full: true
-  text: 'Ba nhóm câu chạy thật qua pipeline Basic RAG trong lượt eval. Tra cứu đúng {}%, ràng buộc {}%, tổng hợp {}%. Mỗi nhóm chỉ có {} câu trong tập con đã chạy, nên một câu đúng sai làm số thay đổi rất
-    nhiều; khoảng tin cậy trên slide cho thấy điều đó. Đọc xu hướng, không đọc từng điểm phần trăm. Câu chuyển: Basic RAG tìm tin giỏi nhưng không hiểu quan hệ; chặng 3 dựng Knowledge Graph để biểu diễn
-    quan hệ đó.'
+  text: 'Ba nhóm câu chạy thật qua pipeline Basic RAG trong lượt eval. Tra cứu đúng {}%, ràng buộc {}%, tổng hợp {}%. Mỗi nhóm chỉ có khoảng {} câu, nên một câu đúng sai làm số thay đổi rất nhiều; khoảng
+    tin cậy trên slide cho thấy điều đó. Đọc xu hướng, không đọc từng điểm phần trăm. Câu chuyển: Basic RAG tìm tin giỏi nhưng không hiểu quan hệ; chặng 3 dựng Knowledge Graph để biểu diễn quan hệ đó.'
   keys:
   - eval_summary.json:by_category.lookup.basic_rag.accuracy
   - eval_summary.json:by_category.constraint.basic_rag.accuracy
@@ -1449,7 +1440,7 @@ entries:
   in: body
   shape: 15
   full: true
-  text: Chấm bằng luật trên tập con {} câu; mô hình sinh gemini-flash-lite-latest.
+  text: Chấm bằng luật trên toàn bộ {} câu; mô hình sinh gemini-flash-lite-latest.
   keys:
   - eval_summary.json:n_questions
   fmt:
@@ -1540,7 +1531,7 @@ entries:
   in: body
   shape: 7
   text: Giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy là bao nhiêu?
-  allow: nguyên văn examples.json:graph[2].question
+  allow: nguyên văn examples.json:graph[3].question
 - slide: kg-cypher-agg
   in: body
   shape: 9
@@ -1548,15 +1539,15 @@ entries:
     m.n AS n
 
     LIMIT 50'
-  allow: nguyên văn examples.json:graph[2].cypher
+  allow: nguyên văn examples.json:graph[3].cypher
 - slide: kg-cypher-agg
   in: body
   shape: 10
   full: true
   text: '{} dòng kết quả  ·  {} ms trên Neo4j'
   keys:
-  - examples.json:graph[2].rows|len
-  - examples.json:graph[2].latency_ms
+  - examples.json:graph[3].rows|len
+  - examples.json:graph[3].latency_ms
   fmt:
   - int
   - int
@@ -1564,7 +1555,7 @@ entries:
   in: body
   shape: 7
   text: Dự án Sunshine Sky City nằm ở quận nào, và giá/m² căn hộ của quận đó cao hay thấp hơn trung vị căn hộ toàn TP.HCM bao nhiêu %?
-  allow: nguyên văn examples.json:graph[1].question
+  allow: nguyên văn examples.json:graph[2].question
 - slide: kg-cypher-multihop
   in: body
   shape: 9
@@ -1574,15 +1565,15 @@ entries:
     mv.median_price_m2_mil - 1) * 100, 2) AS percentage_diff
 
     LIMIT 50'
-  allow: nguyên văn examples.json:graph[1].cypher
+  allow: nguyên văn examples.json:graph[2].cypher
 - slide: kg-cypher-multihop
   in: body
   shape: 10
   full: true
   text: '{} dòng kết quả  ·  {} ms trên Neo4j'
   keys:
-  - examples.json:graph[1].rows|len
-  - examples.json:graph[1].latency_ms
+  - examples.json:graph[2].rows|len
+  - examples.json:graph[2].latency_ms
   fmt:
   - int
   - int
@@ -1757,19 +1748,24 @@ entries:
   allow: hằng số vre.config cypher_timeout, cypher_max_rows
 - slide: gr-patterns
   in: body
+  shape: 16
+  text: Giá trung vị mỗi m2 căn hộ chung cư ở Cầu Giấy là bao nhiêu?
+  allow: nguyên văn examples.json:graph[3].question
+- slide: gr-patterns
+  in: body
   shape: 18
-  text: 'MATCH (d:District)-[:IN_PROVINCE]->(:Province {name: ''Đà Nẵng''}) WITH d MATCH (l:Listing)-[:IN_WARD|IN_DISTRICT*1..2]->(d) WHERE l.property_type = ''Đất'' AND l.deal_type = ''sale'' RETURN count(DISTINCT
-    l) AS n_listings
+  text: 'MATCH (m:MarketStat {scope: ''district'', area_key: ''Hà Nội|Cầu Giấy'', property_type: ''Căn hộ chung cư'', month: ''ALL'', deal_type: ''sale''}) RETURN round(m.median_price_m2_mil, 2) AS median_price_m2_mil,
+    m.n AS n
 
     LIMIT 50'
-  allow: nguyên văn examples.json:graph[4].cypher
+  allow: nguyên văn examples.json:graph[3].cypher
 - slide: gr-router
   in: notes
   shape: 0
   full: true
-  text: 'Router là một lượt gọi mô hình với structured output, chọn một trong các nhãn: Basic RAG, Graph, cả hai, hoặc định giá. Trên tập con đã chạy, router chọn đúng nhãn ở {}% số câu; bỏ nhóm không trả
-    lời được thì {}%. Nếu Cypher lỗi, trả về rỗng hoặc Neo4j mất kết nối, hệ thống lui về Basic RAG. Truy xuất RAG chạy song song với router nên đường lui không phải chờ thêm. Slide sau: đánh giá được thiết
-    kế thế nào.'
+  text: 'Router là một lượt gọi mô hình với structured output, chọn một trong các nhãn: Basic RAG, Graph, cả hai, hoặc định giá. Trên toàn bộ benchmark, router chọn đúng nhãn ở {}% số câu; bỏ nhóm không
+    trả lời được thì {}%. Nếu Cypher lỗi, trả về rỗng hoặc Neo4j mất kết nối, hệ thống lui về Basic RAG. Truy xuất RAG chạy song song với router nên đường lui không phải chờ thêm. Slide sau: đánh giá được
+    thiết kế thế nào.'
   keys:
   - eval_summary.json:router.accuracy
   - eval_summary.json:router.accuracy_excl_unanswerable
@@ -1816,9 +1812,9 @@ entries:
   in: notes
   shape: 0
   full: true
-  text: 'Benchmark có {} câu, đáp án chuẩn tính bằng SQL trên bảng sạch. Vì hạn mức API miễn phí, lượt đánh giá chạy trên tập con {} câu, đủ chín nhóm, với cả bốn hệ. Mô hình sinh là bản miễn phí ghi trên
-    slide, khác mô hình dự kiến ban đầu. Câu trả lời được chấm bằng luật so với đáp án chuẩn, không dùng LLM làm giám khảo. Vì vậy mọi con số phía sau là chỉ dấu trên cỡ mẫu nhỏ, và slide nào cũng ghi n
-    với khoảng tin cậy. Slide sau: ablation truy xuất.'
+  text: 'Benchmark có {} câu, đáp án chuẩn tính bằng SQL trên bảng sạch. Lượt đánh giá chạy đủ {} câu, đủ chín nhóm, với cả bốn hệ. Mô hình sinh là bản giá rẻ ghi trên slide, khác mô hình dự kiến ban đầu.
+    Câu trả lời được chấm bằng luật so với đáp án chuẩn, không dùng LLM làm giám khảo và không chạy RAGAS, để tiết kiệm chi phí. Mỗi nhóm chỉ có khoảng mười câu, nên slide nào cũng ghi n với khoảng tin
+    cậy. Slide sau: ablation truy xuất.'
   keys:
   - benchmark_gt.json:items|len
   - eval_summary.json:n_questions
@@ -1876,21 +1872,116 @@ entries:
   in: notes
   shape: 0
   full: true
-  text: 'Ablation chạy thẳng trên chỉ mục đầy đủ, không qua mô hình sinh, nên không tốn lời gọi API. Ba cách truy xuất dense, BM25 và hybrid, mỗi cách có và không có lọc trước. Rerank không có trong lượt
-    đo vì model cross-encoder không có trong cache. Số câu có tập tin đúng: {}. Bước nhảy lớn nhất đến từ bộ lọc, vì câu tìm tin có điều kiện cứng mà embedding không đảm bảo. Trên dữ liệu này BM25 có lọc
-    ngang hoặc hơn hybrid có lọc, vì đề bài chứa tên dự án và con số khớp đúng từ. Hybrid không tự động thắng; phải đo mới biết. So sánh model embedding nằm ở chặng 1. Slide sau: kết quả câu trả lời theo
-    nhóm câu hỏi.'
+  text: 'Ablation chạy thẳng trên chỉ mục đầy đủ, không qua mô hình sinh, nên không tốn lời gọi API. Ba cách truy xuất dense, BM25 và hybrid, mỗi cách có và không có lọc trước, có và không có rerank. Số
+    câu có tập tin đúng: {}. Bước nhảy lớn nhất đến từ bộ lọc, vì câu tìm tin có điều kiện cứng mà embedding không đảm bảo. Rerank cross-encoder chấm lại hai mươi ứng viên đầu: với hybrid có lọc, Recall@5
+    từ {} lên {}, nhưng độ trễ trung vị từ {} lên {} mili giây vì chạy trên CPU. Hybrid không tự động thắng; phải đo mới biết. Slide sau: kích thước chunk.'
   keys:
-  - ablation.json:runs[0].n_questions
+  - ablation.json:runs[name=full_dense].n_questions
+  - ablation.json:runs[name=full_hybrid_prefilter].recall_at_5
+  - ablation.json:runs[name=full_hybrid_prefilter_rerank].recall_at_5
+  - ablation.json:runs[name=full_hybrid_prefilter].latency_ms_p50
+  - ablation.json:runs[name=full_hybrid_prefilter_rerank].latency_ms_p50
   fmt:
+  - int
+  - dec2
+  - dec2
+  - int
   - int
 - slide: ev-ablation
   chart: 5
   series:
   - name: Recall@5
-    key: ablation.json:runs[*].recall_at_5
+    key:
+    - ablation.json:runs[name=full_dense].recall_at_5
+    - ablation.json:runs[name=full_dense_rerank].recall_at_5
+    - ablation.json:runs[name=full_dense_prefilter].recall_at_5
+    - ablation.json:runs[name=full_dense_prefilter_rerank].recall_at_5
+    - ablation.json:runs[name=full_bm25].recall_at_5
+    - ablation.json:runs[name=full_bm25_rerank].recall_at_5
+    - ablation.json:runs[name=full_bm25_prefilter].recall_at_5
+    - ablation.json:runs[name=full_bm25_prefilter_rerank].recall_at_5
+    - ablation.json:runs[name=full_hybrid].recall_at_5
+    - ablation.json:runs[name=full_hybrid_rerank].recall_at_5
+    - ablation.json:runs[name=full_hybrid_prefilter].recall_at_5
+    - ablation.json:runs[name=full_hybrid_prefilter_rerank].recall_at_5
   - name: MRR
-    key: ablation.json:runs[*].mrr
+    key:
+    - ablation.json:runs[name=full_dense].mrr
+    - ablation.json:runs[name=full_dense_rerank].mrr
+    - ablation.json:runs[name=full_dense_prefilter].mrr
+    - ablation.json:runs[name=full_dense_prefilter_rerank].mrr
+    - ablation.json:runs[name=full_bm25].mrr
+    - ablation.json:runs[name=full_bm25_rerank].mrr
+    - ablation.json:runs[name=full_bm25_prefilter].mrr
+    - ablation.json:runs[name=full_bm25_prefilter_rerank].mrr
+    - ablation.json:runs[name=full_hybrid].mrr
+    - ablation.json:runs[name=full_hybrid_rerank].mrr
+    - ablation.json:runs[name=full_hybrid_prefilter].mrr
+    - ablation.json:runs[name=full_hybrid_prefilter_rerank].mrr
+  categories:
+  - Dense
+  - Dense + rerank
+  - Dense + lọc
+  - Dense + lọc + rerank
+  - BM25
+  - BM25 + rerank
+  - BM25 + lọc
+  - BM25 + lọc + rerank
+  - Hybrid
+  - Hybrid + rerank
+  - Hybrid + lọc
+  - Hybrid + lọc + rerank
+- slide: ev-ablation
+  in: body
+  shape: 6
+  full: true
+  text: '•  Cùng chỉ mục e5-large đầy đủ
+
+    •  Lọc trước = điều kiện cứng trong Qdrant
+
+    •  Rerank = cross-encoder chấm lại ứng viên đầu
+
+    •  Độ trễ hybrid + lọc: {} → {} ms khi rerank
+
+    •  Không qua LLM, 0 lời gọi API'
+  keys:
+  - ablation.json:runs[name=full_hybrid_prefilter].latency_ms_p50
+  - ablation.json:runs[name=full_hybrid_prefilter_rerank].latency_ms_p50
+  fmt:
+  - int
+  - int
+- slide: ev-ablation
+  in: body
+  shape: 6
+  text: Không qua LLM, 0 lời gọi API
+  allow: mô tả thiết kế ablation
+- slide: ev-chunk
+  chart: 5
+  series:
+  - name: Nhỏ
+    key:
+    - ablation.json:runs[name=c256_dense].recall_at_5
+    - ablation.json:runs[name=c256_dense_prefilter].recall_at_5
+    - ablation.json:runs[name=c256_bm25].recall_at_5
+    - ablation.json:runs[name=c256_bm25_prefilter].recall_at_5
+    - ablation.json:runs[name=c256_hybrid].recall_at_5
+    - ablation.json:runs[name=c256_hybrid_prefilter].recall_at_5
+  - name: Vừa
+    key:
+    - ablation.json:runs[name=c400_dense].recall_at_5
+    - ablation.json:runs[name=c400_dense_prefilter].recall_at_5
+    - ablation.json:runs[name=c400_bm25].recall_at_5
+    - ablation.json:runs[name=c400_bm25_prefilter].recall_at_5
+    - ablation.json:runs[name=c400_hybrid].recall_at_5
+    - ablation.json:runs[name=c400_hybrid_prefilter].recall_at_5
+  - name: Lớn
+    key:
+    - ablation.json:runs[name=c512_dense].recall_at_5
+    - ablation.json:runs[name=c512_dense_prefilter].recall_at_5
+    - ablation.json:runs[name=c512_bm25].recall_at_5
+    - ablation.json:runs[name=c512_bm25_prefilter].recall_at_5
+    - ablation.json:runs[name=c512_hybrid].recall_at_5
+    - ablation.json:runs[name=c512_hybrid_prefilter].recall_at_5
   categories:
   - Dense
   - Dense + lọc
@@ -1898,17 +1989,46 @@ entries:
   - BM25 + lọc
   - Hybrid
   - Hybrid + lọc
-- slide: ev-ablation
+- slide: ev-chunk
   in: body
   shape: 6
-  text: Không qua LLM, 0 lời gọi API
-  allow: mô tả thiết kế ablation
+  full: true
+  text: '•  Nhỏ: {} token
+
+    •  Vừa: {} token
+
+    •  Lớn: {} token
+
+    •  Subcorpus {} tin, gồm {} tin đáp án
+
+    •  Chỉ so các cỡ chunk với nhau'
+  keys:
+  - ablation.json:runs[name=c256_dense].chunk_size
+  - ablation.json:runs[name=c400_dense].chunk_size
+  - ablation.json:runs[name=c512_dense].chunk_size
+  - ablation.json:subcorpus.n_listings
+  - ablation.json:subcorpus.n_gt_listings
+  fmt:
+  - int
+  - int
+  - int
+  - int
+  - int
+- slide: ev-chunk
+  in: body
+  shape: 7
+  full: true
+  text: 'Nguồn: ablation.json, {} câu có tập tin đúng; cùng e5-large, không rerank.'
+  keys:
+  - ablation.json:runs[name=c256_dense].n_questions
+  fmt:
+  - int
 - slide: ev-results
   in: notes
   shape: 0
   full: true
-  text: 'Biểu đồ là độ chính xác của bốn hệ theo từng nhóm câu. Tổng trên tập con: LLM thuần {}%, Basic RAG {}%, Graph {}%, Hybrid {}%. Mỗi nhóm chỉ có {} câu, nên một câu đúng sai làm số đổi rất nhiều.
-    Đọc theo hình dạng: hệ nào mạnh ở nhóm nào, chứ không so từng điểm phần trăm. Khoảng tin cậy ở slide sau.'
+  text: 'Biểu đồ là độ chính xác của bốn hệ theo từng nhóm câu. Tổng trên toàn bộ benchmark: LLM thuần {}%, Basic RAG {}%, Graph {}%, Hybrid {}%. Mỗi nhóm chỉ có {} câu, nên một câu đúng sai làm số đổi
+    rất nhiều. Đọc theo hình dạng: hệ nào mạnh ở nhóm nào, chứ không so từng điểm phần trăm. Khoảng tin cậy ở slide sau.'
   keys:
   - eval_summary.json:overall.llm_only.accuracy
   - eval_summary.json:overall.basic_rag.accuracy
@@ -2287,6 +2407,18 @@ entries:
   shape: 5
   cell:
   - 1
+  - 4
+  full: true
+  text: '{}'
+  keys:
+  - error_analysis.json:counts.hybrid.cypher_error
+  fmt:
+  - int
+- slide: ev-errors
+  in: body
+  shape: 5
+  cell:
+  - 2
   - 3
   full: true
   text: '{}'
@@ -2298,7 +2430,7 @@ entries:
   in: body
   shape: 5
   cell:
-  - 1
+  - 2
   - 4
   full: true
   text: '{}'
@@ -2310,7 +2442,7 @@ entries:
   in: body
   shape: 5
   cell:
-  - 2
+  - 3
   - 2
   full: true
   text: '{}'
@@ -2322,7 +2454,19 @@ entries:
   in: body
   shape: 5
   cell:
-  - 2
+  - 3
+  - 3
+  full: true
+  text: '{}'
+  keys:
+  - error_analysis.json:counts.graph.retrieval_miss
+  fmt:
+  - int
+- slide: ev-errors
+  in: body
+  shape: 5
+  cell:
+  - 3
   - 4
   full: true
   text: '{}'
@@ -2334,7 +2478,7 @@ entries:
   in: body
   shape: 5
   cell:
-  - 3
+  - 4
   - 1
   full: true
   text: '{}'
@@ -2346,7 +2490,7 @@ entries:
   in: body
   shape: 5
   cell:
-  - 3
+  - 4
   - 2
   full: true
   text: '{}'
@@ -2358,7 +2502,7 @@ entries:
   in: body
   shape: 5
   cell:
-  - 3
+  - 4
   - 3
   full: true
   text: '{}'
@@ -2370,7 +2514,7 @@ entries:
   in: body
   shape: 5
   cell:
-  - 3
+  - 4
   - 4
   full: true
   text: '{}'
@@ -2382,7 +2526,7 @@ entries:
   in: body
   shape: 5
   cell:
-  - 4
+  - 5
   - 1
   full: true
   text: '{}'
@@ -2394,7 +2538,7 @@ entries:
   in: body
   shape: 5
   cell:
-  - 4
+  - 5
   - 2
   full: true
   text: '{}'
@@ -2406,7 +2550,7 @@ entries:
   in: body
   shape: 5
   cell:
-  - 4
+  - 5
   - 3
   full: true
   text: '{}'
@@ -2418,7 +2562,7 @@ entries:
   in: body
   shape: 5
   cell:
-  - 4
+  - 5
   - 4
   full: true
   text: '{}'
@@ -2429,13 +2573,13 @@ entries:
 - slide: ev-errors
   in: body
   shape: 8
-  text: Giá/m² trung vị căn hộ ở Vinhomes Central Park cao gấp bao nhiêu lần trung vị căn hộ của quận chứa dự án đó?
+  text: Giá/m² căn hộ Cầu Giấy quý 1/2026 so với quý 4/2025 thay đổi bao nhiêu %?
   allow: trích nguyên văn error_analysis.json:examples[0].question
 - slide: ev-errors
   in: body
   shape: 11
-  text: Căn hộ 75m2, 2 phòng ngủ ở Cầu Giấy, Hà Nội hiện đáng giá khoảng bao nhiêu?
-  allow: trích nguyên văn error_analysis.json:examples[2].question
+  text: Diện tích trung vị của các lô đất rao bán ở Củ Chi là bao nhiêu m2?
+  allow: trích nguyên văn error_analysis.json:examples[1].question
 - slide: ext-valuation
   in: body
   shape: 4
@@ -2940,16 +3084,15 @@ entries:
   in: notes
   shape: 0
   full: true
-  text: 'Về đánh giá, benchmark có {} câu nhưng lượt chạy chỉ dùng tập con {} câu vì hạn mức API miễn phí, chấm bằng luật so với đáp án SQL và chưa đo faithfulness bằng mô hình giám khảo. Mô hình sinh là
-    gemini-flash-lite-latest, khác gpt-oss-120b dự kiến ban đầu. Về dữ liệu, giá là giá rao, không phải giá giao dịch; địa giới có cả tên cũ và tên sau sáp nhập năm 2025; tin không có toạ độ; nhiều cột
-    thiếu, ví dụ đường thiếu {}% và dự án thiếu {}%. Giấy phép dữ liệu chỉ cho phép dùng phi thương mại. Cột bên phải là việc làm tiếp. Slide sau: những điều cần nhớ.'
+  text: 'Về đánh giá, lượt chạy dùng đủ {} câu benchmark với cả bốn hệ, nhưng câu trả lời chấm bằng luật so với đáp án SQL. Nhóm chủ động không dùng LLM làm giám khảo và không chạy RAGAS để tiết kiệm chi
+    phí, nên chưa đo faithfulness. Mô hình sinh là gemini-flash-lite-latest, khác gpt-oss-120b dự kiến ban đầu. Về dữ liệu, giá là giá rao, không phải giá giao dịch; địa giới có cả tên cũ và tên sau sáp
+    nhập năm 2025; tin không có toạ độ; nhiều cột thiếu, ví dụ đường thiếu {}% và dự án thiếu {}%. Giấy phép dữ liệu chỉ cho phép dùng phi thương mại. Image Docker của API và web đã dựng và kiểm qua nginx:
+    trang chủ, health, chat stream và định giá đều trả về thành công. Cột bên phải là việc làm tiếp. Slide sau: những điều cần nhớ.'
   keys:
-  - benchmark_gt.json:items|len
   - eval_summary.json:n_questions
   - ingest_report.json:missing_pct.street
   - ingest_report.json:missing_pct.project
   fmt:
-  - int
   - int
   - dec0
   - dec0
@@ -2962,18 +3105,18 @@ entries:
   in: body
   shape: 7
   full: true
-  text: '•  Tập con {} câu trên {} câu benchmark
+  text: '•  Đủ {} câu benchmark, bốn hệ
 
-    •  Chấm bằng luật so với đáp án SQL; chưa có faithfulness bằng LLM
+    •  Chấm bằng luật so với đáp án SQL; không giám khảo LLM, không RAGAS (tiết kiệm chi phí)
 
     •  Mô hình sinh: gemini-flash-lite-latest
 
-    •  Khác gpt-oss-120b dự kiến, do hạn mức và rate limit API'
+    •  Khác gpt-oss-120b dự kiến, do hạn mức và rate limit API
+
+    •  Docker api + web đã dựng, kiểm qua nginx'
   keys:
   - eval_summary.json:n_questions
-  - benchmark_gt.json:items|len
   fmt:
-  - int
   - int
 - slide: end-limits
   in: body
@@ -3461,10 +3604,20 @@ entries:
   shape: 8
   text: Nhóm 7 · Từ RAG đến GraphRAG
   allow: tên nhóm
+- slide: ev-chunk
+  in: body
+  shape: 8
+  text: '45'
+  allow: số trang
+- slide: ev-chunk
+  in: body
+  shape: 9
+  text: Nhóm 7 · Từ RAG đến GraphRAG
+  allow: tên nhóm
 - slide: ev-results
   in: body
   shape: 7
-  text: '45'
+  text: '46'
   allow: số trang
 - slide: ev-results
   in: body
@@ -3474,7 +3627,7 @@ entries:
 - slide: ev-pairwise
   in: body
   shape: 6
-  text: '46'
+  text: '47'
   allow: số trang
 - slide: ev-pairwise
   in: body
@@ -3484,7 +3637,7 @@ entries:
 - slide: ev-cost
   in: body
   shape: 8
-  text: '47'
+  text: '48'
   allow: số trang
 - slide: ev-cost
   in: body
@@ -3494,7 +3647,7 @@ entries:
 - slide: ev-errors
   in: body
   shape: 12
-  text: '48'
+  text: '49'
   allow: số trang
 - slide: ev-errors
   in: body
@@ -3504,7 +3657,7 @@ entries:
 - slide: ext-valuation
   in: body
   shape: 11
-  text: '49'
+  text: '50'
   allow: số trang
 - slide: ext-valuation
   in: body
@@ -3514,7 +3667,7 @@ entries:
 - slide: ext-valuation-detail
   in: body
   shape: 10
-  text: '50'
+  text: '51'
   allow: số trang
 - slide: ext-valuation-detail
   in: body
@@ -3524,7 +3677,7 @@ entries:
 - slide: ext-demo
   in: body
   shape: 13
-  text: '51'
+  text: '52'
   allow: số trang
 - slide: ext-demo
   in: body
@@ -3534,7 +3687,7 @@ entries:
 - slide: end-limits
   in: body
   shape: 14
-  text: '52'
+  text: '53'
   allow: số trang
 - slide: end-limits
   in: body
@@ -3544,7 +3697,7 @@ entries:
 - slide: end-takeaways
   in: body
   shape: 21
-  text: '53'
+  text: '54'
   allow: số trang
 - slide: end-takeaways
   in: body
@@ -3554,7 +3707,7 @@ entries:
 - slide: end-qa
   in: body
   shape: 11
-  text: '54'
+  text: '55'
   allow: số trang
 - slide: end-qa
   in: body
@@ -3825,6 +3978,12 @@ fonts_allow:
   reason: footer/số trang
 - slide: ev-ablation
   shape: 8
+  reason: footer/số trang
+- slide: ev-chunk
+  shape: 8
+  reason: footer/số trang
+- slide: ev-chunk
+  shape: 9
   reason: footer/số trang
 - slide: ev-results
   shape: 7

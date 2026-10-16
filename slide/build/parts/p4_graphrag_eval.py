@@ -94,7 +94,9 @@ def compare(d: Deck) -> None:
 
 
 def patterns(d: Deck) -> None:
-    ex = d.pick("examples.json:graph", "AG03") or "examples.json:graph[0]"
+    graph = d.V("examples.json:graph") or []
+    agg = next((f"examples.json:graph[{i}]" for i, r in enumerate(graph) if r.get("category") == "aggregate"), None)
+    ex = d.pick("examples.json:graph", "AG01") or agg or "examples.json:graph[0]"
     s = d.slide("gr-patterns", SEC_G, "Text2Cypher: mô hình viết truy vấn, Neo4j tính; năm lớp an toàn bọc quanh", notes=(
         "Có ba mẫu truy xuất trên đồ thị: local đi từ một thực thể ra láng giềng, global dùng bản tóm tắt cộng đồng, và "
         "Text2Cypher để mô hình viết truy vấn. Câu hỏi bất động sản phần lớn là lọc và tính trên cột nên nhóm chọn Text2Cypher. "
@@ -110,7 +112,7 @@ def patterns(d: Deck) -> None:
         s.rect(MX, y, 5.2, 0.8, fill="soft", line=None, radius=0.08)
         s.text(MX + 0.2, y + 0.08, 5.0, 0.65, [[(t + "  ", {"bold": True, "color": "amber"}), (body, {})]],
                size=SIZE["small"], anchor="middle")
-    s.text(6.2, 1.95, 6.5, 0.4, "Cypher mô hình sinh · " + d.A("câu đếm", "nhãn"), size=SIZE["caption"],
+    s.text(6.2, 1.95, 6.5, 0.4, "Cypher mô hình sinh · " + d.A("câu tổng hợp", "nhãn"), size=SIZE["caption"],
            bold=True, color="teal")
     s.text(6.2, 2.35, 6.5, 0.8, "“" + d.T(ex + ".question") + "”", size=SIZE["small"], color="ink")
     s.code(6.2, 3.2, 6.5, 3.2, d.T(ex + ".cypher"), highlight=["count(", "IN_PROVINCE", "OF_TYPE", "WHERE", "LIMIT"])

@@ -210,34 +210,34 @@ clusterWards:'3.391',
 modularity:'0,88',
 nBench:'100',
 nCat:'9',
-nSub:'36',
-perCat:'4',
+nSub:'100',
+perCat:'12',
 nSys:'4',
 usd:'0',
 ragasN:'0',
 accLlm:'11',
-okLlm:'4',
-accRag:'22',
-okRag:'8',
-accGraph:'83',
-okGraph:'30',
-accHybrid:'69',
-okHybrid:'25',
-routerAcc:'92',
-routerN:'36',
-routerExcl:'94',
-routerNExcl:'32',
+okLlm:'11',
+accRag:'28',
+okRag:'28',
+accGraph:'75',
+okGraph:'75',
+accHybrid:'72',
+okHybrid:'72',
+routerAcc:'96',
+routerN:'100',
+routerExcl:'98',
+routerNExcl:'88',
 routerRagToHybrid:'3',
 routerLookupWrong:'2',
-routerUnansWrong:'1',
-routerGraphOk:'22',
-routerValOk:'4',
+routerUnansWrong:'2',
+routerGraphOk:'58',
+routerValOk:'10',
 nBoot:'10.000',
-retN:'8',
-retRagR5:'0,58',
-retRagMrr:'0,75',
-retGraphR5:'1,00',
-retGraphMrr:'0,92',
+retN:'27',
+retRagR5:'0,63',
+retRagMrr:'0,70',
+retGraphR5:'0,72',
+retGraphMrr:'0,73',
 abQ:'27',
 abGt:'3.393',
 ab_dense:['0,29','0,28','475,8'],
@@ -246,21 +246,31 @@ ab_bm25:['0,27','0,30','38,7'],
 ab_bm25_prefilter:['0,58','0,68','18,7'],
 ab_hybrid:['0,36','0,30','468,1'],
 ab_hybrid_prefilter:['0,53','0,65','385,2'],
-costLlm:['4,0','11,8','82','158'],
-costRag:['10,5','37,0','1.942','260'],
-costGraph:['8,9','23,0','3.843','308'],
-costHybrid:['9,0','21,7','4.063','398'],
-pwHR:['+47','+31','+64','0,00'],
-pwRL:['+11','−8','+31','0,15'],
-pwHG:['−14','−25','−3','0,00'],
-catLlm:['0','0','25','0','0','50','0','0','25'],
-catRag:['100','0','0','0','25','0','0','0','75'],
-catGraph:['100','100','100','75','100','100','100','0','75'],
-catHybrid:['100','0','100','75','100','75','100','0','75'],
-errLlm:{insufficient_context:'29',refusal_missing:'3'},
-errRag:{insufficient_context:'23',retrieval_miss:'4',refusal_missing:'1'},
-errGraph:{cypher_wrong_result:'4',refusal_missing:'1',insufficient_context:'1'},
-errHybrid:{retrieval_miss:'4',cypher_wrong_result:'1',refusal_missing:'1',insufficient_context:'5'},
+ab_dense_rerank:['0,36','0,45','1.633,2'],
+ab_dense_prefilter_rerank:['0,64','0,74','1.214,0'],
+ab_bm25_rerank:['0,31','0,37','1.348,1'],
+ab_bm25_prefilter_rerank:['0,62','0,65','1.116,4'],
+ab_hybrid_rerank:['0,37','0,41','1.512,9'],
+ab_hybrid_prefilter_rerank:['0,67','0,71','1.188,5'],
+ckSizes:['256','400','512'],
+ck_hybrid:['0,58','0,54','0,56'],
+ck_hybrid_prefilter:['0,91','0,90','0,90'],
+subN:'203.135',
+costLlm:['1,8','9,6','83','160'],
+costRag:['3,5','22,9','1.887','268'],
+costGraph:['3,4','20,1','4.016','326'],
+costHybrid:['2,7','19,2','4.154','407'],
+pwHR:['+44','+33','+54','0,00'],
+pwRL:['+17','+6','+28','0,00'],
+pwHG:['−3','−12','+7','0,30'],
+catLlm:['0','0','17','0','0','40','0','10','33'],
+catRag:['100','17','17','0','10','10','0','20','67'],
+catGraph:['42','92','83','83','70','100','100','20','83'],
+catHybrid:['100','17','83','83','70','90','100','20','83'],
+errLlm:{insufficient_context:'81',refusal_missing:'8'},
+errRag:{insufficient_context:'55',retrieval_miss:'13',refusal_missing:'4'},
+errGraph:{cypher_wrong_result:'12',refusal_missing:'2',insufficient_context:'3'},
+errHybrid:{retrieval_miss:'10',cypher_wrong_result:'5',refusal_missing:'2',insufficient_context:'10'},
 ag01Gt:'91,26',
 ag01N:'22.783',
 ag01Seen:'0,02',
@@ -274,13 +284,12 @@ mh04Proj:'125,0',
 mh04Dist:'92,21',
 tm02N:'9.171',
 va01Gt:'7,33',
-hybridValPts:'0,75',
-ragConstrPts:'0,50',
+hybridValPts:'1,10',
+ragConstrPts:'1,00',
 abDenseLat:'476',
-exAg01Ms:'4,6',
-exAg03Ms:'1.153',
-exAg03Gt:'71.318',
-exLk01Hits:'1',
+exAg01Ms:'67,6',
+exLk01Ms:'4.002',
+exLk01Hits:'5',
 exAg04Gt:'107,14',
 exAg04N:'6.379',
 cfgTimeout:'10',
@@ -322,7 +331,7 @@ const GLOSS = {
   "lọc trước":"Pre-filter: áp bộ lọc ngay trong Qdrant trước khi xếp hạng, nên top-k chỉ gồm tin thoả điều kiện cứng.",
   "metadata":"Các cột có cấu trúc đi kèm tin: loại hình, tỉnh, quận, phường, đường, dự án, giá, diện tích, số phòng, tháng đăng.",
   "đáp án chuẩn":"Ground truth: đáp án đúng tính bằng một câu SQL (DuckDB) trên toàn bộ bảng sạch, không gõ tay, không nhờ LLM.",
-  "benchmark":`Bộ đề thi chung: ${V.nBench} câu thuộc ${V.nCat} nhóm. Lượt đánh giá hiện có chạy tập con ${V.nSub} câu (${V.perCat} câu mỗi nhóm) cho cả ${V.nSys} hệ.`,
+  "benchmark":`Bộ đề thi chung: ${V.nBench} câu thuộc ${V.nCat} nhóm. Lượt đánh giá chạy đủ ${V.nSub} câu (khoảng ${V.perCat} câu mỗi nhóm) cho cả ${V.nSys} hệ.`,
   "chấm bằng luật":"Rule-based scoring: so câu trả lời với đáp án chuẩn bằng luật cố định (Recall theo cụm tin, sai số cho phép, câu từ chối), không dùng LLM làm giám khảo.",
   "Recall@k":"Trong các tin ĐÚNG, tìm được bao nhiêu tin trong top-k? (đo ‘tìm có đủ không’).",
   "MRR":"Mean Reciprocal Rank: tin đúng đầu tiên đứng hạng mấy? Hạng nhất được trọn điểm, hạng nhì nửa điểm, hạng ba một phần ba… rồi lấy trung bình.",
@@ -460,9 +469,10 @@ addEventListener('scroll',()=>{const t=document.getElementById('tip');if(t)t.cla
     <tr><td><code>gr-patterns</code></td><td>Text2Cypher: mô hình viết truy vấn, Neo4j tính; năm lớp an toàn bọc quanh</td><td><b>P4-03 LIVE</b>, <b>P4-04 LIVE</b></td></tr>
     <tr><td><code>gr-router</code></td><td>Router chọn nguồn cho từng câu; đồ thị rỗng hoặc lỗi thì lui về Basic RAG</td><td><b>P4-06 LIVE</b>, P4-07</td></tr>
     <tr><td><code>ev-layers</code></td><td>Đánh giá ở hai tầng: truy xuất có tìm đúng tin, câu trả lời có đúng đáp án</td><td><b>P4-08 LIVE</b>, <b>P4-09 LIVE</b></td></tr>
-    <tr><td><code>ev-setup</code></td><td>Thiết lập: benchmark đủ chín nhóm, chạy trên tập con, chấm bằng luật</td><td>P4-01, P4-02, P4-10</td></tr>
-    <tr><td><code>ev-ablation</code></td><td>Ablation truy xuất: Recall@5 và MRR của từng cấu hình</td><td class="muted">đọc <code>results/ablation.json</code></td></tr>
-    <tr><td><code>ev-results</code></td><td>Graph đúng nhiều nhất trên tập con; mỗi hệ mạnh ở nhóm câu riêng</td><td>P4-11</td></tr>
+    <tr><td><code>ev-setup</code></td><td>Thiết lập: benchmark đủ chín nhóm, chạy toàn bộ, chấm bằng luật</td><td>P4-01, P4-02, P4-10</td></tr>
+    <tr><td><code>ev-ablation</code></td><td>Lọc trước tăng Recall@5 nhiều nhất, rerank cộng thêm ở mọi cấu hình; Hybrid + lọc + rerank cao nhất</td><td class="muted">đọc <code>results/ablation.json</code></td></tr>
+    <tr><td><code>ev-chunk</code></td><td>Đổi kích thước chunk gần như không đổi Recall@5; lọc trước vẫn quyết định</td><td class="muted">đọc <code>results/ablation.json</code> (run <code>c*</code>, subcorpus)</td></tr>
+    <tr><td><code>ev-results</code></td><td>Graph đúng nhiều nhất trên toàn bộ benchmark; mỗi hệ mạnh ở nhóm câu riêng</td><td>P4-11</td></tr>
     <tr><td><code>ev-pairwise</code></td><td>So từng cặp trên cùng câu hỏi: khoảng tin cậy cho biết chênh lệch nào đáng tin</td><td>P4-14</td></tr>
     <tr><td><code>ev-cost</code></td><td>Chi phí và độ trễ: thêm router và Cypher thì thêm thời gian và token</td><td>P4-12</td></tr>
     <tr><td><code>ev-errors</code></td><td>Hệ thống sai vì đâu: phân loại từng câu sai theo nguyên nhân</td><td>P4-13</td></tr>
@@ -868,7 +878,7 @@ addEventListener('scroll',()=>{const t=document.getElementById('tip');if(t)t.cla
   <p class="small muted">Độ dài thanh chỉ để minh hoạ thứ tự, không phải số đo. Đổi lại, tuyến graph vẫn tốn lượt trích bộ lọc RAG dù không dùng tới kết quả.</p>
 
   <div class="box say"><span class="lbl">🎤 Khi chạy cell P4-06 trên lớp</span>
-    <p>Cell chạy router trên các câu benchmark có trong cache LLM và in bảng: mã câu, nhãn đúng, nhãn router chọn. Số câu trên màn hình có thể ít hơn <span data-v="routerN"></span> câu của slide; nói rõ con số trên slide là cả tập con đã đánh giá.</p>
+    <p>Cell chạy router trên các câu benchmark có trong cache LLM và in bảng: mã câu, nhãn đúng, nhãn router chọn. Số câu trên màn hình có thể ít hơn <span data-v="routerN"></span> câu của slide; nói rõ con số trên slide là cả benchmark đã đánh giá.</p>
     <p><b>Câu chốt:</b> “RAG chạy song song với router và Cypher, nên đường lui không phải chờ thêm một lượt truy xuất.”</p>
   </div>
   <div class="done-row"><button class="btn ok" data-done="router">✓ Mình hiểu rồi</button></div>
@@ -991,7 +1001,7 @@ addEventListener('scroll',()=>{const t=document.getElementById('tip');if(t)t.cla
   <h3>Thiết lập lượt đánh giá (ev-setup)</h3>
   <div class="grid g3">
     <div class="card stat"><span class="big-num" data-v="nBench"></span><small>câu trong benchmark, <span data-v="nCat"></span> nhóm, đáp án chuẩn bằng SQL</small></div>
-    <div class="card stat"><span class="big-num" data-v="nSub"></span><small>câu đã chạy: tập con <span data-v="perCat"></span> câu mỗi nhóm</small></div>
+    <div class="card stat"><span class="big-num" data-v="nSub"></span><small>câu đã chạy: đủ benchmark, khoảng <span data-v="perCat"></span> câu mỗi nhóm</small></div>
     <div class="card stat"><span class="big-num" data-v="nSys"></span><small>hệ trên cùng câu hỏi: LLM thuần, Basic RAG, Graph, Hybrid</small></div>
   </div>
   <div class="grid g2">
@@ -1087,12 +1097,14 @@ addEventListener('scroll',()=>{const t=document.getElementById('tip');if(t)t.cla
   <p class="small muted">Hybrid có cùng số với Basic RAG vì router gửi các câu này sang basic_rag hoặc hybrid, đều dùng phần RAG. Mẫu chỉ <span data-v="retN"></span> câu.</p>
 
   <h3>Số thật ② · ablation truy xuất (ev-ablation, <span data-v="abQ"></span> câu, chỉ mục đầy đủ)</h3>
-  <p class="small muted">Chạy thẳng trên chỉ mục e5-large đủ <span data-v="chunks"></span> chunk, chunk <span data-v="chunkSize"></span> token, không qua mô hình sinh nên không tốn lời gọi API. Rerank không có vì model cross-encoder chưa có trong cache.</p>
+  <p class="small muted">Chạy thẳng trên chỉ mục e5-large đủ <span data-v="chunks"></span> chunk, chunk <span data-v="chunkSize"></span> token, không qua mô hình sinh nên không tốn lời gọi API. Mỗi cách truy xuất có và không có lọc trước, có và không có <span class="term">rerank</span> cross-encoder (chạy CPU, chấm lại các ứng viên đầu).</p>
   <div class="seg" id="t1Seg"><button class="on" data-c="0">Recall@5</button><button data-c="1">MRR</button><button data-c="2">Độ trễ p50 (ms)</button></div>
   <div class="bars" id="t1Bars"></div>
   <div class="box key"><span class="lbl">💡 Đọc ablation thế nào</span>
     <p>• <b>Bước nhảy lớn nhất đến từ <span class="term">lọc trước</span></b>: dense <span data-v="ab_dense.0"></span> → <b><span data-v="ab_dense_prefilter.0"></span></b>, BM25 <span data-v="ab_bm25.0"></span> → <b><span data-v="ab_bm25_prefilter.0"></span></b>, hybrid <span data-v="ab_hybrid.0"></span> → <b><span data-v="ab_hybrid_prefilter.0"></span></b> (Recall@5). Embedding không bảo đảm điều kiện cứng như “dưới ba tỷ”, “hai phòng ngủ”.</p>
-    <p>• Có lọc thì <b>BM25 + lọc</b> cao nhất ở cả Recall@5 (<span data-v="ab_bm25_prefilter.0"></span>) và MRR (<span data-v="ab_bm25_prefilter.1"></span>), hybrid + lọc đứng sau (<span data-v="ab_hybrid_prefilter.0"></span> và <span data-v="ab_hybrid_prefilter.1"></span>). Nói thật: trên bộ này, gộp dense vào chưa giúp thêm khi đã lọc.</p>
+    <p>• Có lọc mà chưa rerank thì <b>BM25 + lọc</b> cao nhất ở cả Recall@5 (<span data-v="ab_bm25_prefilter.0"></span>) và MRR (<span data-v="ab_bm25_prefilter.1"></span>), hybrid + lọc đứng sau (<span data-v="ab_hybrid_prefilter.0"></span> và <span data-v="ab_hybrid_prefilter.1"></span>).</p>
+    <p>• <b>Rerank cộng thêm ở mọi cấu hình</b>: hybrid + lọc <span data-v="ab_hybrid_prefilter.0"></span> → <b><span data-v="ab_hybrid_prefilter_rerank.0"></span></b> (cao nhất), dense + lọc <span data-v="ab_dense_prefilter.0"></span> → <span data-v="ab_dense_prefilter_rerank.0"></span>. Cái giá là độ trễ p50: <span data-v="ab_hybrid_prefilter.2"></span> → <span data-v="ab_hybrid_prefilter_rerank.2"></span> ms, nên chatbot để rerank tuỳ chọn.</p>
+    <p>• <b>Kích thước chunk</b> (ev-chunk) đo trên subcorpus <span data-v="subN"></span> tin chứa mọi tin đáp án: hybrid không lọc được <span data-v="ck_hybrid.0"></span> / <span data-v="ck_hybrid.1"></span> / <span data-v="ck_hybrid.2"></span> với chunk <span data-v="ckSizes.0"></span> / <span data-v="ckSizes.1"></span> / <span data-v="ckSizes.2"></span> token. Chênh lệch nhỏ hơn nhiều so với lọc trước; chỉ so các run này với nhau, không so với chỉ mục đầy đủ.</p>
     <p>• Mọi con số đều thấp hơn nhiều so với truy xuất trong lượt đánh giá, vì ablation không có bước LLM trích bộ lọc đầy đủ như hệ thật và đo trên tập câu khác. Đừng so trực tiếp hai bảng.</p>
   </div>
   <div class="box say"><span class="lbl">🎤 Khi chạy cell P4-08 trên lớp</span>
@@ -1127,8 +1139,8 @@ addEventListener('scroll',()=>{const t=document.getElementById('tip');if(t)t.cla
   }
   m();
 
-  const T={'dense':V.ab_dense,'dense + lọc':V.ab_dense_prefilter,'BM25':V.ab_bm25,'BM25 + lọc':V.ab_bm25_prefilter,'hybrid':V.ab_hybrid,'hybrid + lọc':V.ab_hybrid_prefilter};
-  const C={'dense':'var(--rag)','dense + lọc':'var(--rag)','BM25':'var(--llm)','BM25 + lọc':'var(--llm)','hybrid':'var(--hybrid)','hybrid + lọc':'var(--hybrid)'};
+  const T={'dense':V.ab_dense,'dense + rerank':V.ab_dense_rerank,'dense + lọc':V.ab_dense_prefilter,'dense + lọc + rerank':V.ab_dense_prefilter_rerank,'BM25':V.ab_bm25,'BM25 + rerank':V.ab_bm25_rerank,'BM25 + lọc':V.ab_bm25_prefilter,'BM25 + lọc + rerank':V.ab_bm25_prefilter_rerank,'hybrid':V.ab_hybrid,'hybrid + rerank':V.ab_hybrid_rerank,'hybrid + lọc':V.ab_hybrid_prefilter,'hybrid + lọc + rerank':V.ab_hybrid_prefilter_rerank};
+  const C=Object.fromEntries(Object.keys(T).map(k=>[k,k.startsWith('dense')?'var(--rag)':k.startsWith('BM25')?'var(--llm)':'var(--hybrid)']));
   const bars=document.getElementById('t1Bars');
   function draw(c){const mx=c===2?Math.max(...Object.values(T).map(v=>num(v[2]))):1;
     bars.innerHTML=Object.entries(T).map(([k,v])=>`<div class="bar-row"><span>${k}</span><div class="bar-track"><div class="bar-fill" style="background:${C[k]};opacity:${k.includes('lọc')?1:.55}" data-w="${num(v[c])/mx*100}%"></div></div><span class="bar-val">${v[c]}</span></div>`).join('');
@@ -1466,7 +1478,7 @@ const KS=[
   ['live','▶ CHẠY CELL P4-04 (nếu còn giờ)'],
   ['say','Cell này minh hoạ mẫu Local: từ các phường của Quận 7, mở ra những phường cùng cụm giá Leiden.'],
   ['point','Quay lại slide, chỉ vào đoạn Cypher.'],
-  ['say',`Câu trên slide đọc thẳng node thống kê, nên chạy rất nhanh: câu trung vị Cầu Giấy chạy ${V.exAg01Ms} mili giây. So với câu đếm đất Đà Nẵng phải đi qua từng tin, mất ${V.exAg03Ms} mili giây. Đó là lý do tính sẵn MarketStat.`],
+  ['say',`Câu trên slide đọc thẳng node thống kê, nên chạy rất nhanh: câu trung vị Cầu Giấy chạy ${V.exAg01Ms} mili giây. So với câu tìm tin theo dự án Sun Feliza phải đi qua từng tin, mất ${V.exLk01Ms} mili giây. Đó là lý do tính sẵn MarketStat.`],
   ['say','Điểm chính: phép tính do Neo4j thực hiện. Mô hình chỉ viết truy vấn và diễn giải kết quả.']
  ],
  key:'Phép tính do Neo4j thực thi, không để LLM ước lượng; LLM chỉ viết truy vấn và diễn giải kết quả.',
@@ -1524,55 +1536,68 @@ const KS=[
  b:[
   ['point','Chỉ vào ba con số.'],
   ['say',`Benchmark có ${V.nBench} câu, thuộc ${V.nCat} nhóm, đáp án chuẩn tính bằng SQL trên toàn bộ bảng sạch.`],
-  ['say',`Vì hạn mức API miễn phí, lượt đánh giá chạy trên tập con ${V.nSub} câu, ${V.perCat} câu mỗi nhóm, đủ cả ${V.nCat} nhóm, với cả ${V.nSys} hệ trên cùng câu hỏi.`],
+  ['say',`Lượt đánh giá chạy đủ ${V.nSub} câu, khoảng ${V.perCat} câu mỗi nhóm, đủ cả ${V.nCat} nhóm, với cả ${V.nSys} hệ trên cùng câu hỏi.`],
   ['point','Chỉ vào tên mô hình sinh.'],
   ['say','Mô hình sinh là gemini flash lite, bản miễn phí, khác mô hình dự kiến ban đầu. Cả bốn hệ dùng cùng mô hình, nên so sánh giữa các hệ vẫn công bằng.'],
   ['point','Chỉ vào danh sách luật chấm.'],
   ['say','Câu trả lời được chấm bằng luật, không dùng mô hình làm giám khảo. Câu tìm tin chấm bằng Recall at năm theo cụm tin. Câu ra số thì phải có một con số nằm trong sai số cho phép so với đáp án. Câu ra tên thì phải chứa đúng tên. Câu phải từ chối thì phải có câu từ chối. Câu đạt trọn hai điểm mới tính là đúng.'],
-  ['say','Vì vậy mọi con số phía sau là chỉ dấu trên cỡ mẫu nhỏ. Em luôn ghi số câu và khoảng tin cậy đi kèm.'],
-  ['note','Nếu bị hỏi “sao không chạy đủ benchmark”: hết hạn mức API miễn phí, nhóm không có ngân sách; benchmark đầy đủ và đáp án vẫn có sẵn, chạy lại chỉ cần khoá API.']
+  ['say','Mỗi nhóm chỉ khoảng mười câu, nên số theo nhóm vẫn dao động. Em luôn ghi số câu và khoảng tin cậy đi kèm.'],
+  ['note','Nếu bị hỏi “sao không dùng LLM giám khảo hay RAGAS”: nhóm chủ động chấm bằng luật để tiết kiệm chi phí API; luật chấm so trực tiếp với đáp án SQL, nên không phụ thuộc một mô hình khác.']
  ],
- key:'Tập con nhỏ, chấm bằng luật: đọc kết quả như chỉ dấu, kèm n và khoảng tin cậy.',
- short:`Benchmark ${V.nBench} câu, ${V.nCat} nhóm, đáp án SQL. Chạy tập con ${V.nSub} câu (${V.perCat} câu mỗi nhóm) cho ${V.nSys} hệ, mô hình sinh gemini flash lite miễn phí, chấm bằng luật, không giám khảo.`,
+ key:'Đủ benchmark, chấm bằng luật: đọc kết quả kèm n và khoảng tin cậy.',
+ short:`Benchmark ${V.nBench} câu, ${V.nCat} nhóm, đáp án SQL. Chạy đủ ${V.nSub} câu cho ${V.nSys} hệ, mô hình sinh gemini flash lite, chấm bằng luật, không giám khảo LLM, không RAGAS (tiết kiệm chi phí).`,
  next:'Slide sau: ablation truy xuất.'},
 
-{s:'ev-ablation',t:'Ablation truy xuất: Recall@5 và MRR của từng cấu hình',live:null,
- onSlide:'Biểu đồ cột Recall@5 và MRR cho từng cấu hình (dense, BM25, hybrid; có và không có lọc trước). Bên phải ba gạch đầu dòng: cùng chỉ mục e5-large, lọc trước trong Qdrant, không qua LLM.',
+{s:'ev-ablation',t:'Lọc trước tăng Recall@5 nhiều nhất, rerank cộng thêm ở mọi cấu hình; Hybrid + lọc + rerank cao nhất',live:null,
+ onSlide:'Biểu đồ thanh Recall@5 và MRR cho từng cấu hình (dense, BM25, hybrid; có và không có lọc trước; có và không có rerank). Bên phải: cùng chỉ mục e5-large, lọc trước trong Qdrant, rerank cross-encoder, độ trễ khi rerank, không qua LLM.',
  b:[
   ['say',`Ablation chạy thẳng trên chỉ mục đầy đủ, ${V.chunks} chunk, không qua mô hình sinh, nên không tốn lời gọi API. Đo trên ${V.abQ} câu có tập tin đúng.`],
   ['point','Chỉ lần lượt từng cặp cột “không lọc” và “có lọc”.'],
   ['say',`Bước nhảy lớn nhất đến từ lọc trước. Dense từ ${V.ab_dense[0]} lên ${V.ab_dense_prefilter[0]}. BM25 từ ${V.ab_bm25[0]} lên ${V.ab_bm25_prefilter[0]}. Hybrid từ ${V.ab_hybrid[0]} lên ${V.ab_hybrid_prefilter[0]}. Đó là Recall at năm.`],
   ['say','Lý do: câu ràng buộc có điều kiện cứng như dưới ba tỷ, đúng hai phòng ngủ. Embedding đo độ gần về nghĩa, nên với nó căn hai phòng và căn ba phòng vẫn rất giống nhau. Chỉ lọc trên cột mới bảo đảm điều kiện đúng hay sai.'],
-  ['say',`Em nói thẳng một điểm: khi đã lọc, BM25 cao nhất, Recall ${V.ab_bm25_prefilter[0]} và MRR ${V.ab_bm25_prefilter[1]}; hybrid có lọc đứng sau. Trên bộ câu này, gộp thêm dense chưa giúp thêm.`],
-  ['say','Rerank không có trong lượt đo vì mô hình cross-encoder chưa có trong cache. So sánh các mô hình embedding nằm ở chặng một.'],
+  ['say',`Khi đã lọc mà chưa rerank, BM25 cao nhất, Recall ${V.ab_bm25_prefilter[0]} và MRR ${V.ab_bm25_prefilter[1]}; hybrid có lọc đứng sau.`],
+  ['say',`Rerank cross-encoder cộng thêm ở mọi cấu hình. Hybrid có lọc lên ${V.ab_hybrid_prefilter_rerank[0]}, cao nhất. Đổi lại, độ trễ trung vị từ ${V.ab_hybrid_prefilter[2]} lên ${V.ab_hybrid_prefilter_rerank[2]} mili giây vì chạy trên CPU, nên chatbot để rerank tuỳ chọn. So sánh các mô hình embedding nằm ở chặng một.`],
   ['note','Số ablation thấp hơn nhiều so với Recall trong lượt đánh giá, vì đo trên tập câu khác và không có bước LLM trích bộ lọc đầy đủ. Đừng so trực tiếp hai con số.']
  ],
  key:'Lọc trước theo cột đóng góp nhiều nhất; không đo thì không biết thay đổi nào là cải tiến.',
- short:`Ablation trên chỉ mục đầy đủ, ${V.abQ} câu, không gọi LLM. Lọc trước nâng Recall@5: dense ${V.ab_dense[0]} → ${V.ab_dense_prefilter[0]}, BM25 ${V.ab_bm25[0]} → ${V.ab_bm25_prefilter[0]}, hybrid ${V.ab_hybrid[0]} → ${V.ab_hybrid_prefilter[0]}. BM25 + lọc cao nhất.`,
+ short:`Ablation trên chỉ mục đầy đủ, ${V.abQ} câu, không gọi LLM. Lọc trước nâng Recall@5: dense ${V.ab_dense[0]} → ${V.ab_dense_prefilter[0]}, BM25 ${V.ab_bm25[0]} → ${V.ab_bm25_prefilter[0]}, hybrid ${V.ab_hybrid[0]} → ${V.ab_hybrid_prefilter[0]}. Rerank đưa hybrid + lọc lên ${V.ab_hybrid_prefilter_rerank[0]} nhưng độ trễ p50 ${V.ab_hybrid_prefilter[2]} → ${V.ab_hybrid_prefilter_rerank[2]} ms.`,
+ next:'Slide sau: kích thước chunk.'},
+
+{s:'ev-chunk',t:'Đổi kích thước chunk gần như không đổi Recall@5; lọc trước vẫn quyết định',live:null,
+ onSlide:'Biểu đồ cột Recall@5 theo sáu cấu hình truy xuất, ba cột cho ba cỡ chunk nhỏ, vừa, lớn. Bên phải: cỡ chunk bằng token, kích thước subcorpus.',
+ b:[
+  ['say',`Mỗi cỡ chunk phải nhúng lại toàn bộ, nên nhóm đo trên subcorpus ${V.subN} tin, chứa mọi tin đáp án cộng tin ngẫu nhiên.`],
+  ['point','Chỉ vào ba cột của hybrid không lọc.'],
+  ['say',`Hybrid không lọc được ${V.ck_hybrid[0]}, ${V.ck_hybrid[1]} và ${V.ck_hybrid[2]} với chunk ${V.ckSizes[0]}, ${V.ckSizes[1]} và ${V.ckSizes[2]} token. Có lọc thì quanh ${V.ck_hybrid_prefilter[1]}.`],
+  ['say','Chênh lệch giữa các cỡ nhỏ hơn nhiều so với chênh lệch do lọc trước, nên nhóm giữ cỡ mặc định của chỉ mục đầy đủ.'],
+  ['note','Subcorpus ít tin nhiễu nên số cao hơn hẳn chỉ mục đầy đủ. Chỉ so các cột trên slide này với nhau.']
+ ],
+ key:'Cỡ chunk là núm vặn nhỏ; bộ lọc mới là núm vặn lớn.',
+ short:`Subcorpus ${V.subN} tin. Hybrid không lọc: ${V.ck_hybrid[0]} / ${V.ck_hybrid[1]} / ${V.ck_hybrid[2]} theo chunk ${V.ckSizes[0]} / ${V.ckSizes[1]} / ${V.ckSizes[2]} token; có lọc quanh ${V.ck_hybrid_prefilter[1]}. Chỉ so trong subcorpus.`,
  next:'Slide sau: kết quả câu trả lời theo nhóm câu hỏi.'},
 
-{s:'ev-results',t:'Graph đúng nhiều nhất trên tập con; mỗi hệ mạnh ở nhóm câu riêng',live:'P4-11',
+{s:'ev-results',t:'Graph đúng nhiều nhất trên toàn bộ benchmark; mỗi hệ mạnh ở nhóm câu riêng',live:'P4-11',
  onSlide:'Biểu đồ cột độ chính xác của bốn hệ theo chín nhóm câu. Chú thích dưới: tổng của từng hệ và n.',
  b:[
   ['note','Tiêu đề slide do script dựng deck tự chọn theo hệ có độ chính xác tổng cao nhất. Đọc đúng tiêu đề đang hiện.'],
   ['point','Chỉ vào dòng tổng ở dưới.'],
   ['say',`Tổng trên ${V.nSub} câu: Graph đúng ${V.accGraph} phần trăm, Hybrid ${V.accHybrid}, Basic RAG ${V.accRag}, LLM thuần ${V.accLlm}.`],
   ['point','Chỉ vào các nhóm tổng hợp, so sánh, dự án đường.'],
-  ['say','Ở các nhóm cần tính, gồm tổng hợp, so sánh, dự án và tuyến đường, Graph và Hybrid đúng hết; Basic RAG gần như không câu nào, vì vài tin không thể thay cả nghìn tin khi phải tính trung vị.'],
+  ['say','Ở các nhóm cần tính, gồm tổng hợp, so sánh, dự án và tuyến đường, Graph và Hybrid đúng phần lớn; Basic RAG gần như không câu nào, vì vài tin không thể thay cả nghìn tin khi phải tính trung vị.'],
   ['point','Chỉ vào nhóm tra cứu.'],
-  ['say',`Ở nhóm tra cứu, ba hệ có truy xuất đều đúng hết, còn LLM thuần ${V.catLlm[0]} phần trăm, vì không chỉ ra được tin nào.`],
+  ['say',`Ở nhóm tra cứu, Basic RAG và Hybrid đúng ${V.catRag[0]} phần trăm; Graph chỉ ${V.catGraph[0]} phần trăm vì Cypher không tìm tin theo nghĩa; LLM thuần ${V.catLlm[0]} phần trăm, vì không chỉ ra được tin nào.`],
   ['point','Chỉ vào nhóm ràng buộc.'],
   ['say',`Chỗ bất ngờ là nhóm ràng buộc: Graph đúng ${V.catGraph[1]} phần trăm, còn Basic RAG và Hybrid ${V.catRag[1]}. Cypher lọc đúng mọi điều kiện cột và trả mã tin; còn phần RAG lấy về chưa đủ tin thuộc tập đúng.`],
   ['point','Chỉ vào nhóm định giá.'],
-  ['say',`Nhóm định giá thì không hệ nào đạt trọn điểm: Hybrid có gọi mô hình định giá nhưng lệch quá sai số cho phép, điểm trung bình ${V.hybridValPts} trên hai.`],
-  ['say',`Mỗi nhóm chỉ có ${V.perCat} câu, nên một câu đúng sai làm số đổi rất nhiều. Em đọc theo hình dạng: hệ nào mạnh ở nhóm nào, không so từng điểm phần trăm.`],
+  ['say',`Nhóm định giá là nhóm yếu nhất của mọi hệ: Hybrid đúng ${V.catHybrid[7]} phần trăm; có gọi mô hình định giá nhưng phần lớn lệch quá sai số cho phép, điểm trung bình ${V.hybridValPts} trên hai.`],
+  ['say',`Mỗi nhóm chỉ có khoảng ${V.perCat} câu, nên một câu đúng sai làm số đổi khá nhiều. Em đọc theo hình dạng: hệ nào mạnh ở nhóm nào, không so từng điểm phần trăm.`],
   ['live','▶ CHẠY CELL P4-11'],
   ['act','Chuyển sang Jupyter · cell “# P4-11” · Shift + Enter.'],
   ['say','Cell đọc kết quả đã lưu và vẽ lại biểu đồ này, kèm khoảng tin cậy của từng ô.'],
   ['backup','Nếu lỗi: “Em dùng biểu đồ trên slide”.']
  ],
  key:'Truy xuất đúng loại bằng chứng quan trọng hơn: đồ thị thắng câu cần tính, RAG thắng câu tìm tin.',
- short:`Tổng: Graph ${V.accGraph}%, Hybrid ${V.accHybrid}%, Basic RAG ${V.accRag}%, LLM thuần ${V.accLlm}% trên ${V.nSub} câu. Graph và Hybrid đúng hết nhóm cần tính; ràng buộc thì chỉ Graph đúng; định giá chưa hệ nào đạt. Mỗi nhóm ${V.perCat} câu nên đọc theo hình dạng.`,
+ short:`Tổng: Graph ${V.accGraph}%, Hybrid ${V.accHybrid}%, Basic RAG ${V.accRag}%, LLM thuần ${V.accLlm}% trên ${V.nSub} câu. Graph và Hybrid đúng phần lớn nhóm cần tính; ràng buộc thì gần như chỉ Graph đúng; định giá yếu ở mọi hệ. Mỗi nhóm khoảng ${V.perCat} câu nên đọc theo hình dạng.`,
  next:'Chênh lệch nào là thật? Slide sau dùng khoảng tin cậy.'},
 
 {s:'ev-pairwise',t:'So từng cặp trên cùng câu hỏi: khoảng tin cậy cho biết chênh lệch nào đáng tin',live:null,
@@ -1712,14 +1737,15 @@ const KS=[
 <script>
 (function(){
   const T=[
-    ['🔴','Chỉ chạy tập con, không phải cả benchmark',`Benchmark có ${V.nBench} câu (${V.nCat} nhóm) và đủ đáp án SQL, nhưng lượt đánh giá chỉ chạy ${V.nSub} câu, ${V.perCat} câu mỗi nhóm, vì hết hạn mức API miễn phí.`,'Nói thẳng trên slide ev-setup và slide Hạn chế. Mọi kết luận là chỉ dấu; đọc kèm n và khoảng tin cậy. Đừng nói “trên cả benchmark”.'],
-    ['🔴','Mô hình sinh khác kế hoạch, không có giám khảo','Mô hình sinh là <code>gemini-flash-lite-latest</code> (gói miễn phí), không phải mô hình trong kế hoạch ban đầu. <code>llm.judge</code> = null: chấm bằng luật, <b>Faithfulness, Answer Relevancy, Context Precision đều để trống</b>.','Không nói “RAGAS cho thấy…”. Nếu bị hỏi: chỉ số đã cài đặt (<code>vre.eval.metrics</code>, cell P4-09 có ví dụ nhỏ), chưa chạy được vì cần LLM giám khảo.'],
+    ['🟠','Mỗi nhóm chỉ khoảng mười câu',`Lượt đánh giá chạy đủ ${V.nSub}/${V.nBench} câu (${V.nCat} nhóm), nhưng mỗi nhóm chỉ khoảng ${V.perCat} câu nên số theo nhóm dao động mạnh.`,'Đọc kèm n và khoảng tin cậy; so theo hình dạng, không so từng điểm phần trăm.'],
+    ['🟢','Docker đã dựng và kiểm','Image <code>api</code> và <code>web</code> dựng bằng compose profile <code>app</code>; qua nginx, trang chủ, <code>/api/health</code>, chat SSE và <code>/api/valuate</code> đều trả mã thành công (lead kiểm bằng curl).','Nếu bị hỏi triển khai: <code>docker compose --profile app up -d --build --wait</code>, chi tiết ở <code>plans/reports/p3-docker.md</code>.'],
+    ['🔴','Mô hình sinh khác kế hoạch, không có giám khảo','Mô hình sinh là <code>gemini-flash-lite-latest</code>, không phải mô hình trong kế hoạch ban đầu. Nhóm chủ động không dùng LLM giám khảo và không chạy RAGAS để tiết kiệm chi phí: <code>llm.judge</code> = null, chấm bằng luật, <b>Faithfulness, Answer Relevancy, Context Precision đều để trống</b>.','Không nói “RAGAS cho thấy…”. Nếu bị hỏi: chỉ số đã cài đặt (<code>vre.eval.metrics</code>, cell P4-09 có ví dụ nhỏ), không chạy vì cần LLM giám khảo tốn thêm chi phí.'],
     ['🟠','Luật so chuỗi có thể chấm trượt câu đúng','Câu TM02 “Tháng nào có nhiều tin rao bán đất ở Đà Nẵng nhất?”: Graph trả lời đúng tháng nhưng viết “07/2025”, đáp án lưu dạng “2025-07”, nên bị 0 điểm. (Số tin Graph đọc từ MarketStat là 8.535, đáp án SQL đếm ' + V.tm02N + ' tin: hai cách đếm khác phạm vi.)','Nói: “chấm bằng luật lặp lại được nhưng cứng; vài câu bị chấm trượt vì định dạng”. Đây là lý do độ chính xác nhóm thời gian của Graph có thể thấp hơn thực tế.'],
     ['🟠','Luật so chuỗi cũng có thể cho điểm oan','Câu CP02 “nha o q3 hay phu nhuan dat hon tinh theo m2”: Basic RAG trả lời “Không đủ dữ liệu để so sánh…” mà vẫn được trọn điểm (<code>examples.json</code>). Đó là câu duy nhất Basic RAG đúng ở nhóm so sánh.','Không dùng nhóm so sánh để khen Basic RAG. Nói rõ luật chấm có cả chấm oan lẫn chấm trượt; muốn chắc phải đọc tay câu trả lời.'],
-    ['🟠','Hybrid thấp hơn Graph','Hybrid kém Graph ' + V.pwHG[0] + ' điểm % (CI ' + V.pwHG[1] + ' … ' + V.pwHG[2] + '). Toàn bộ do nhóm ràng buộc: nhãn đúng của nhóm này là basic_rag, router làm đúng, nhưng phần RAG lấy thiếu tin; Graph lọc bằng Cypher thì đúng hết.','Đừng nói “Hybrid tốt nhất”. Nói: “Graph đúng nhiều nhất trên tập con; Hybrid thua ở câu ràng buộc vì đi tuyến RAG; cải tiến hợp lý là gửi câu ràng buộc thuần cột sang graph.”'],
+    ['🟠','Hybrid thấp hơn Graph','Hybrid kém Graph ' + V.pwHG[0] + ' điểm % (CI ' + V.pwHG[1] + ' … ' + V.pwHG[2] + '). Chủ yếu do nhóm ràng buộc: nhãn đúng của nhóm này là basic_rag, router làm đúng, nhưng phần RAG lấy thiếu tin; Graph lọc bằng Cypher thì đúng gần hết. Ngược lại Hybrid hơn Graph ở nhóm tra cứu.','Đừng nói “Hybrid tốt nhất”. Nói: “Graph đúng nhiều nhất trên toàn bộ benchmark; Hybrid thua ở câu ràng buộc vì đi tuyến RAG; cải tiến hợp lý là gửi câu ràng buộc thuần cột sang graph.”'],
     ['🟡','Cypher an toàn nhưng sai','MH04: Cypher khớp <code>CONTAINS</code> nhầm dự án con, <code>LIMIT 1</code> không sắp xếp. Năm lớp an toàn chỉ bảo vệ dữ liệu, không bảo đảm đúng.','Dùng làm ví dụ ở slide gr-patterns hoặc ev-errors; chính là lý do cần đáp án SQL độc lập.'],
     ['🟡','Tiêu đề cell notebook có thể còn số cũ','Tiêu đề các cell P4-06, P4-08, P4-10, P4-11, P4-12, P4-13, P4-14 được sinh từ <code>results/</code> lúc chạy notebook. Nếu notebook chạy trước khi đánh giá xong thì tiêu đề còn số của lượt chạy thử nhỏ.','Chạy lại notebook 04 sau khi có kết quả cuối, rồi so tiêu đề cell với số trên slide trước khi lên.'],
-    ['🟢','Ablation: không có rerank, BM25 + lọc mới là cao nhất','<code>ablation.json</code> có dense, BM25, hybrid × có/không lọc trước. Rerank bị bỏ vì model cross-encoder chưa có trong cache. Có lọc thì BM25 cao nhất, không phải hybrid.','Tiêu đề slide ev-ablation do script tự chọn; đừng nói “hybrid có lọc thắng” nếu số không cho thấy vậy.'],
+    ['🟢','Ablation: rerank cộng thêm nhưng chậm','<code>ablation.json</code> có dense, BM25, hybrid × có/không lọc trước × có/không rerank trên chỉ mục đầy đủ, cộng quét kích thước chunk trên subcorpus. Chưa rerank thì BM25 + lọc cao nhất; có rerank thì hybrid + lọc + rerank cao nhất nhưng chậm hơn nhiều.','Tiêu đề slide ev-ablation do script tự chọn; không so run <code>c*</code> (subcorpus) với run <code>full_*</code>.'],
     ['🟢','Tỷ lệ lui về Basic RAG chưa có số','Code có đường lui (Cypher lỗi, rỗng, mất kết nối) nhưng <code>eval_summary.json</code> chưa ghi tỷ lệ câu phải lui.','Nói định tính. Nếu cần con số: nhờ người phụ trách đánh giá thêm khoá vào writer, không tự đếm tay.']
   ];
   document.getElementById('trapList').innerHTML=T.map(t=>`<details class="acc"><summary>${t[0]} ${t[1]}</summary><div class="in"><p class="small"><b>Thực tế:</b> ${t[2]}</p><p class="small"><b>Nên làm gì:</b> ${t[3]}</p></div></details>`).join('');
@@ -1738,16 +1764,16 @@ const KS=[
   const Q=[
     ['Hệ thống của nhóm có phải Microsoft GraphRAG không?','Không. Nhóm làm <b>Graph-based RAG dựa trên Text2Cypher</b>: đồ thị dựng bằng luật từ cột có cấu trúc, LLM chỉ viết Cypher và diễn giải kết quả. Không làm bước tóm tắt cộng đồng (global search). Lý do: dữ liệu đã có cột nên tính thẳng bằng Cypher chính xác và rẻ hơn.'],
     ['Để LLM viết truy vấn cơ sở dữ liệu có nguy hiểm không?',`Có rủi ro nên có năm lớp: regex chặn CREATE/MERGE/DELETE/SET/CALL/SHOW…; tự thêm LIMIT; giao dịch chỉ đọc của Neo4j (lệnh ghi bị từ chối kể cả khi lọt regex); timeout ${V.cfgTimeout} s và đọc tối đa ${V.cfgMaxRows} dòng; lỗi thì gửi lỗi lại cho LLM, thử lại tối đa ${V.cfgRetries} lần. Nhưng an toàn không có nghĩa là đúng: câu MH04 qua đủ năm lớp mà vẫn sai.`],
-    ['Sao câu tổng hợp không tính thẳng trên từng tin?',`Có ${V.kept} tin; quét từng tin cho mỗi câu thì chậm và dễ quá timeout. Nhóm tính sẵn ${V.marketStats} node MarketStat (trung vị, số tin theo khu vực, tháng, loại hình). Câu trung vị Cầu Giấy đọc một node, chạy ${V.exAg01Ms} ms; câu đếm đất Đà Nẵng đi qua từng tin mất ${V.exAg03Ms} ms.`],
+    ['Sao câu tổng hợp không tính thẳng trên từng tin?',`Có ${V.kept} tin; quét từng tin cho mỗi câu thì chậm và dễ quá timeout. Nhóm tính sẵn ${V.marketStats} node MarketStat (trung vị, số tin theo khu vực, tháng, loại hình). Câu trung vị Cầu Giấy đọc một node, chạy ${V.exAg01Ms} ms; câu tìm tin theo dự án đi qua từng tin mất ${V.exLk01Ms} ms.`],
     ['Router sai thì sao?',`Router đúng ${V.routerAcc}% (${V.routerN} câu). Cả ${V.routerRagToHybrid} câu sai là câu nhãn basic_rag bị gửi sang hybrid; hybrid vẫn chạy RAG nên câu tra cứu vẫn đúng. Nếu đồ thị lỗi, rỗng hoặc mất kết nối thì lui về Basic RAG; RAG chạy song song nên lui không phải chờ thêm.`],
     ['Vì sao Hybrid lại thấp hơn Graph?',`Hybrid kém Graph ${V.pwHG[0]} điểm % (CI ${V.pwHG[1]} … ${V.pwHG[2]}), toàn bộ ở nhóm ràng buộc: nhãn đúng của nhóm đó là basic_rag, router làm đúng, nhưng phần RAG lấy thiếu tin (truy xuất trượt). Graph lọc đủ điều kiện bằng Cypher nên đúng hết. Bài học: nhãn router cho câu ràng buộc thuần cột nên là graph.`],
     ['Kết quả có ý nghĩa thống kê không?',`Một phần. Mỗi nhóm chỉ ${V.perCat} câu nên từng nhóm không đủ để kết luận. Ở toàn tập: Hybrid − Basic RAG ${V.pwHR[0]} điểm %, CI ${V.pwHR[1]} … ${V.pwHR[2]} (đáng tin); Basic RAG − LLM thuần ${V.pwRL[0]}, CI ${V.pwRL[1]} … ${V.pwRL[2]} chứa số không (chưa đủ bằng chứng). Nói thẳng điều này được đánh giá cao hơn bảo vệ con số.`],
-    ['Sao không có Faithfulness/RAGAS?','Lượt đánh giá không có LLM giám khảo (hết hạn mức, không có ngân sách), nên chấm bằng luật so với đáp án SQL và để trống Faithfulness. Công thức đã cài đặt và có ví dụ nhỏ ở cell P4-09. Thêm nữa, bám nguồn không có nghĩa là đúng: câu “không đủ dữ liệu” của Basic RAG không bịa gì nhưng vẫn sai.'],
+    ['Sao không có Faithfulness/RAGAS?','Nhóm chủ động không dùng LLM giám khảo để tiết kiệm chi phí API, nên chấm bằng luật so với đáp án SQL và để trống Faithfulness. Công thức đã cài đặt và có ví dụ nhỏ ở cell P4-09. Thêm nữa, bám nguồn không có nghĩa là đúng: câu “không đủ dữ liệu” của Basic RAG không bịa gì nhưng vẫn sai.'],
     ['Chấm bằng luật có tin được không?','Lặp lại được, không phụ thuộc giám khảo. Nhưng cứng: TM02 đúng tháng mà ghi “07/2025” nên bị 0 điểm; CP02 Basic RAG nói “không đủ dữ liệu” mà vẫn được điểm. Nên đọc kết quả theo hình dạng, kèm khoảng tin cậy, và đọc tay các câu đáng ngờ.'],
     ['Graph đúng nhiều nhất, sao không dùng Graph cho mọi câu?',`Trên tập con này Graph đúng ${V.accGraph}%, nhưng tập con ít câu mô tả mờ. Đồ thị không hiểu “gần trường”, “view hồ” nếu không có cột hay node tiện ích; và Cypher có thể sai mà vẫn chạy (MH04). Hybrid giữ được RAG cho câu mô tả và có đường lui.`],
     ['Đáp án chuẩn lấy từ đâu, có gõ tay không?',`Không gõ tay. Mỗi câu có một câu SQL (<code>gt_sql</code>) chạy bằng DuckDB trên toàn bộ bảng sạch; câu tìm tin trả danh sách mã tin, câu ra số trả một giá trị kèm cỡ nhóm. Ví dụ AG01: ${V.ag01Gt} triệu/m² trên ${V.ag01N} tin.`],
     ['Vì sao lọc trước quan trọng vậy?',`Ablation trên chỉ mục đầy đủ: lọc trước nâng Recall@5 của dense từ ${V.ab_dense[0]} lên ${V.ab_dense_prefilter[0]}, của BM25 từ ${V.ab_bm25[0]} lên ${V.ab_bm25_prefilter[0]}. Embedding không bảo đảm điều kiện cứng như giá, số phòng; chỉ lọc trên cột mới bảo đảm.`],
-    ['Nếu có thêm thời gian, nhóm sẽ cải thiện gì?',`Chạy đủ ${V.nBench} câu khi có hạn mức; thêm LLM giám khảo cho Faithfulness; gửi câu ràng buộc thuần cột sang graph; dặn Text2Cypher luôn sắp xếp và khớp tên dự án chặt hơn; nới luật chấm cho định dạng tháng; thử rerank; ghi tỷ lệ lui về Basic RAG vào kết quả.`]
+    ['Nếu có thêm thời gian, nhóm sẽ cải thiện gì?',`Thêm LLM giám khảo cho Faithfulness khi có ngân sách; gửi câu ràng buộc thuần cột sang graph; dặn Text2Cypher luôn sắp xếp và khớp tên dự án chặt hơn; nới luật chấm cho định dạng tháng; chạy rerank trên GPU để bật mặc định; ghi tỷ lệ lui về Basic RAG vào kết quả.`]
   ];
   let know=new Set(store('p4_qa')||[]);
   const L=document.getElementById('qaList'),C=document.getElementById('qaCount');
@@ -1775,7 +1801,7 @@ const KS=[
     ['Câu MH04 qua đủ năm lớp an toàn. Điều đó có nghĩa là gì?',['Câu trả lời chắc chắn đúng','Dữ liệu an toàn, nhưng kết quả vẫn có thể sai','Cypher không có LIMIT','Router chọn sai'],1,'CONTAINS khớp nhầm dự án con, LIMIT không sắp xếp: an toàn mà vẫn sai.'],
     ['Router thật sai kiểu nào?',['Câu tổng hợp bị gửi sang RAG','Câu nhãn basic_rag bị gửi sang hybrid','Câu định giá bị gửi sang graph','Sai đều mọi loại'],1,`Cả ${V.routerRagToHybrid} câu sai đều là basic_rag → hybrid; router đúng ${V.routerAcc}%.`],
     ['Ba tin đúng, top-5 trúng hai. Recall@5 = ?',['0,40','0,50','0,67','1,00'],2,'Hai phần ba, làm tròn hai chữ số.'],
-    ['Trong ablation, thay đổi nào tăng Recall@5 nhiều nhất?',['Đổi dense sang BM25','Lọc trước theo cột','Gộp hybrid','Rerank'],1,`Ví dụ dense ${V.ab_dense[0]} → ${V.ab_dense_prefilter[0]}; rerank không có trong lượt đo.`],
+    ['Trong ablation, thay đổi nào tăng Recall@5 nhiều nhất?',['Đổi dense sang BM25','Lọc trước theo cột','Gộp hybrid','Rerank'],1,`Ví dụ dense ${V.ab_dense[0]} → ${V.ab_dense_prefilter[0]}; rerank cộng ít hơn (hybrid + lọc ${V.ab_hybrid_prefilter[0]} → ${V.ab_hybrid_prefilter_rerank[0]}).`],
     ['Vì sao lượt đánh giá để trống Faithfulness?',['Faithfulness luôn bằng một','Không có LLM giám khảo, chấm bằng luật','Mô hình sinh không trả lời','Thiếu đáp án chuẩn'],1,'llm.judge = null; đáp án chuẩn bằng SQL vẫn có đủ.'],
     ['Hệ nào đúng nhiều nhất trên tập con?',['Basic RAG','Graph','Hybrid','LLM thuần'],1,`Graph ${V.accGraph}%, Hybrid ${V.accHybrid}%, Basic RAG ${V.accRag}%, LLM thuần ${V.accLlm}%.`],
     ['Basic RAG hơn LLM thuần, khoảng tin cậy chứa số không. Đọc thế nào?',['Basic RAG chắc chắn tốt hơn','Chưa đủ bằng chứng trên tập con này','LLM thuần tốt hơn','Phép đo bị lỗi'],1,`Chênh lệch ${V.pwRL[0]} điểm %, CI ${V.pwRL[1]} … ${V.pwRL[2]}.`]

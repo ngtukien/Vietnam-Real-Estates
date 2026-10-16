@@ -1,39 +1,39 @@
 {
- "n_rows": 20,
- "n_questions": 5,
+ "n_rows": 434,
+ "n_questions": 100,
  "by_system": [
   {
    "system": "basic_rag",
-   "n": 5,
-   "errors": 0,
-   "latency_ms_p50": 21872.4,
-   "input_tokens": 2861.4
+   "n": 109,
+   "errors": 9,
+   "latency_ms_p50": 3420.7,
+   "input_tokens": 1731.1
   },
   {
    "system": "graph",
-   "n": 5,
-   "errors": 0,
-   "latency_ms_p50": 75812.6,
-   "input_tokens": 3710.8
+   "n": 109,
+   "errors": 9,
+   "latency_ms_p50": 3351.0,
+   "input_tokens": 3712.1
   },
   {
    "system": "hybrid",
-   "n": 5,
-   "errors": 0,
-   "latency_ms_p50": 89973.9,
-   "input_tokens": 5921.0
+   "n": 111,
+   "errors": 12,
+   "latency_ms_p50": 2594.3,
+   "input_tokens": 3771.0
   },
   {
    "system": "llm_only",
-   "n": 5,
-   "errors": 0,
-   "latency_ms_p50": 1724.2,
-   "input_tokens": 163.8
+   "n": 105,
+   "errors": 5,
+   "latency_ms_p50": 1694.2,
+   "input_tokens": 78.8
   }
  ],
  "_meta": {
   "cell": "P4-10",
   "mode": "live",
-  "generated_at": "2026-10-15T15:47:12Z"
+  "generated_at": "2026-10-16T01:31:48Z"
  }
 }

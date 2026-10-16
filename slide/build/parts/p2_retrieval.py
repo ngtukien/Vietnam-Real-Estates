@@ -45,8 +45,10 @@ def three_needs(d: Deck) -> None:
 
 
 def _ex(d: Deck) -> str:
-    """Ví dụ truy xuất của câu CS01 (đủ quận, số phòng, giá tối đa) trong examples.rag."""
-    return d.pick("examples.json:rag", "CS01") or "examples.json:rag[0]"
+    """Ví dụ truy xuất trong examples.rag: CS01 nếu có, không thì ví dụ đầu (report xếp câu ràng buộc có đủ bộ lọc trước)."""
+    rag = d.V("examples.json:rag") or []
+    return next((f"examples.json:rag[{i}]" for i, r in enumerate(rag) if r.get("question") == d.Q("CS01")["question"]),
+                "examples.json:rag[0]")
 
 
 def filters(d: Deck) -> None:
@@ -84,7 +86,7 @@ def cosine(d: Deck) -> None:
         "Cosine đo hướng nên không phụ thuộc độ dài: vector dài gấp đôi nhưng cùng hướng vẫn cho điểm bằng một, vector "
         "vuông góc cho không. Với vector đã chuẩn hoá L2 như của e5, cosine chính là tích vô hướng, nên Qdrant chỉ cần nhân. "
         "Dense hiểu nghĩa nhưng không đảm bảo điều kiện cứng: điểm cosine các tin dồn sát nhau nên tin đứng đầu có thể "
-        "sai quận hay sai số phòng. Bên phải là ba tin Basic RAG đưa vào ngữ cảnh cho câu CS01 trong lượt chạy thật, sau "
+        "sai quận hay sai số phòng. Bên phải là ba tin Basic RAG đưa vào ngữ cảnh cho một câu ràng buộc trong lượt chạy thật, sau "
         "khi đã lọc trước và gộp với BM25; dòng chữ dưới bảng cho biết chúng có thoả điều kiện không. Slide sau: ghép dense với BM25."))
     s.text(MX, 1.95, 6.0, 0.4, "Công thức", size=SIZE["caption"], bold=True, color="teal")
     s.text(MX, 2.35, 6.0, 0.9, "cos(θ) = (q · d) / (‖q‖ ‖d‖)", size=32, bold=True, color="ink", font="Cambria Math")

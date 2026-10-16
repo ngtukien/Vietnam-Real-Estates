@@ -194,7 +194,7 @@ Sinh lại nguồn, chạy và lưu output (từ gốc repo, sau `. scriptsre_e
 Khối dưới đây do `scripts/vre_pipeline.py report readme` sinh từ `results/*.json`; không sửa tay.
 
 <!-- results:start -->
-### Benchmark (100/100 câu, sinh `gemini-flash-lite-latest`, chấm theo luật, không giám khảo LLM, `cf27faf`)
+### Benchmark (100/100 câu, sinh `gemini-flash-lite-latest`, chấm theo luật, không giám khảo LLM, `dirty`)
 
 | Nhóm | llm_only | basic_rag | graph | hybrid |
 |---|---|---|---|---|
@@ -246,7 +246,7 @@ Luật chấm (không LLM):
 - refusal: answer contains a refusal phrase (no data / insufficient information / out of range) => 2, else 0
 - empty answer => 0; faithfulness = null (needs an LLM)
 
-> ragas: answer_relevancy và context_precision bỏ để tiết kiệm lời gọi LLM (chỉ đo faithfulness)
+> ragas: không chạy (chấm theo luật, không LLM giám khảo — chọn để tiết kiệm chi phí); faithfulness để trống
 > retrieval: nguồn = top_k=5 tin mà hệ thống đưa vào ngữ cảnh; recall_at_10 vì thế ≤ recall_at_5 khi có hơn 5 cụm đúng (truy xuất thuần ở ablation.json)
 > benchmark đầy đủ có 100 câu; bản tóm tắt này chấm 100 câu (benchmark_subset)
 > pairwise chỉ dùng câu cả hai hệ thống đều có điểm; overall_common chỉ dùng câu mọi hệ thống đều có điểm; mọi CI có n kèm theo
@@ -293,6 +293,11 @@ Luật chấm (không LLM):
 | c512_bm25_prefilter | 0.92 | 0.94 | 0.89 | 27 |
 | c512_hybrid | 0.56 | 0.70 | 0.53 | 27 |
 | c512_hybrid_prefilter | 0.90 | 0.91 | 0.88 | 27 |
+
+> filter_llm_calls=0 (questions not served from the LLM cache in this run)
+> rerank: cross-encoder cross-encoder/mmarco-mMiniLMv2-L12-H384-v1 on cpu, rescoring the top 20 candidates down to 10
+> c256/c400/c512 runs are measured on the subcorpus (see `subcorpus`), not on the full index: compare them with each other, not with full_* runs
+> c512: header+body capped at 508 tokens so the whole sequence fits e5-large max_length 512
 <!-- results:end -->
 
 ## Kiểm thử và CI

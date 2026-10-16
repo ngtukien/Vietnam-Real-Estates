@@ -1777,7 +1777,7 @@ PAYLOAD = {"property_type": "Căn hộ chung cư", "province": "Hồ Chí Minh",
 def compute():
     from vre.valuation.predict import valuate
 
-    return {"input": PAYLOAD, "result": valuate(PAYLOAD, variant="tabular")}
+    return {"input": PAYLOAD, "result": valuate(PAYLOAD)}  # luôn phục vụ model tabular
 
 
 d = live("P5-07", compute, needs=("models", "data"))
