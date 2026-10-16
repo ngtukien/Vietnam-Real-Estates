@@ -20,10 +20,33 @@ def build(d: Deck) -> None:
     layers(d)
     setup(d)
     ablation(d)
+    chunk_sweep(d)
     results(d)
     pairwise(d)
     cost(d)
     errors(d)
+
+
+def full_bench(d: Deck) -> bool:
+    """Lượt eval đã chạy đủ benchmark (đủ mọi câu, mọi hệ có điểm): chọn chữ "toàn bộ" thay cho "tập con"."""
+    return bool(d.V(f"{ES}:complete")) and d.V(f"{ES}:n_questions") == d.V("benchmark_gt.json:items|len")
+
+
+def scope_word(d: Deck) -> str:
+    return "trên toàn bộ benchmark" if full_bench(d) else "trên tập con đã chạy"
+
+
+RET = {"dense": "Dense", "bm25": "BM25", "hybrid": "Hybrid"}
+
+
+def run_label(r: dict) -> str:
+    return RET.get(r.get("retrieval"), r.get("retrieval")) + (" + lọc" if r.get("prefilter") else "") + (
+        " + rerank" if r.get("rerank") else "")
+
+
+def full_runs(d: Deck) -> list[dict]:
+    """Run trên chỉ mục đầy đủ (tên `full_*`); run `c256/c400/c512` đo trên subcorpus nên không trộn vào."""
+    return [r for r in d.V("ablation.json:runs") or [] if str(r.get("name", "")).startswith("full_")]
 
 
 def systems(d: Deck) -> list[str]:
@@ -97,7 +120,7 @@ def router(d: Deck) -> None:
     r = f"{ES}:router"
     s = d.slide("gr-router", SEC_G, "Router chọn nguồn cho từng câu; đồ thị rỗng hoặc lỗi thì lui về Basic RAG", notes=(
         "Router là một lượt gọi mô hình với structured output, chọn một trong các nhãn: Basic RAG, Graph, cả hai, hoặc định "
-        f"giá. Trên tập con đã chạy, router chọn đúng nhãn ở {d.N(r + '.accuracy', 'pct0')}% số câu; bỏ nhóm không trả lời "
+        f"giá. {scope_word(d).capitalize()}, router chọn đúng nhãn ở {d.N(r + '.accuracy', 'pct0')}% số câu; bỏ nhóm không trả lời "
         f"được thì {d.N(r + '.accuracy_excl_unanswerable', 'pct0')}%. Nếu Cypher lỗi, trả về rỗng hoặc Neo4j mất kết nối, "
         "hệ thống lui về Basic RAG. Truy xuất RAG chạy song song với router nên đường lui không phải chờ thêm. "
         "Slide sau: đánh giá được thiết kế thế nào."))
@@ -134,14 +157,18 @@ def layers(d: Deck) -> None:
 
 
 def setup(d: Deck) -> None:
-    s = d.slide("ev-setup", SEC_E, "Thiết lập: benchmark đủ chín nhóm, chạy trên tập con, chấm bằng luật", notes=(
-        f"Benchmark có {d.N('benchmark_gt.json:items|len')} câu, đáp án chuẩn tính bằng SQL trên bảng sạch. Vì hạn mức API "
-        f"miễn phí, lượt đánh giá chạy trên tập con {d.N(ES + ':n_questions')} câu, đủ chín nhóm, với cả bốn hệ. Mô hình sinh "
-        "là bản miễn phí ghi trên slide, khác mô hình dự kiến ban đầu. Câu trả lời được chấm bằng luật so với đáp án chuẩn, "
-        "không dùng LLM làm giám khảo. Vì vậy mọi con số phía sau là chỉ dấu trên cỡ mẫu nhỏ, và slide nào cũng ghi n với "
-        "khoảng tin cậy. Slide sau: ablation truy xuất."))
+    full = full_bench(d)
+    s = d.slide("ev-setup", SEC_E, "Thiết lập: benchmark đủ chín nhóm, " + ("chạy toàn bộ" if full else "chạy trên tập con")
+                + ", chấm bằng luật", notes=(
+        f"Benchmark có {d.N('benchmark_gt.json:items|len')} câu, đáp án chuẩn tính bằng SQL trên bảng sạch. "
+        + (f"Lượt đánh giá chạy đủ {d.N(ES + ':n_questions')} câu, đủ chín nhóm, với cả bốn hệ. " if full else
+           f"Vì hạn mức API miễn phí, lượt đánh giá chạy trên tập con {d.N(ES + ':n_questions')} câu, đủ chín nhóm, với cả "
+           "bốn hệ. ")
+        + "Mô hình sinh là bản giá rẻ ghi trên slide, khác mô hình dự kiến ban đầu. Câu trả lời được chấm bằng luật so với "
+        "đáp án chuẩn, không dùng LLM làm giám khảo và không chạy RAGAS, để tiết kiệm chi phí. Mỗi nhóm chỉ có khoảng mười "
+        "câu, nên slide nào cũng ghi n với khoảng tin cậy. Slide sau: ablation truy xuất."))
     items = [(d.N("benchmark_gt.json:items|len"), "câu trong benchmark, đáp án SQL"),
-             (d.N(ES + ":n_questions"), "câu đã chạy (tập con, đủ chín nhóm)"),
+             (d.N(ES + ":n_questions"), "câu đã chạy (đủ chín nhóm)" if full else "câu đã chạy (tập con, đủ chín nhóm)"),
              (d.N(ES + ":systems|len"), "hệ so sánh trên cùng câu hỏi")]
     for i, (v, lab) in enumerate(items):
         s.stat(MX + i * 4.1, 1.95, 3.8, v, lab, accent="teal")
@@ -159,36 +186,94 @@ def setup(d: Deck) -> None:
 
 
 def ablation(d: Deck) -> None:
-    runs = d.V("ablation.json:runs") or []
-    names = {"dense": "Dense", "bm25": "BM25", "hybrid": "Hybrid"}
-    labels = [names.get(r.get("retrieval"), r.get("retrieval")) + (" + lọc" if r.get("prefilter") else "") for r in runs]
+    runs = full_runs(d)
+    labels = [run_label(r) for r in runs]
+    by = {r["name"]: r for r in runs}
+    base = [r for r in runs if not r["rerank"]]
+    lifted = bool(base) and all(by.get(r["name"] + "_prefilter", {}).get("recall_at_5", 0) > r["recall_at_5"]
+                                for r in base if not r["prefilter"])
+    reranked = [(r, by[r["name"] + "_rerank"]) for r in base if r["name"] + "_rerank" in by]
+    rerank_up = bool(reranked) and all(on["recall_at_5"] > off["recall_at_5"] for off, on in reranked)
     best = max(runs, key=lambda r: r.get("recall_at_5") or 0) if runs else None
-    lifted = runs and all((next((x["recall_at_5"] for x in runs if x["retrieval"] == r["retrieval"] and x["prefilter"]), 0)
-                           > r["recall_at_5"]) for r in runs if not r["prefilter"])
-    title = (f"Lọc trước tăng Recall@5 ở cả ba cách truy xuất; {labels[runs.index(best)]} cao nhất" if lifted and best
-             else "Ablation truy xuất: Recall@5 và MRR của từng cấu hình")
+    if lifted and rerank_up and best:
+        title = f"Lọc trước tăng Recall@5 nhiều nhất, rerank cộng thêm ở mọi cấu hình; {run_label(best)} cao nhất"
+    elif lifted and best:
+        title = f"Lọc trước tăng Recall@5 ở cả ba cách truy xuất; {run_label(best)} cao nhất"
+    else:
+        title = "Ablation truy xuất: Recall@5 và MRR của từng cấu hình"
+    k = "ablation.json:runs[name={}]"
+    hp, hpr = k.format("full_hybrid_prefilter"), k.format("full_hybrid_prefilter_rerank")
+    has_rr = "full_hybrid_prefilter" in by and "full_hybrid_prefilter_rerank" in by
+    rr_note = (f"Rerank cross-encoder chấm lại hai mươi ứng viên đầu: với hybrid có lọc, Recall@5 từ "
+               f"{d.N(hp + '.recall_at_5', 'dec2')} lên {d.N(hpr + '.recall_at_5', 'dec2')}, nhưng độ trễ trung vị từ "
+               f"{d.N(hp + '.latency_ms_p50')} lên {d.N(hpr + '.latency_ms_p50')} mili giây vì chạy trên CPU. " if has_rr
+               else "Lượt đo này không có cặp bật tắt rerank. ")
+    n_q = d.N(k.format(runs[0]["name"]) + ".n_questions") if runs else "⟨?⟩"
     s = d.slide("ev-ablation", SEC_E, title, notes=(
         "Ablation chạy thẳng trên chỉ mục đầy đủ, không qua mô hình sinh, nên không tốn lời gọi API. Ba cách truy xuất dense, "
-        "BM25 và hybrid, mỗi cách có và không có lọc trước. Rerank không có trong lượt đo vì model cross-encoder không có "
-        f"trong cache. Số câu có tập tin đúng: {d.N('ablation.json:runs[0].n_questions')}. Bước nhảy lớn nhất đến từ bộ lọc, "
-        "vì câu tìm tin có điều kiện cứng mà embedding không đảm bảo. Trên dữ liệu này BM25 có lọc ngang hoặc hơn hybrid "
-        "có lọc, vì đề bài chứa tên dự án và con số khớp đúng từ. Hybrid không tự động thắng; phải đo mới biết. So "
-        "sánh model embedding nằm ở chặng 1. Slide sau: kết quả câu trả lời theo nhóm câu hỏi."))
-    s.chart(MX, 1.9, 8.2, 4.5, "column", labels or ["⟨?⟩"],
-            [("Recall@5", "ablation.json:runs[*].recall_at_5", "teal"), ("MRR", "ablation.json:runs[*].mrr", "blue")],
+        f"BM25 và hybrid, mỗi cách có và không có lọc trước, có và không có rerank. Số câu có tập tin đúng: {n_q}. "
+        "Bước nhảy lớn nhất đến từ bộ lọc, vì câu tìm tin có điều kiện cứng mà embedding không đảm bảo. " + rr_note
+        + "Hybrid không tự động thắng; phải đo mới biết. Slide sau: kích thước chunk."))
+    s.chart(MX, 1.85, 8.4, 4.9, "bar", labels or ["⟨?⟩"],
+            [("Recall@5", [k.format(r["name"]) + ".recall_at_5" for r in runs], "teal"),
+             ("MRR", [k.format(r["name"]) + ".mrr" for r in runs], "blue")],
             number_format="0.00", max_value=1)
-    s.text(9.1, 1.95, 3.6, 4.3, ["Cùng chỉ mục e5-large đầy đủ", "Lọc trước = điều kiện cứng trong Qdrant",
-                                 d.A("Không qua LLM, 0 lời gọi API", "mô tả thiết kế ablation")], size=18, bullets=True)
+    side = ["Cùng chỉ mục e5-large đầy đủ", "Lọc trước = điều kiện cứng trong Qdrant",
+            "Rerank = cross-encoder chấm lại ứng viên đầu"]
+    if has_rr:
+        side.append(f"Độ trễ hybrid + lọc: {d.N(hp + '.latency_ms_p50')} → {d.N(hpr + '.latency_ms_p50')} ms khi rerank")
+    side.append(d.A("Không qua LLM, 0 lời gọi API", "mô tả thiết kế ablation"))
+    s.text(9.3, 1.95, 3.45, 4.6, side, size=SIZE["small"], bullets=True)
+
+
+def chunk_sweep(d: Deck) -> None:
+    runs = [r for r in d.V("ablation.json:runs") or [] if not str(r.get("name", "")).startswith("full_")]
+    prefixes = sorted({r["name"].split("_", 1)[0] for r in runs},
+                      key=lambda p: next(r["chunk_size"] for r in runs if r["name"].startswith(p + "_")))
+    cfgs: list[tuple[str, str]] = []
+    for r in runs:
+        cfg = r["name"].split("_", 1)[1]
+        if cfg not in [c for c, _ in cfgs]:
+            cfgs.append((cfg, run_label(r)))
+    k = "ablation.json:runs[name={}_{}]"
+    spreads = [max(x["recall_at_5"] for x in runs if x["name"].endswith("_" + c))
+               - min(x["recall_at_5"] for x in runs if x["name"].endswith("_" + c)) for c, _ in cfgs]
+    pre = [x["recall_at_5"] for x in runs if x["prefilter"]]
+    nopre = [x["recall_at_5"] for x in runs if not x["prefilter"]]
+    small = bool(spreads and pre and nopre) and max(spreads) < (min(pre) - max(nopre))
+    title = ("Đổi kích thước chunk gần như không đổi Recall@5; lọc trước vẫn quyết định" if small
+             else "Recall@5 theo kích thước chunk trên subcorpus")
+    s = d.slide("ev-chunk", SEC_E, title, notes=(
+        "Quét kích thước chunk tốn một lần nhúng lại cho mỗi cỡ, nên nhóm đo trên một subcorpus chứa mọi tin đáp án của "
+        "benchmark cộng thêm tin ngẫu nhiên, thay vì chỉ mục đầy đủ. Chênh lệch giữa các cỡ chunk nhỏ hơn nhiều so với "
+        "chênh lệch do lọc trước. Subcorpus dễ hơn chỉ mục đầy đủ vì ít tin gây nhiễu, nên chỉ so các cột này với nhau, "
+        "không so với slide trước. Slide sau: kết quả câu trả lời theo nhóm."))
+    if not runs:
+        s.text(MX, 2.0, W - 2 * MX, 1.0, "Chưa có lượt quét kích thước chunk trong ablation.json", size=20)
+        return
+    names = ["Nhỏ", "Vừa", "Lớn"] if len(prefixes) == 3 else [f"Cỡ {chr(65 + i)}" for i in range(len(prefixes))]
+    sub = "ablation.json:subcorpus"
+    s.chart(MX, 1.85, 8.4, 4.4, "column", [label for _, label in cfgs],
+            [(n, [k.format(p, c) + ".recall_at_5" for c, _ in cfgs], col)
+             for n, p, col in zip(names, prefixes, ("amber", "teal", "violet"), strict=False)],
+            number_format="0.00", max_value=1)
+    side = [f"{n}: {d.N(k.format(p, cfgs[0][0]) + '.chunk_size')} token" for n, p in zip(names, prefixes, strict=False)]
+    side += [f"Subcorpus {d.N(sub + '.n_listings')} tin, gồm {d.N(sub + '.n_gt_listings')} tin đáp án",
+             "Chỉ so các cỡ chunk với nhau"]
+    s.text(9.3, 1.95, 3.45, 4.3, side, size=SIZE["small"], bullets=True)
+    s.caption(f"Nguồn: ablation.json, {d.N(k.format(prefixes[0], cfgs[0][0]) + '.n_questions')} câu có tập tin đúng; "
+              "cùng e5-large, không rerank.", y=6.35)
 
 
 def results(d: Deck) -> None:
     cats, syss = categories(d), systems(d)
     acc = {s_: d.V(f"{ES}:overall.{s_}.accuracy") for s_ in syss}
     top = max((s_ for s_ in syss if acc.get(s_) is not None), key=lambda s_: acc[s_], default=None)
-    title = (f"{SYSTEM[top][0]} đúng nhiều nhất trên tập con; mỗi hệ mạnh ở nhóm câu riêng" if top
+    title = (f"{SYSTEM[top][0]} đúng nhiều nhất " + ("trên toàn bộ benchmark" if full_bench(d) else "trên tập con")
+             + "; mỗi hệ mạnh ở nhóm câu riêng" if top
              else "Độ chính xác bốn hệ theo chín nhóm câu hỏi")
     s = d.slide("ev-results", SEC_E, title, notes=(
-        "Biểu đồ là độ chính xác của bốn hệ theo từng nhóm câu. Tổng trên tập con: "
+        "Biểu đồ là độ chính xác của bốn hệ theo từng nhóm câu. Tổng " + scope_word(d) + ": "
         + ", ".join(f"{SYSTEM[x][0]} {d.N(f'{ES}:overall.{x}.accuracy', 'pct0')}%" for x in syss)
         + f". Mỗi nhóm chỉ có {d.N(f'{ES}:by_category.{cats[0]}.{syss[0]}.n')} câu, nên một câu đúng sai làm số đổi "
         "rất nhiều. Đọc theo hình dạng: hệ nào mạnh ở nhóm nào, chứ không so từng điểm phần trăm. Khoảng tin cậy ở slide sau."))
@@ -208,7 +293,7 @@ def pairwise(d: Deck) -> None:
         "Bảng so ba cặp trên cùng câu hỏi: Basic RAG với LLM thuần, Hybrid với Basic RAG, và Hybrid với Graph, ở toàn tập "
         "và ở nhóm tổng hợp. Chênh lệch là hiệu độ chính xác tính bằng điểm phần trăm; khoảng tin cậy chín mươi "
         "lăm phần trăm lấy bằng bootstrap mười nghìn mẫu theo câu hỏi, ghép cặp giữa hai hệ. Khoảng nào chứa số không thì "
-        "chưa đủ bằng chứng nói hệ này hơn hệ kia trên tập con này. Với bốn câu mỗi nhóm, phần lớn khoảng tin cậy rất rộng. "
+        "chưa đủ bằng chứng nói hệ này hơn hệ kia. Với khoảng mười câu mỗi nhóm, khoảng tin cậy theo nhóm vẫn rộng. "
         "Slide sau: chi phí và độ trễ."))
     rows = [["So sánh", "Phạm vi", "Chênh lệch", "CI95", "p"]]
     for i in keep:

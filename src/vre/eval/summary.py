@@ -24,6 +24,7 @@ PAIRS = (("hybrid", "basic_rag"), ("basic_rag", "llm_only"), ("hybrid", "graph")
 PAIR_METRICS = ("accuracy", "mean_points")
 ROUTES = ("basic_rag", "graph", "hybrid", "valuation")
 RAGAS_NOTE = "ragas: answer_relevancy và context_precision bỏ để tiết kiệm lời gọi LLM (chỉ đo faithfulness)"
+RAGAS_OFF_NOTE = "ragas: không chạy (chấm theo luật, không LLM giám khảo — chọn để tiết kiệm chi phí); faithfulness để trống"
 
 
 def _round(x: float | None, nd: int = 4) -> float | None:
@@ -130,7 +131,8 @@ def build(settings: Settings, answers: dict[tuple[str, str], dict], scores: dict
                         settings.llm_price_input or 0.0, settings.llm_price_output or 0.0)
     total = len(questions)
     scoring = _scoring(scores)
-    notes = [RAGAS_NOTE,
+    ragas_ran = any(v.get("n") for v in ragas.values())
+    notes = [RAGAS_NOTE if ragas_ran else RAGAS_OFF_NOTE,
              f"retrieval: nguồn = top_k={settings.top_k} tin mà hệ thống đưa vào ngữ cảnh; recall_at_10 vì thế ≤ "
              "recall_at_5 khi có hơn 5 cụm đúng (truy xuất thuần ở ablation.json)",
              f"benchmark đầy đủ có {total} câu; bản tóm tắt này chấm {len(answered)} câu (benchmark_subset)",

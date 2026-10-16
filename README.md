@@ -114,9 +114,10 @@ kiểm điều kiện tiên quyết trước khi chạy (thiếu shard, thiếu 
 - `benchmark/questions.jsonl`: bộ câu hỏi chia theo nhóm `lookup`, `constraint`, `aggregate`, `multihop`, `temporal`, `comparison`,
   `project_street`, `valuation`, `unanswerable`; mỗi câu có tuyến đúng cho router. Đáp án chuẩn tính bằng SQL DuckDB trên toàn bộ bảng
   sạch (lưu kèm câu SQL), không gõ tay, ghi vào `results/benchmark_gt.json`; file câu hỏi không bao giờ bị code ghi đè.
-- `& $VRE_PY scripts/vre_pipeline.py eval` chạy bốn hệ thống trên mọi câu, chấm bằng LLM giám khảo khác mô hình sinh, tính recall/MRR/nDCG,
-  các chỉ số kiểu RAGAS, chi phí và độ trễ, khoảng tin cậy bootstrap ghép cặp theo câu hỏi, rồi phân tích nguyên nhân lỗi
-  → `results/eval_summary.json`, `results/error_analysis.json`.
+- `& $VRE_PY scripts/vre_pipeline.py eval` chạy bốn hệ thống trên mọi câu, chấm câu trả lời (`eval score --offline`: chấm theo luật so
+  với đáp án SQL; không `--offline`: LLM giám khảo khác mô hình sinh + faithfulness kiểu RAGAS), tính recall/MRR/nDCG, chi phí và độ trễ,
+  khoảng tin cậy bootstrap ghép cặp theo câu hỏi, rồi phân tích nguyên nhân lỗi → `results/eval_summary.json`,
+  `results/error_analysis.json`. Lượt kết quả trong repo chấm theo luật (xem [Hạn chế](#hạn-chế)).
 - `& $VRE_PY scripts/vre_pipeline.py ablation` so sánh cấu hình truy hồi (dense/BM25/hybrid, lọc trước, rerank, kích thước chunk) trên
   subcorpus chứa mọi tin đáp án → `results/ablation.json`. So sánh giữa các model embedding chỉ lấy từ `results/embedding_benchmark.json`.
 - `& $VRE_PY scripts/vre_pipeline.py report examples` → `results/examples.json`; `& $VRE_PY scripts/vre_pipeline.py report readme` điền
@@ -193,43 +194,43 @@ Sinh lại nguồn, chạy và lưu output (từ gốc repo, sau `. scriptsre_e
 Khối dưới đây do `scripts/vre_pipeline.py report readme` sinh từ `results/*.json`; không sửa tay.
 
 <!-- results:start -->
-### Benchmark (36/100 câu, sinh `gemini-flash-lite-latest`, chấm theo luật, không giám khảo LLM, `79fe53b`)
+### Benchmark (100/100 câu, sinh `gemini-flash-lite-latest`, chấm theo luật, không giám khảo LLM, `cf27faf`)
 
 | Nhóm | llm_only | basic_rag | graph | hybrid |
 |---|---|---|---|---|
-| lookup | 0.0% [0–0%] | 100.0% [100–100%] | 100.0% [100–100%] | 100.0% [100–100%] |
-| constraint | 0.0% [0–0%] | 0.0% [0–0%] | 100.0% [100–100%] | 0.0% [0–0%] |
-| aggregate | 25.0% [0–75%] | 0.0% [0–0%] | 100.0% [100–100%] | 100.0% [100–100%] |
-| multihop | 0.0% [0–0%] | 0.0% [0–0%] | 75.0% [25–100%] | 75.0% [25–100%] |
-| temporal | 0.0% [0–0%] | 25.0% [0–75%] | 100.0% [100–100%] | 100.0% [100–100%] |
-| comparison | 50.0% [0–100%] | 0.0% [0–0%] | 100.0% [100–100%] | 75.0% [25–100%] |
+| lookup | 0.0% [0–0%] | 100.0% [100–100%] | 41.7% [17–67%] | 100.0% [100–100%] |
+| constraint | 0.0% [0–0%] | 16.7% [0–42%] | 91.7% [75–100%] | 16.7% [0–42%] |
+| aggregate | 16.7% [0–42%] | 16.7% [0–42%] | 83.3% [58–100%] | 83.3% [58–100%] |
+| multihop | 0.0% [0–0%] | 0.0% [0–0%] | 83.3% [58–100%] | 83.3% [58–100%] |
+| temporal | 0.0% [0–0%] | 10.0% [0–30%] | 70.0% [40–100%] | 70.0% [40–100%] |
+| comparison | 40.0% [10–70%] | 10.0% [0–30%] | 100.0% [100–100%] | 90.0% [70–100%] |
 | project_street | 0.0% [0–0%] | 0.0% [0–0%] | 100.0% [100–100%] | 100.0% [100–100%] |
-| valuation | 0.0% [0–0%] | 0.0% [0–0%] | 0.0% [0–0%] | 0.0% [0–0%] |
-| unanswerable | 25.0% [0–75%] | 75.0% [25–100%] | 75.0% [25–100%] | 75.0% [25–100%] |
-| **Tổng** | 11.1% [3–22%] | 22.2% [8–36%] | 83.3% [69–94%] | 69.4% [53–83%] |
+| valuation | 10.0% [0–30%] | 20.0% [0–50%] | 20.0% [0–50%] | 20.0% [0–50%] |
+| unanswerable | 33.3% [8–58%] | 66.7% [42–92%] | 83.3% [58–100%] | 83.3% [58–100%] |
+| **Tổng** | 11.0% [5–17%] | 28.0% [20–37%] | 75.0% [66–83%] | 72.0% [63–81%] |
 
 Độ chính xác (2/2 điểm), CI 95% bootstrap 10.000 mẫu theo câu hỏi, seed 42.
 
 | So sánh | Phạm vi | Chênh lệch | CI 95% | p | n |
 |---|---|---|---|---|---|
-| hybrid − basic_rag | overall | +47.2 điểm % | [+30.6, +63.9] | 0.000 | 36 |
-| hybrid − basic_rag | aggregate | +100.0 điểm % | [+100.0, +100.0] | 0.000 | 4 |
-| hybrid − basic_rag | multihop | +75.0 điểm % | [+25.0, +100.0] | 0.003 | 4 |
-| basic_rag − llm_only | overall | +11.1 điểm % | [-8.3, +30.6] | 0.154 | 36 |
-| basic_rag − llm_only | aggregate | -25.0 điểm % | [-75.0, +0.0] | 0.320 | 4 |
-| basic_rag − llm_only | multihop | +0.0 điểm % | [+0.0, +0.0] | 1.000 | 4 |
-| hybrid − graph | overall | -13.9 điểm % | [-25.0, -2.8] | 0.004 | 36 |
-| hybrid − graph | aggregate | +0.0 điểm % | [+0.0, +0.0] | 1.000 | 4 |
-| hybrid − graph | multihop | +0.0 điểm % | [+0.0, +0.0] | 1.000 | 4 |
+| hybrid − basic_rag | overall | +44.0 điểm % | [+33.0, +54.0] | 0.000 | 100 |
+| hybrid − basic_rag | aggregate | +66.7 điểm % | [+25.0, +100.0] | 0.001 | 12 |
+| hybrid − basic_rag | multihop | +83.3 điểm % | [+58.3, +100.0] | 0.000 | 12 |
+| basic_rag − llm_only | overall | +17.0 điểm % | [+6.0, +28.0] | 0.002 | 100 |
+| basic_rag − llm_only | aggregate | +0.0 điểm % | [-33.3, +33.3] | 1.000 | 12 |
+| basic_rag − llm_only | multihop | +0.0 điểm % | [+0.0, +0.0] | 1.000 | 12 |
+| hybrid − graph | overall | -3.0 điểm % | [-12.0, +7.0] | 0.298 | 100 |
+| hybrid − graph | aggregate | +0.0 điểm % | [+0.0, +0.0] | 1.000 | 12 |
+| hybrid − graph | multihop | +0.0 điểm % | [+0.0, +0.0] | 1.000 | 12 |
 
 | Hệ thống | Độ trễ p50 (ms) | p95 (ms) | Token vào/ra TB | USD/câu | Trích dẫn sai | Fallback |
 |---|---|---|---|---|---|---|
-| llm_only | 4029 | 11841 | 82/158 | 0.00000 | 0.0% | 0.0% |
-| basic_rag | 10468 | 37000 | 1942/260 | 0.00000 | 0.0% | 0.0% |
-| graph | 8855 | 23016 | 3843/308 | 0.00000 | 0.0% | 0.0% |
-| hybrid | 8989 | 21686 | 4063/398 | 0.00000 | 0.0% | 5.6% |
+| llm_only | 1770 | 9568 | 83/160 | 0.00000 | 0.0% | 0.0% |
+| basic_rag | 3480 | 22945 | 1887/268 | 0.00000 | 0.0% | 0.0% |
+| graph | 3434 | 20078 | 4016/326 | 0.00000 | 0.0% | 0.0% |
+| hybrid | 2700 | 19181 | 4154/407 | 0.00000 | 0.0% | 7.0% |
 
-Router (hybrid): 91.7% trên 36 câu; 93.8% khi bỏ nhóm unanswerable.
+Router (hybrid): 96.0% trên 100 câu; 97.7% khi bỏ nhóm unanswerable.
 
 Luật chấm (không LLM):
 
@@ -247,7 +248,7 @@ Luật chấm (không LLM):
 
 > ragas: answer_relevancy và context_precision bỏ để tiết kiệm lời gọi LLM (chỉ đo faithfulness)
 > retrieval: nguồn = top_k=5 tin mà hệ thống đưa vào ngữ cảnh; recall_at_10 vì thế ≤ recall_at_5 khi có hơn 5 cụm đúng (truy xuất thuần ở ablation.json)
-> benchmark đầy đủ có 100 câu; bản tóm tắt này chấm 36 câu (benchmark_subset)
+> benchmark đầy đủ có 100 câu; bản tóm tắt này chấm 100 câu (benchmark_subset)
 > pairwise chỉ dùng câu cả hai hệ thống đều có điểm; overall_common chỉ dùng câu mọi hệ thống đều có điểm; mọi CI có n kèm theo
 
 ### Định giá (tập kiểm tra)
@@ -263,11 +264,35 @@ Luật chấm (không LLM):
 | Run | Recall@5 | MRR | nDCG@10 | n |
 |---|---|---|---|---|
 | full_dense | 0.29 | 0.28 | 0.28 | 27 |
+| full_dense_rerank | 0.36 | 0.45 | 0.36 | 27 |
 | full_dense_prefilter | 0.50 | 0.60 | 0.51 | 27 |
+| full_dense_prefilter_rerank | 0.64 | 0.74 | 0.66 | 27 |
 | full_bm25 | 0.27 | 0.30 | 0.26 | 27 |
+| full_bm25_rerank | 0.31 | 0.37 | 0.31 | 27 |
 | full_bm25_prefilter | 0.58 | 0.68 | 0.60 | 27 |
+| full_bm25_prefilter_rerank | 0.62 | 0.65 | 0.65 | 27 |
 | full_hybrid | 0.36 | 0.30 | 0.30 | 27 |
+| full_hybrid_rerank | 0.37 | 0.41 | 0.36 | 27 |
 | full_hybrid_prefilter | 0.53 | 0.65 | 0.55 | 27 |
+| full_hybrid_prefilter_rerank | 0.67 | 0.71 | 0.66 | 27 |
+| c256_dense | 0.50 | 0.61 | 0.50 | 27 |
+| c256_dense_prefilter | 0.90 | 0.94 | 0.88 | 27 |
+| c256_bm25 | 0.56 | 0.61 | 0.49 | 27 |
+| c256_bm25_prefilter | 0.91 | 0.92 | 0.88 | 27 |
+| c256_hybrid | 0.58 | 0.71 | 0.55 | 27 |
+| c256_hybrid_prefilter | 0.91 | 0.90 | 0.88 | 27 |
+| c400_dense | 0.49 | 0.59 | 0.51 | 27 |
+| c400_dense_prefilter | 0.91 | 0.92 | 0.88 | 27 |
+| c400_bm25 | 0.55 | 0.62 | 0.50 | 27 |
+| c400_bm25_prefilter | 0.91 | 0.94 | 0.88 | 27 |
+| c400_hybrid | 0.54 | 0.68 | 0.52 | 27 |
+| c400_hybrid_prefilter | 0.90 | 0.92 | 0.88 | 27 |
+| c512_dense | 0.50 | 0.60 | 0.51 | 27 |
+| c512_dense_prefilter | 0.91 | 0.92 | 0.89 | 27 |
+| c512_bm25 | 0.56 | 0.62 | 0.50 | 27 |
+| c512_bm25_prefilter | 0.92 | 0.94 | 0.89 | 27 |
+| c512_hybrid | 0.56 | 0.70 | 0.53 | 27 |
+| c512_hybrid_prefilter | 0.90 | 0.91 | 0.88 | 27 |
 <!-- results:end -->
 
 ## Kiểm thử và CI
@@ -308,3 +333,8 @@ data/ index/ models/ docker-data/   Sinh ra khi chạy pipeline, không đưa v�
 - Bộ lọc, Cypher, router và câu trả lời phụ thuộc LLM; cần khoá Groq khi chạy lần đầu, lần sau đọc cache. LLM có thể chép sai id trong
   `[Tin#id]` (đo bằng `bad_citation_rate`).
 - Benchmark là bộ câu hỏi có hạn: so sánh tương đối giữa bốn hệ thống, kèm khoảng tin cậy; không có ý nghĩa thống kê thì ghi đúng như vậy.
+- Lượt đánh giá trong repo chấm câu trả lời theo luật so với đáp án SQL, không dùng LLM giám khảo và không chạy RAGAS (chọn để tiết kiệm
+  chi phí API): faithfulness, answer relevancy và context precision để trống. Luật chấm in ở khối kết quả phía trên.
+- Ablation `c256`/`c400`/`c512` đo trên subcorpus chứa mọi tin đáp án, không phải chỉ mục đầy đủ: chỉ so chúng với nhau, không so với `full_*`.
+- Docker (profile `app`): image `api` và `web` đã dựng và kiểm qua nginx `:8080` — `/`, `/api/health`, chat SSE và `/api/valuate` đều
+  trả 200 (chi tiết `plans/reports/p3-docker.md`).

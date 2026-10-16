@@ -674,11 +674,13 @@ def h_p2_08(c: Ctx) -> str:
     a = c.r("ablation.json")
     if a is None:
         return "Rerank cross-encoder: tác dụng đo ở ablation (chưa có ablation.json)"
-    on = [r for r in a["runs"] if r["rerank"]]
-    off = [r for r in a["runs"] if not r["rerank"] and r["retrieval"] == "hybrid"]
-    if not on or not off:
-        return "Rerank cross-encoder: ablation không có cặp bật/tắt rerank"
-    return f"Rerank đổi recall@5 từ {D(max(r['recall_at_5'] for r in off), 3)} thành {D(max(r['recall_at_5'] for r in on), 3)} trên ablation"
+    full = {r["name"]: r for r in a["runs"] if r["name"].startswith("full_")}  # c256/c400/c512 đo trên subcorpus, không so
+    pairs = [(r, full[r["name"] + "_rerank"]) for r in full.values() if not r["rerank"] and r["name"] + "_rerank" in full]
+    if not pairs:
+        return "Rerank cross-encoder: ablation không có cặp bật/tắt rerank trên chỉ mục đầy đủ"
+    off, on = max(pairs, key=lambda p: p[1]["recall_at_5"])
+    return (f"Rerank ({off['retrieval']}{' + lọc' if off['prefilter'] else ''}) đổi Recall@5 từ {D(off['recall_at_5'], 3)} thành "
+            f"{D(on['recall_at_5'], 3)} trên chỉ mục đầy đủ, độ trễ p50 {N(off['latency_ms_p50'])} → {N(on['latency_ms_p50'])} ms")
 
 
 def h_p2_09(c: Ctx) -> str:
@@ -851,14 +853,24 @@ if d:
     table(d["pre_rows"], ["listing_id", "quận", "giá", "tiêu đề"])'''),
     Step("P2-08", "CACHE", h_p2_08, """
 Mục tiêu: rerank cross-encoder chấm lại từng cặp (câu hỏi, chunk) — chậm hơn bi-encoder nhưng chính xác hơn — trên một tập ứng viên
-rồi giữ top-k. Notebook không nạp cross-encoder (thêm một model lớn vào RAM); tác dụng của rerank được đo ở ablation trên subcorpus
-chứa mọi tin đáp án. Mặc định rerank tắt trong chatbot vì tăng độ trễ.
+rồi giữ top-k. Notebook không nạp cross-encoder (thêm một model lớn vào RAM); tác dụng của rerank được đo ở ablation trên chỉ mục
+đầy đủ (các run `full_*`). Bảng thứ hai quét kích thước chunk (`c256`/`c400`/`c512`) trên subcorpus chứa mọi tin đáp án: chỉ so các
+run đó với nhau, không so với `full_*`. Mặc định rerank tắt trong chatbot vì tăng độ trễ.
 """, r'''# P2-08 · CACHE
 ablation = load("ablation.json")
 if ablation is None:
     missing("`results/ablation.json`", "python scripts/vre_pipeline.py ablation")
 else:
-    display(pd.DataFrame(ablation["runs"]))'''),
+    runs = pd.DataFrame(ablation["runs"])
+    cols = ["name", "retrieval", "prefilter", "rerank", "chunk_size", "recall_at_5", "mrr", "ndcg_at_10", "latency_ms_p50", "n_questions"]
+    md("**Chỉ mục đầy đủ** (dense/BM25/hybrid × lọc trước × rerank)")
+    display(runs[runs["name"].str.startswith("full_")][cols].reset_index(drop=True))
+    sub = runs[~runs["name"].str.startswith("full_")]
+    if len(sub):
+        md(f"**Quét kích thước chunk trên subcorpus** ({ablation['subcorpus']['n_listings']:,} tin, Recall@5)".replace(",", "."))
+        display(sub.pivot_table(index=["retrieval", "prefilter"], columns="chunk_size", values="recall_at_5").round(3))
+    for note in ablation.get("notes", []):
+        md(f"> {note}")'''),
     Step("P2-09", "LIVE", h_p2_09, """
 Mục tiêu: ghép prompt gồm chỉ thị, ngữ cảnh và câu hỏi. Mỗi tài liệu được bọc trong `<tai_lieu>` và thẻ giả mạo trong nội dung bị vô
 hiệu hoá, vì tin đăng là văn bản người dùng tự nhập (chống prompt injection). Câu trả lời lấy từ lượt eval đã chạy
